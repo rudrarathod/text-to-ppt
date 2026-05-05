@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo, useImperativeHandle, forwardRef } from "react";
 import Handlebars from "handlebars";
 import { getGoogleFontLink } from "../lib/utils";
-import { saveImage } from "../lib/imageStore";
+import { saveImage, getImage, isIdbImage } from "../lib/imageStore";
 
 // Register custom helpers for Handlebars
 Handlebars.registerHelper('each_limit', function(context, limit, options) {
@@ -14,10 +14,49 @@ Handlebars.registerHelper('each_limit', function(context, limit, options) {
 });
 
 const useResolvedData = (data: Record<string, any>) => {
-  return useMemo(() => {
-    const resolved = { ...data };
-    return resolved;
+  const [resolved, setResolved] = useState(data);
+
+  useEffect(() => {
+    let active = true;
+    const blobUrls: string[] = [];
+
+    const resolveImages = async () => {
+      // Check if there are any IDB images to resolve
+      const needsResolution = Object.values(data).some(v => isIdbImage(v));
+      
+      if (!needsResolution) {
+        if (active) setResolved(data);
+        return;
+      }
+
+      const nextData = { ...data };
+      for (const key in nextData) {
+        const val = nextData[key];
+        if (isIdbImage(val)) {
+          try {
+            const blob = await getImage(val);
+            if (blob && active) {
+              const url = URL.createObjectURL(blob);
+              blobUrls.push(url);
+              nextData[key] = url;
+            }
+          } catch (err) {
+            console.error("Failed to resolve image:", val, err);
+          }
+        }
+      }
+      if (active) setResolved(nextData);
+    };
+
+    resolveImages();
+
+    return () => {
+      active = false;
+      blobUrls.forEach(url => URL.revokeObjectURL(url));
+    };
   }, [data]);
+
+  return resolved;
 };
 
 export const generateSlideHtml = (templateCode: string, data: Record<string, any>, designConfig?: Record<string, any>, interactive: boolean = false) => {
@@ -25,9 +64,17 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
   try {
     let processedTemplate = templateCode;
     if (interactive) {
+        // Ensure any element with data-image-key gets cursor-pointer
+        processedTemplate = processedTemplate.replace(
+          /(data-image-key=["'][^"']+["'])/g,
+          '$1 style="cursor: pointer;"'
+        );
+
+        // Also fallback for raw img tags that don't have data-image-key yet
         processedTemplate = processedTemplate.replace(
           /(<img([^>]*)src=["']\{\{\{?\s*([a-zA-Z0-9_]+)\s*\}\}\}?["']([^>]*)>)/g,
           (match, fullImg, before, key, after) => {
+             if (match.includes('data-image-key')) return match;
              return `<span data-image-key="${key}" class="relative group inline-flex w-full h-full cursor-pointer">${fullImg}</span>`;
           }
         );
