@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useAppStore, SlideData } from "../store";
 import { SlidePreview, SlideStatic } from "../components/SlidePreview";
 import { Button, Textarea } from "../components/ui";
-import { Download, Plus, Trash2, LayoutTemplate, Sparkles, X, Mic, Copy, Check, Settings2, ChevronDown, ChevronUp, Save, Loader2 } from "lucide-react";
+import { Download, Plus, Trash2, LayoutTemplate, Sparkles, X, Mic, Copy, Check, Settings2, ChevronDown, ChevronUp, Save, Loader2, Palette, Code2, Presentation as PresentationIcon, Layout as LayoutIcon, ArrowLeft } from "lucide-react";
 import jsPDF from "jspdf";
 import { toJpeg } from "html-to-image";
 import { cn } from "../lib/utils";
@@ -94,6 +94,7 @@ export function SlideGenerator() {
   const [aiResponse, setAiResponse] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const [activeSidebarTab, setActiveSidebarTab] = useState<'design' | 'content'>('design');
 
   const [generatorMode, setGeneratorMode] = useState<'individual' | 'presentation'>('individual');
   const [deckAiMode, setDeckAiMode] = useState<'ai' | 'prompt'>('ai');
@@ -403,12 +404,39 @@ export function SlideGenerator() {
 
       {/* Right Panel: JSON Editor & Layout Selector */}
       <div className="lg:w-80 w-full h-[50vh] lg:h-full bg-[#161618] border-t lg:border-t-0 lg:border-l border-[#2d2d30] flex flex-col shrink-0 relative lg:min-h-0">
-        <div className="p-4 lg:p-6 pb-2 shrink-0 flex items-center justify-between">
-          <span className="text-[11px] font-bold uppercase tracking-widest text-[#85858b]">Slide Details</span>
-          <div className="flex bg-[#1e1e1e] rounded-md p-1 border border-[#2d2d30]">
-             <button onClick={() => setGeneratorMode('individual')} className={cn("px-2 py-1 text-[10px] font-bold rounded-sm transition-colors", generatorMode === 'individual' ? "bg-[#333] text-white" : "text-gray-400 hover:text-white")}>Single</button>
-             <button onClick={() => setGeneratorMode('presentation')} className={cn("px-2 py-1 text-[10px] font-bold rounded-sm transition-colors", generatorMode === 'presentation' ? "bg-[#333] text-white" : "text-gray-400 hover:text-white")}>Full Deck</button>
+        <div className="p-4 lg:p-6 pb-4 shrink-0 border-b border-[#2d2d30] bg-[#161618]">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
+               <Settings2 size={16} className="text-[#D62828]" /> Slide Details
+            </h3>
+            <div className="flex bg-[#111111] rounded-lg p-1 border border-[#2d2d30]">
+               <button onClick={() => setGeneratorMode('individual')} className={cn("px-3 py-1 text-[10px] font-bold rounded-md transition-all", generatorMode === 'individual' ? "bg-[#252526] text-white shadow-sm" : "text-gray-500 hover:text-gray-300")}>Single</button>
+               <button onClick={() => setGeneratorMode('presentation')} className={cn("px-3 py-1 text-[10px] font-bold rounded-md transition-all", generatorMode === 'presentation' ? "bg-[#252526] text-white shadow-sm" : "text-gray-500 hover:text-gray-300")}>Deck</button>
+            </div>
           </div>
+
+          {generatorMode === 'individual' && (
+            <div className="flex p-1 bg-[#111111] rounded-xl border border-[#2d2d30]">
+               <button 
+                 onClick={() => setActiveSidebarTab('design')}
+                 className={cn(
+                   "flex-1 flex items-center justify-center gap-2 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all",
+                   activeSidebarTab === 'design' ? "bg-[#D62828] text-white shadow-lg shadow-[#D62828]/20" : "text-gray-500 hover:text-white"
+                 )}
+               >
+                 <Palette size={14} /> Design
+               </button>
+               <button 
+                 onClick={() => setActiveSidebarTab('content')}
+                 className={cn(
+                   "flex-1 flex items-center justify-center gap-2 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all",
+                   activeSidebarTab === 'content' ? "bg-[#D62828] text-white shadow-lg shadow-[#D62828]/20" : "text-gray-500 hover:text-white"
+                 )}
+               >
+                 <Code2 size={14} /> Content
+               </button>
+            </div>
+          )}
         </div>
         
         {generatorMode === 'presentation' ? (
@@ -549,67 +577,119 @@ export function SlideGenerator() {
               )}
            </div>
         ) : selectedSlide ? (
-          <div className="flex-1 overflow-y-auto p-3 lg:p-4 pb-32 flex flex-col space-y-4 lg:space-y-8 min-h-0">
-            
-            <div className="shrink-0 flex gap-2 lg:block space-y-0 lg:space-y-2 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0">
-              <label className="lg:block text-xs font-bold text-white uppercase tracking-wider mb-0 lg:mb-3 px-1 hidden lg:block">
-                Layout Template
-              </label>
-              {layouts.map(l => (
-                 <div 
-                   key={l.id}
-                   onClick={() => {
-                     const newLayout = layouts.find(x => x.id === l.id);
-                     if (newLayout && selectedSlide) {
-                       const newContent = extractDefaultContent(newLayout.code, selectedSlide.content);
-
-                       updateSlideLayout(selectedSlide.id, l.id);
-                       updateSlideContent(selectedSlide.id, newContent);
-                       setJsonInput(JSON.stringify(newContent, null, 2));
-                     }
-                   }}
-                   className={cn(
-                     "px-3 py-2 lg:px-4 lg:py-3 text-[11px] lg:text-sm rounded-xl cursor-pointer transition-colors font-medium flex items-center justify-between group whitespace-nowrap shrink-0 lg:whitespace-normal",
-                     selectedSlide.layoutId === l.id ? "bg-[#2d2d30] text-white font-bold border border-[#444]" : "text-[#85858b] hover:bg-[#2d2d30]/50 hover:text-white border border-transparent hover:border-[#333]"
-                   )}
-                 >
-                   <span>{l.name}</span>
-                   {selectedSlide.layoutId === l.id && <span className="w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full bg-[#fe6247] ml-2"></span>}
-                 </div>
-              ))}
-            </div>
-
-            <div className="flex-1 flex flex-col min-h-0">
-               <div className="flex items-center justify-between mb-2 lg:mb-3 px-1 shrink-0">
-                 <label className="text-xs font-bold text-white uppercase tracking-wider hidden lg:block">
-                   Content (JSON)
-                 </label>
-               </div>
-               
-               <Textarea 
-                 className="font-mono text-xs flex-1 min-h-[100px] leading-relaxed bg-[#1e1e1e] border-[#2d2d30] text-gray-300 focus-visible:ring-[#D62828] rounded-xl p-3 lg:p-4 resize-none" 
-                 value={jsonInput}
-                 onChange={handleJsonChange}
-                 spellCheck={false}
-               />
-               {jsonError && (
-                 <p className="text-[10px] lg:text-xs text-red-400 mt-2 font-mono break-words bg-red-500/10 p-2 lg:p-3 rounded-lg border border-red-500/20 shrink-0">{jsonError}</p>
-               )}
-            </div>
+          <div className="flex-1 overflow-y-auto min-h-0 relative">
+            {activeSidebarTab === 'design' ? (
+              <div className="p-6 space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Layout Library</label>
+                    <span className="text-[10px] font-bold text-[#D62828] bg-[#D62828]/10 px-2 py-0.5 rounded-full">{layouts.length} Layouts</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3">
+                    {layouts.map(l => (
+                       <div 
+                         key={l.id}
+                         onClick={() => {
+                           const newLayout = layouts.find(x => x.id === l.id);
+                           if (newLayout && selectedSlide) {
+                             const newContent = extractDefaultContent(newLayout.code, selectedSlide.content);
+                             updateSlideLayout(selectedSlide.id, l.id);
+                             updateSlideContent(selectedSlide.id, newContent);
+                             setJsonInput(JSON.stringify(newContent, null, 2));
+                           }
+                         }}
+                         className={cn(
+                           "group relative p-4 rounded-2xl cursor-pointer transition-all border flex flex-col gap-3",
+                           selectedSlide.layoutId === l.id 
+                             ? "bg-[#D62828]/5 border-[#D62828] shadow-lg shadow-[#D62828]/5" 
+                             : "bg-[#1c1c1e] border-[#2d2d30] hover:border-[#444] hover:bg-[#252526]"
+                         )}
+                       >
+                         <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                               <div className={cn(
+                                 "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
+                                 selectedSlide.layoutId === l.id ? "bg-[#D62828] text-white" : "bg-[#2d2d30] text-gray-400 group-hover:text-white"
+                               )}>
+                                 {l.variant === 'title' && <PresentationIcon size={14} />}
+                                 {l.variant === 'content' && <LayoutIcon size={14} />}
+                                 {l.variant === 'image-text' && <Sparkles size={14} />}
+                                 {l.variant === 'comparison' && <ArrowLeft size={14} className="rotate-180" />}
+                                 {l.variant === 'divider' && <Plus size={14} />}
+                               </div>
+                               <div>
+                                 <h4 className="text-xs font-bold text-white mb-0.5">{l.name}</h4>
+                                 <p className="text-[9px] text-gray-500 font-medium uppercase tracking-wider">{l.variant}</p>
+                               </div>
+                            </div>
+                            {selectedSlide.layoutId === l.id && (
+                               <div className="w-5 h-5 rounded-full bg-[#D62828] flex items-center justify-center">
+                                  <Check size={12} className="text-white" />
+                               </div>
+                            )}
+                         </div>
+                       </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-6 flex flex-col h-full space-y-6">
+                <div className="flex-1 flex flex-col min-h-0">
+                   <div className="flex items-center justify-between mb-4">
+                     <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                       Data Structure
+                     </label>
+                     <button 
+                       onClick={() => {
+                         try {
+                           const parsed = JSON.parse(jsonInput);
+                           setJsonInput(JSON.stringify(parsed, null, 2));
+                         } catch(e) {}
+                       }}
+                       className="text-[10px] font-bold text-gray-400 hover:text-white transition-colors flex items-center gap-1"
+                     >
+                        Format
+                     </button>
+                   </div>
+                   
+                   <div className="relative flex-1 min-h-[300px]">
+                     <Textarea 
+                       className="font-mono text-[11px] w-full h-full leading-relaxed bg-[#111111] border-[#2d2d30] text-gray-300 focus-visible:ring-[#D62828] rounded-2xl p-4 resize-none shadow-inner border shadow-black/20" 
+                       value={jsonInput}
+                       onChange={handleJsonChange}
+                       spellCheck={false}
+                     />
+                     {jsonError && (
+                       <div className="absolute bottom-4 left-4 right-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                         <p className="text-[9px] text-red-400 font-mono bg-red-950/80 backdrop-blur-md p-3 rounded-xl border border-red-500/30 shadow-2xl">{jsonError}</p>
+                       </div>
+                     )}
+                   </div>
+                </div>
+                <div className="h-32 shrink-0"></div> {/* Spacer for fixed AI panel */}
+              </div>
+            )}
 
             {/* AI Assistant fixed to bottom inside Right Panel */}
             {generatorMode === 'individual' && selectedSlide && (
-            <div className="absolute bottom-6 left-4 right-4 bg-[#1e1e1e] border border-[#2d2d30] rounded-xl shadow-2xl flex flex-col shrink-0 overflow-hidden z-10">
-               <div className="flex items-center justify-between px-3 py-2 border-b border-[#2d2d30]">
-                 <div className="flex items-center gap-2">
-                   <span className="text-white text-xs font-bold flex items-center gap-1"><Sparkles size={12}/> AI</span>
-                   <div className="flex items-center bg-[#252526] rounded-md border border-[#333] overflow-hidden text-[9px] font-bold text-gray-400">
-                     <button onClick={() => setAiMode('ai')} className={cn("px-2 py-1 transition-colors", aiMode === 'ai' && "bg-[#2d2d30] text-white")}>AI</button>
-                     <button onClick={() => setAiMode('prompt')} className={cn("px-2 py-1 transition-colors", aiMode === 'prompt' && "bg-[#2d2d30] text-white")}>Prompt</button>
+            <div className={cn(
+              "absolute bottom-6 left-6 right-6 bg-[#161618] border border-[#2d2d30] rounded-2xl shadow-2xl flex flex-col shrink-0 overflow-hidden z-20 transition-all duration-500",
+              activeSidebarTab === 'content' ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none"
+            )}>
+               <div className="flex items-center justify-between px-4 py-3 border-b border-[#2d2d30] bg-[#1c1c1e]">
+                 <div className="flex items-center gap-3">
+                   <div className="w-6 h-6 rounded-lg bg-[#D62828]/10 flex items-center justify-center">
+                     <Sparkles size={12} className="text-[#D62828] animate-pulse" />
+                   </div>
+                   <span className="text-white text-[11px] font-black uppercase tracking-widest">AI Designer</span>
+                   <div className="flex items-center bg-[#111111] rounded-md border border-[#2d2d30] overflow-hidden text-[9px] font-bold text-gray-500 p-0.5">
+                     <button onClick={() => setAiMode('ai')} className={cn("px-2 py-1 rounded transition-all", aiMode === 'ai' ? "bg-[#252526] text-white shadow-sm" : "hover:text-gray-300")}>Auto</button>
+                     <button onClick={() => setAiMode('prompt')} className={cn("px-2 py-1 rounded transition-all", aiMode === 'prompt' ? "bg-[#252526] text-white shadow-sm" : "hover:text-gray-300")}>Draft</button>
                    </div>
                  </div>
-                 <button onClick={() => setShowPromptSettings(!showPromptSettings)} title="Prompt Settings" className={cn("text-[#85858b] hover:text-white transition-colors", showPromptSettings && "text-white")}>
-                    <Settings2 size={12} />
+                 <button onClick={() => setShowPromptSettings(!showPromptSettings)} title="Prompt Settings" className={cn("text-gray-500 hover:text-white transition-colors", showPromptSettings && "text-[#D62828]")}>
+                    <Settings2 size={14} />
                  </button>
                </div>
                
