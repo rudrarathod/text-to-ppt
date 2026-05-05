@@ -742,7 +742,7 @@ export function MagicBuilder() {
 
             {showStep2PromptSettings && (
               <div className="bg-[#161618] border border-[#2d2d30] rounded-2xl p-6 shadow-xl">
-                <PromptSettingsForm settings={step2PromptSettings} setSettings={setPromptSettings} />
+                <PromptSettingsForm settings={step2PromptSettings} setSettings={setStep2PromptSettings} />
               </div>
             )}
 

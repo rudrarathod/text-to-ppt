@@ -1,8 +1,8 @@
 import Handlebars from 'handlebars';
-import { getGoogleFontLink } from './gemini';
+import { getGoogleFontLink } from './utils';
 
 export function generateFullPresentationHtml(slides: any[], layouts: any[], designConfig: any) {
-  const fontLink = getGoogleFontLink(designConfig?.fontFamily || 'Inter', designConfig?.headingFont || 'Inter');
+  const fontLink = getGoogleFontLink([designConfig?.fontFamily || 'Inter', designConfig?.headingFont || 'Inter']);
   
   const slidesHtml = slides.map((slide, index) => {
     const layout = layouts.find(l => l.id === slide.layoutId) || layouts[0];

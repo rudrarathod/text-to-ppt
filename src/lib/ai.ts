@@ -1,17 +1,20 @@
-import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
+// import ollama from 'ollama';
 
-let aiInstance: GoogleGenAI | null = null;
+const OLLAMA_MODEL = 'qwen2.5-coder:7b';
 
-export function getGemini() {
-  if (!aiInstance) {
-    const key = process.env.GEMINI_API_KEY;
-    if (!key) {
-      console.error("GEMINI_API_KEY environment variable is missing.");
-      return null;
-    }
-    aiInstance = new GoogleGenAI({ apiKey: key });
-  }
-  return aiInstance;
+async function callOllama(prompt: string): Promise<string | null> {
+  // try {
+  //   const response = await ollama.chat({
+  //     model: OLLAMA_MODEL,
+  //     messages: [{ role: 'user', content: prompt }],
+  //   });
+  //   return response.message.content;
+  // } catch (error) {
+  //   console.error("Ollama Error:", error);
+  //   return null;
+  // }
+  console.warn("Ollama is not installed. This feature is disabled.");
+  return null;
 }
 
 export function buildLayoutPrompt(prompt: string, currentCode: string, currentJson: string, designConfig?: any, options?: PromptSettings): string {
@@ -109,14 +112,9 @@ IMPORTANT: You may see image URLs starting with 'idb-image://'. These are valid 
 }
 
 export async function askAiForSlideContent(prompt: string, layoutCode: string, currentJson: string, options?: PromptSettings): Promise<string | null> {
-  const ai = getGemini();
-  if (!ai) return null;
-  const res = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: [{ role: "user", parts: [{ text: buildSlideContentPrompt(prompt, layoutCode, currentJson, options) }] }]
-  });
+  const text = await callOllama(buildSlideContentPrompt(prompt, layoutCode, currentJson, options));
+  if (!text) return null;
 
-  const text = res.text || "";
   const jsonMatch = text.match(/<json>([\s\S]*?)<\/json>/i);
   if (jsonMatch && jsonMatch[1]) {
     return jsonMatch[1].trim();
@@ -154,14 +152,9 @@ Do not include any HTML or markdown formatting outside these tags.`;
 }
 
 export async function askAiForFullPresentation(prompt: string, layouts: {id: string, name: string, code: string}[], options?: PromptSettings): Promise<any[] | null> {
-  const ai = getGemini();
-  if (!ai) return null;
-  const res = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: [{ role: "user", parts: [{ text: buildPresentationPrompt(prompt, layouts, options) }] }]
-  });
+  const text = await callOllama(buildPresentationPrompt(prompt, layouts, options));
+  if (!text) return null;
 
-  const text = res.text || "";
   const jsonMatch = text.match(/<json>([\s\S]*?)<\/json>/i);
   let jsonStr = "";
   if (jsonMatch && jsonMatch[1]) {
@@ -237,14 +230,9 @@ Return ONLY the FLAT JSON object inside <json>...</json> tags.`;
 }
 
 export async function askAiForDesignConfig(prompt: string, options?: PromptSettings): Promise<any | null> {
-  const ai = getGemini();
-  if (!ai) return null;
-  const res = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: [{ role: "user", parts: [{ text: buildDesignConfigPrompt(prompt, options) }] }]
-  });
+  const text = await callOllama(buildDesignConfigPrompt(prompt, options));
+  if (!text) return null;
 
-  const text = res.text || "";
   const jsonMatch = text.match(/<json>([\s\S]*?)<\/json>/i) || text.match(/```json\n([\s\S]*?)```/i);
   let jsonStr = jsonMatch ? jsonMatch[1].trim() : text.trim();
   try {
@@ -293,14 +281,9 @@ Important: Return ONLY valid JSON inside <json> tags.`;
 }
 
 export async function askAiForDesignUpdate(prompt: string, currentConfig: any, options?: PromptSettings): Promise<any | null> {
-  const ai = getGemini();
-  if (!ai) return null;
-  const res = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: [{ role: "user", parts: [{ text: buildDesignUpdatePrompt(prompt, currentConfig, options) }] }]
-  });
+  const text = await callOllama(buildDesignUpdatePrompt(prompt, currentConfig, options));
+  if (!text) return null;
 
-  const text = res.text || "";
   const jsonMatch = text.match(/<json>([\s\S]*?)<\/json>/i) || text.match(/```json\n([\s\S]*?)```/i);
   let jsonStr = jsonMatch ? jsonMatch[1].trim() : text.trim();
   try {
@@ -311,14 +294,9 @@ export async function askAiForDesignUpdate(prompt: string, currentConfig: any, o
 }
 
 export async function askAiForLayoutCode(prompt: string, currentCode: string, currentJson: string, designConfig?: any, options?: PromptSettings): Promise<{code: string, json: string | null}> {
-  const ai = getGemini();
-  if (!ai) return { code: currentCode, json: null };
-  const res = await ai.models.generateContent({
-    model: "gemini-2.0-flash", // Complex coding task
-    contents: [{ role: "user", parts: [{ text: buildLayoutPrompt(prompt, currentCode, currentJson, designConfig, options) }] }]
-  });
+  const text = await callOllama(buildLayoutPrompt(prompt, currentCode, currentJson, designConfig, options));
+  if (!text) return { code: currentCode, json: null };
 
-  const text = res.text || "";
   let finalCode = currentCode;
   let finalJson = null;
 
@@ -378,14 +356,9 @@ Important: Do not answer with anything outside the <json> tags.`;
 }
 
 export async function askAiForFullTemplate(prompt: string, currentLayouts: {id: string, name: string}[], options?: PromptSettings): Promise<any[] | null> {
-  const ai = getGemini();
-  if (!ai) return null;
-  const res = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: [{ role: "user", parts: [{ text: buildFullTemplatePrompt(prompt, currentLayouts, options) }] }]
-  });
+  const text = await callOllama(buildFullTemplatePrompt(prompt, currentLayouts, options));
+  if (!text) return null;
   
-  const text = res.text || "";
   const jsonMatch = text.match(/<json>([\s\S]*?)<\/json>/i) || text.match(/```json\n([\s\S]*?)```/i);
   let jsonStr = jsonMatch ? jsonMatch[1].trim() : text.trim();
   try {
@@ -394,6 +367,7 @@ export async function askAiForFullTemplate(prompt: string, currentLayouts: {id: 
   } catch(e) {}
   return null;
 }
+
 export function buildPresentationMagicPrompt(prompt: string, designConfig?: any, options?: PromptSettings): string {
   return `You are an expert Presentation Creator, UI/UX Designer, and Frontend Developer specializing in high-quality, visually engaging presentations.
 
@@ -499,14 +473,9 @@ Generate the final presentation now.`;
 }
 
 export async function askAiForFullPresentationMagic(prompt: string, designConfig?: any, options?: PromptSettings): Promise<any[] | null> {
-  const ai = getGemini();
-  if (!ai) return null;
-  const res = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: [{ role: "user", parts: [{ text: buildPresentationMagicPrompt(prompt, designConfig, options) }] }]
-  });
+  const text = await callOllama(buildPresentationMagicPrompt(prompt, designConfig, options));
+  if (!text) return null;
 
-  const text = res.text || "";
   const jsonMatch = text.match(/<json>([\s\S]*?)<\/json>/i) || text.match(/```json\n([\s\S]*?)```/i);
   let jsonStr = jsonMatch ? jsonMatch[1].trim() : text.trim();
 
@@ -548,14 +517,9 @@ Ensure the slide remains perfectly contained within the 1280x720 canvas with no 
 }
 
 export async function askAiForSlideRefinement(prompt: string, currentCode: string, currentJson: string, designConfig?: any, options?: PromptSettings): Promise<{code: string, content: any} | null> {
-  const ai = getGemini();
-  if (!ai) return null;
-  const res = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: [{ role: "user", parts: [{ text: buildSlideRefinementPrompt(prompt, currentCode, currentJson, designConfig, options) }] }]
-  });
+  const text = await callOllama(buildSlideRefinementPrompt(prompt, currentCode, currentJson, designConfig, options));
+  if (!text) return null;
 
-  const text = res.text || "";
   const jsonMatch = text.match(/<json>([\s\S]*?)<\/json>/i) || text.match(/```json\n([\s\S]*?)```/i);
   let jsonStr = jsonMatch ? jsonMatch[1].trim() : text.trim();
 
@@ -563,4 +527,12 @@ export async function askAiForSlideRefinement(prompt: string, currentCode: strin
     return JSON.parse(jsonStr);
   } catch (e) {}
   return null;
+}
+
+export function getGoogleFontLink(bodyFont: string, headingFont: string): string {
+  const uniqueFonts = Array.from(new Set([bodyFont, headingFont])).filter(f => f && f !== 'sans-serif' && f !== 'serif' && f !== 'monospace');
+  if (uniqueFonts.length === 0) return '';
+  
+  const fontQuery = uniqueFonts.map(f => `${f.replace(/\s+/g, '+')}:wght@100;200;300;400;500;600;700;800;900`).join('&family=');
+  return `https://fonts.googleapis.com/css2?family=${fontQuery}&display=swap`;
 }
