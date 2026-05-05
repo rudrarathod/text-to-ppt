@@ -472,7 +472,13 @@ export function MagicBuilder() {
         const element = document.getElementById(`magic-export-slide-${slide.id}`);
         if (!element) continue;
         await new Promise(r => setTimeout(r, 200));
-        const imgData = await toJpeg(element, { quality: 0.95, pixelRatio: 2 });
+        let imgData;
+        try {
+          imgData = await toJpeg(element, { quality: 0.95, pixelRatio: 2, cacheBust: true });
+        } catch (err) {
+          console.warn("Retrying without fonts in MagicBuilder:", err);
+          imgData = await toJpeg(element, { quality: 0.90, pixelRatio: 1.5, skipFonts: true });
+        }
         if (i > 0) pdf.addPage([1280, 720], 'landscape');
         pdf.addImage(imgData, 'JPEG', 0, 0, 1280, 720);
       }

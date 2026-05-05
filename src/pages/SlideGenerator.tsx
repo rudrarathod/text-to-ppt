@@ -220,23 +220,38 @@ export function SlideGenerator() {
         if (!element) continue;
         
         // Wait briefly to ensure images are loaded
-        await new Promise(r => setTimeout(r, 200));
+        await new Promise(r => setTimeout(r, 300));
         
-        const imgData = await toJpeg(element, { 
-          quality: 0.95,
-          pixelRatio: 2, 
-          backgroundColor: '#ffffff',
-          cacheBust: true,
-          style: {
-            transform: 'scale(1)',
-            transformOrigin: 'top left',
-            font: '14px sans-serif'
-          },
-          filter: (node) => {
-            // Only skip script tags, keep style tags for rendering
-            return node.tagName?.toLowerCase() !== 'script';
-          }
-        });
+        let imgData;
+        try {
+          imgData = await toJpeg(element, { 
+            quality: 0.95,
+            pixelRatio: 2, 
+            backgroundColor: '#ffffff',
+            cacheBust: true,
+            style: {
+              transform: 'scale(1)',
+              transformOrigin: 'top left'
+            },
+            filter: (node) => {
+              // Only skip script tags, keep style tags for rendering
+              return node.tagName?.toLowerCase() !== 'script';
+            }
+          });
+        } catch (err) {
+          console.warn("Retrying without fonts due to error:", err);
+          // Fallback: retry without fonts if the font embedding logic crashes
+          imgData = await toJpeg(element, { 
+            quality: 0.90,
+            pixelRatio: 1.5, 
+            backgroundColor: '#ffffff',
+            skipFonts: true,
+            style: {
+              transform: 'scale(1)',
+              transformOrigin: 'top left'
+            }
+          });
+        }
         
         if (!imgData) {
           console.warn(`Could not generate image for slide ${i + 1}`);

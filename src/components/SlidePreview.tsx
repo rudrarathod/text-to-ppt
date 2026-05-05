@@ -133,7 +133,7 @@ export const SlideStatic: React.FC<{
           borderRadius: 'var(--tw-lumina-radius)'
         }}
       >
-        <link rel="stylesheet" href={getGoogleFontLink([designConfig?.fontFamily, designConfig?.headingFont])} />
+        {fontImport && <link rel="stylesheet" href={fontImport} />}
         <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: renderedHtml }} />
       </div>
     </div>
