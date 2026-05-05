@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useAppStore, SlideData } from "../store";
 import { SlidePreview, SlideStatic } from "../components/SlidePreview";
 import { Button, Textarea } from "../components/ui";
-import { Download, Plus, Trash2, LayoutTemplate, Sparkles, X, Mic, Copy, Check, Settings2, ChevronDown, ChevronUp, Save } from "lucide-react";
+import { Download, Plus, Trash2, LayoutTemplate, Sparkles, X, Mic, Copy, Check, Settings2, ChevronDown, ChevronUp, Save, Loader2 } from "lucide-react";
 import jsPDF from "jspdf";
 import { toJpeg } from "html-to-image";
 import { cn } from "../lib/utils";
@@ -197,6 +197,7 @@ export function SlideGenerator() {
   };
 
   const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
 
   const handleSave = () => {
@@ -206,73 +207,85 @@ export function SlideGenerator() {
   };
 
   const handleExportPDF = async () => {
+    if (slides.length === 0) return;
     setIsExporting(true);
+    setExportProgress(0);
     try {
       const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'px',
+        orientation: "landscape",
+        unit: "px",
         format: [1280, 720]
       });
 
       for (let i = 0; i < slides.length; i++) {
+        setExportProgress(Math.round((i / slides.length) * 100));
         const slide = slides[i];
         const element = document.getElementById(`export-slide-${slide.id}`);
         if (!element) continue;
         
-        // Wait briefly to ensure images are loaded
-        await new Promise(r => setTimeout(r, 300));
+        await new Promise(r => setTimeout(r, 500));
         
+        const iframe = element.querySelector("iframe");
         let imgData;
         try {
-          imgData = await toJpeg(element, { 
-            quality: 0.95,
-            pixelRatio: 2, 
-            backgroundColor: '#ffffff',
-            cacheBust: true,
-            style: {
-              transform: 'scale(1)',
-              transformOrigin: 'top left'
-            },
-            filter: (node) => {
-              // Only skip script tags, keep style tags for rendering
-              return node.tagName?.toLowerCase() !== 'script';
-            }
-          });
+          if (iframe?.contentWindow && (iframe.contentWindow as any).captureSlide) {
+            imgData = await (iframe.contentWindow as any).captureSlide();
+          } else {
+            imgData = await toJpeg(element, { quality: 0.95, pixelRatio: 2 });
+          }
         } catch (err) {
-          console.warn("Retrying without fonts due to error:", err);
-          // Fallback: retry without fonts if the font embedding logic crashes
-          imgData = await toJpeg(element, { 
-            quality: 0.90,
-            pixelRatio: 1.5, 
-            backgroundColor: '#ffffff',
-            skipFonts: true,
-            style: {
-              transform: 'scale(1)',
-              transformOrigin: 'top left'
-            }
-          });
-        }
-        
-        if (!imgData) {
-          console.warn(`Could not generate image for slide ${i + 1}`);
+          console.warn("Capture failed:", err);
           continue;
         }
         
-        if (i > 0) pdf.addPage([1280, 720], 'landscape');
-        pdf.addImage(imgData, 'JPEG', 0, 0, 1280, 720, undefined, 'FAST');
-        console.log(`Exported slide ${i + 1}/${slides.length}`);
+        if (!imgData) continue;
+        if (i > 0) pdf.addPage([1280, 720], "landscape");
+        pdf.addImage(imgData, "JPEG", 0, 0, 1280, 720, undefined, "FAST");
       }
+      setExportProgress(100);
       pdf.save(`${activePresentation?.name || "Presentation"}.pdf`);
     } catch (e) {
       console.error("Export Error:", e);
-      alert("Failed to export PDF. Some styles or images might be incompatible.");
+      alert("Failed to export PDF.");
     } finally {
-      setIsExporting(false);
+      setTimeout(() => {
+        setIsExporting(false);
+        setExportProgress(0);
+      }, 1000);
     }
   };
 
   return (
     <div className="flex flex-col lg:flex-row h-full w-full bg-[#111111] text-gray-200 overflow-y-auto lg:overflow-hidden relative">
+      {/* Export Progress Overlay */}
+      {isExporting && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex flex-col items-center justify-center p-6 animate-in fade-in duration-300">
+           <div className="max-w-md w-full space-y-6 text-center">
+              <div className="relative w-24 h-24 mx-auto">
+                 <div className="absolute inset-0 rounded-full border-4 border-white/10" />
+                 <div 
+                   className="absolute inset-0 rounded-full border-4 border-t-[#D62828] animate-spin" 
+                   style={{ animationDuration: '2s' }}
+                 />
+                 <div className="absolute inset-0 flex items-center justify-center text-[#D62828] font-black text-xl">
+                   {exportProgress}%
+                 </div>
+              </div>
+              <div className="space-y-2">
+                 <h2 className="text-2xl font-black text-white tracking-tight">Generating PDF</h2>
+                 <p className="text-gray-400">Please wait while we render your slides with high fidelity...</p>
+              </div>
+              <div className="w-full bg-white/10 h-2.5 rounded-full overflow-hidden shadow-inner border border-white/5">
+                 <div 
+                   className="h-full bg-gradient-to-r from-[#D62828] to-[#fe6247] transition-all duration-500 ease-out shadow-[0_0_15px_rgba(214,40,40,0.5)]" 
+                   style={{ width: `${exportProgress}%` }}
+                 />
+              </div>
+              <p className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-bold">Slide {Math.ceil((exportProgress / 100) * slides.length)} of {slides.length}</p>
+           </div>
+        </div>
+      )}
+
       {/* Left Panel: Thumbnails */}
       <div className="w-full h-32 lg:h-full lg:w-64 bg-[#161618] border-b lg:border-b-0 lg:border-r border-[#2d2d30] flex flex-col shrink-0">
         <div className="p-3 lg:p-4 border-b border-[#2d2d30] flex items-center justify-between shrink-0">
@@ -361,7 +374,7 @@ export function SlideGenerator() {
               disabled={isExporting}
               className="gap-2 border-none shrink-0 h-8 lg:h-10 text-xs lg:text-sm px-3 bg-[#D62828] hover:bg-[#b20112] text-white transition-colors shadow-lg"
             >
-              {isExporting ? <span className="animate-pulse">Exporting...</span> : <><Download size={14} /> <span className="hidden sm:inline">Export</span> PDF</>}
+              {isExporting ? <Loader2 size={14} className="animate-spin" /> : <><Download size={14} /> <span className="hidden sm:inline">Export</span> PDF</>}
             </Button>
           </div>
         </div>
@@ -716,11 +729,24 @@ export function SlideGenerator() {
            </div>
         )}
       </div>
-      <div className="absolute opacity-0 pointer-events-none" style={{ left: 0, top: 0, zIndex: -100, width: 1280, height: 720, overflow: 'hidden' }} aria-hidden="true">
+      
+      {/* Hidden Export Container - Positioned off-screen but NOT display:none or opacity-0 */}
+      <div 
+        className="fixed pointer-events-none z-[-1000]" 
+        style={{ left: '-10000px', top: 0, width: 1280, height: 720, overflow: 'hidden' }} 
+        aria-hidden="true"
+      >
         {slides.map(slide => {
           const layout = layouts.find(l => l.id === slide.layoutId) || layouts[0];
           return (
-            <div key={`export-${slide.id}`} id={`export-slide-${slide.id}`} className="w-[1280px] h-[720px] bg-white relative overflow-hidden" style={{ fontFamily: 'sans-serif' }}>
+            <div 
+              key={`export-${slide.id}`} 
+              id={`export-slide-${slide.id}`} 
+              className="w-[1280px] h-[720px] bg-white relative overflow-hidden" 
+              style={{ 
+                fontFamily: designConfig?.fontFamily ? `"${designConfig.fontFamily}", sans-serif` : 'sans-serif' 
+              }}
+            >
               <SlideStatic 
                 templateCode={layout?.code || ""}
                 data={slide.content}

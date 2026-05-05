@@ -371,7 +371,7 @@ Each layout object in the array MUST have:
 3. "variant": Choose one of "title", "content", "image-text", "comparison", "divider", or provide a custom string representing its type.
 4. "mockData": A JSON object providing default mock data for the handlebars variables used in the "code".
 
-Important: Provide 3 to 6 logical layouts that make up a cohesive presentation template. Do not answer with anything outside the <json> tags.`;
+Important: Do not answer with anything outside the <json> tags.`;
 }
 
 export async function askAiForFullTemplate(prompt: string, currentLayouts: {id: string, name: string}[], options?: PromptSettings): Promise<any[] | null> {

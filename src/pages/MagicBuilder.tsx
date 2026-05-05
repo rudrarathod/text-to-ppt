@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppStore, DesignConfig, SlideData, Presentation } from "../store";
 import { Button, Textarea, Input } from "../components/ui";
-import { SlidePreview } from "../components/SlidePreview";
+import { SlidePreview, SlideStatic } from "../components/SlidePreview";
 import { 
   Sparkles, 
   Loader2, 
@@ -462,31 +462,49 @@ export function MagicBuilder() {
 
   // --- Export ---
   const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+
   const handleExportPDF = async () => {
-    if (!activePresentation) return;
+    if (!activePresentation || slides.length === 0) return;
     setIsExporting(true);
+    setExportProgress(0);
     try {
-      const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [1280, 720] });
+      const pdf = new jsPDF({ orientation: "landscape", unit: "px", format: [1280, 720] });
       for (let i = 0; i < slides.length; i++) {
+        setExportProgress(Math.round((i / slides.length) * 100));
         const slide = slides[i];
         const element = document.getElementById(`magic-export-slide-${slide.id}`);
         if (!element) continue;
-        await new Promise(r => setTimeout(r, 200));
+        
+        await new Promise(r => setTimeout(r, 500));
+        
+        const iframe = element.querySelector("iframe");
         let imgData;
         try {
-          imgData = await toJpeg(element, { quality: 0.95, pixelRatio: 2, cacheBust: true });
+          if (iframe?.contentWindow && (iframe.contentWindow as any).captureSlide) {
+            imgData = await (iframe.contentWindow as any).captureSlide();
+          } else {
+            imgData = await toJpeg(element, { quality: 0.95, pixelRatio: 2 });
+          }
         } catch (err) {
-          console.warn("Retrying without fonts in MagicBuilder:", err);
-          imgData = await toJpeg(element, { quality: 0.90, pixelRatio: 1.5, skipFonts: true });
+          console.warn("Magic capture failed:", err);
+          continue;
         }
-        if (i > 0) pdf.addPage([1280, 720], 'landscape');
-        pdf.addImage(imgData, 'JPEG', 0, 0, 1280, 720);
+        
+        if (!imgData) continue;
+        if (i > 0) pdf.addPage([1280, 720], "landscape");
+        pdf.addImage(imgData, "JPEG", 0, 0, 1280, 720, undefined, "FAST");
       }
+      setExportProgress(100);
       pdf.save(`${activePresentation.name}.pdf`);
     } catch (e) {
+      console.error("Magic export error:", e);
       alert("Export failed.");
     } finally {
-      setIsExporting(false);
+      setTimeout(() => {
+        setIsExporting(false);
+        setExportProgress(0);
+      }, 1000);
     }
   };
 
@@ -724,7 +742,7 @@ export function MagicBuilder() {
 
             {showStep2PromptSettings && (
               <div className="bg-[#161618] border border-[#2d2d30] rounded-2xl p-6 shadow-xl">
-                <PromptSettingsForm settings={step2PromptSettings} setSettings={setStep2PromptSettings} />
+                <PromptSettingsForm settings={step2PromptSettings} setSettings={setPromptSettings} />
               </div>
             )}
 
@@ -804,470 +822,389 @@ export function MagicBuilder() {
   // --- Final Step: EDITOR ---
   return (
     <div className="flex h-full w-full bg-[#111111] text-gray-200 overflow-hidden relative">
-      {designConfig && <GoogleFontLoader fonts={[designConfig.fontFamily, designConfig.headingFont]} />}
-      <DesignSystemLoader config={designConfig} />
-      {isApiKeyMissing && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-[#D62828] text-white px-6 py-3 rounded-xl flex items-center gap-4 z-[100] shadow-2xl animate-in zoom-in-95 duration-300">
-           <Settings2 size={18} />
-           <span className="text-sm font-bold truncate max-w-xs sm:max-w-md">Gemini API Key is missing. AI features will not work.</span>
-           <Button variant="secondary" size="sm" onClick={() => window.location.reload()} className="h-8 px-3 text-xs bg-white text-[#D62828] hover:bg-white/90">
-             Reload
-           </Button>
+      {/* Export Progress Overlay */}
+      {isExporting && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex flex-col items-center justify-center p-6 animate-in fade-in duration-300">
+           <div className="max-w-md w-full space-y-6 text-center">
+              <div className="relative w-24 h-24 mx-auto">
+                 <div className="absolute inset-0 rounded-full border-4 border-white/10" />
+                 <div 
+                   className="absolute inset-0 rounded-full border-4 border-t-[#D62828] animate-spin" 
+                   style={{ animationDuration: '2s' }}
+                 />
+                 <div className="absolute inset-0 flex items-center justify-center text-[#D62828] font-black text-xl">
+                   {exportProgress}%
+                 </div>
+              </div>
+              <div className="space-y-2">
+                 <h2 className="text-2xl font-black text-white tracking-tight">Generating PDF</h2>
+                 <p className="text-gray-400">Rendering your magic slides with high precision...</p>
+              </div>
+              <div className="w-full bg-white/10 h-2.5 rounded-full overflow-hidden shadow-inner border border-white/5">
+                 <div 
+                   className="h-full bg-gradient-to-r from-[#D62828] to-[#fe6247] transition-all duration-500 ease-out shadow-[0_0_15px_rgba(214,40,40,0.5)]" 
+                   style={{ width: `${exportProgress}%` }}
+                 />
+              </div>
+           </div>
         </div>
       )}
 
-      {/* Middle: Preview / IDE */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <div className="h-16 border-b border-[#2d2d30] flex items-center justify-between px-6 bg-[#161618]">
-          <div className="flex items-center gap-4">
-            <button onClick={() => navigate("/")} className="text-gray-400 hover:text-white transition-colors">
-              <ChevronLeft size={20} />
-            </button>
-            <h2 className="font-bold text-white truncate max-w-md">
-              {activePresentation?.name} / {activeSlide?.title}
-            </h2>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="bg-[#1e1e1e] rounded-lg p-1 border border-[#2d2d30] flex">
-              <button 
-                onClick={() => setViewMode('preview')} 
-                className={cn("px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-2", viewMode === 'preview' ? "bg-[#2d2d30] text-white shadow-sm" : "text-gray-500 hover:text-gray-300")}
-              >
-                <Eye size={14} /> Preview
-              </button>
-              <button 
-                onClick={() => setViewMode('code')} 
-                className={cn("px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-2", viewMode === 'code' ? "bg-[#2d2d30] text-white shadow-sm" : "text-gray-500 hover:text-gray-300")}
-              >
-                <Code size={14} /> IDE
-              </button>
-            </div>
-            <div className="w-px h-6 bg-[#2d2d30] mx-2" />
-            <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={isExporting} className="border-[#2d2d30] text-gray-300">
-              {isExporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} className="mr-2" />} Export PDF
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setShowDesignSettings(true)} className="border-[#2d2d30] text-gray-300">
-               <Palette size={14} className="mr-2" /> Theme
-            </Button>
-            <Button size="sm" onClick={() => navigate("/")}>
-              <Save size={14} className="mr-2" /> Save & Exit
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-hidden flex bg-[#111111] relative">
-          {viewMode === 'preview' ? (
-            <div className="flex-1 p-12 flex items-center justify-center">
-              <SlidePreview 
-                templateCode={activeSlide?.code || ""} 
-                data={activeSlide?.content || {}} 
-                designConfig={designConfig || templates.find(t => t.id === activePresentation?.templateId)?.designConfig}
-                interactive={true}
-                onImageUpload={(key, path) => {
-                  const newContent = { ...activeSlide.content, [key]: path };
-                  updateSlideContent(activeSlide.id, newContent);
-                }}
-              />
-            </div>
-          ) : (
-            <div className="flex-1 flex flex-col p-6 space-y-6 overflow-hidden">
-               <div className="flex-1 flex gap-6 min-h-0">
-                  <div className="flex-1 flex flex-col">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                      <Code size={12} /> Handlebars Template
-                    </label>
-                    <textarea
-                      value={activeSlide?.code || ""}
-                      onChange={(e) => handleUpdateCode(e.target.value)}
-                      className="flex-1 bg-[#1a1a1c] border border-[#2d2d30] rounded-2xl p-6 text-sm font-mono text-gray-300 outline-none focus:border-[#D62828] transition-all resize-none shadow-inner"
-                      spellCheck={false}
-                    />
-                  </div>
-                  <div className="w-96 flex flex-col">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                      <Layout size={12} /> Data (JSON)
-                    </label>
-                    <textarea
-                      value={localJson}
-                      onChange={(e) => handleUpdateContent(e.target.value)}
-                      className="flex-1 bg-[#1a1a1c] border border-[#2d2d30] rounded-2xl p-6 text-sm font-mono text-gray-300 outline-none focus:border-[#D62828] transition-all resize-none shadow-inner"
-                      spellCheck={false}
-                    />
-                  </div>
-               </div>
-            </div>
-          )}
-
-          {/* Floating AI Panel (Now shared by both Preview and IDE) */}
-          <div className={cn(
-            "absolute bottom-10 left-10 bg-[#1e1e1e] border border-[#2d2d30] rounded-xl shadow-2xl flex flex-col shrink-0 overflow-hidden z-20 transition-all duration-300",
-            isAiAssistantCollapsed ? "w-44 h-11" : "w-[450px]"
-          )}>
-             <div 
-               className="flex items-center justify-between px-4 py-3 border-b border-[#2d2d30] cursor-pointer hover:bg-[#252526] transition-colors"
-               onClick={() => setIsAiAssistantCollapsed(!isAiAssistantCollapsed)}
-             >
-               <div className="flex items-center gap-3">
-                 <span className="text-white text-xs font-bold flex items-center gap-2">
-                   <Sparkles size={14} className="text-[#D62828]" /> AI Assistant
-                 </span>
-               </div>
-               <button className="text-gray-500">
-                 {isAiAssistantCollapsed ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-               </button>
-             </div>
-             {!isAiAssistantCollapsed && (
-               <div className="p-3 space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
-               <div className="flex items-center justify-between gap-2">
-                 <button 
-                   onClick={() => setShowIdePromptSettings(!showIdePromptSettings)}
-                   className="flex items-center gap-2 text-[11px] font-medium text-[#85858b] hover:text-white transition-colors"
-                 >
-                   <Settings2 size={12} /> Prompt Settings {showIdePromptSettings ? <ChevronUp size={12}/> : <ChevronDown size={12}/>}
-                 </button>
-                 
-                 <div className="flex items-center bg-[#252526] rounded-md border border-[#333] overflow-hidden text-[9px] font-bold text-gray-400">
-                   <button 
-                     onClick={() => setIdeAiTarget('slide')} 
-                     className={cn("px-2 py-1 transition-colors flex items-center gap-1", ideAiTarget === 'slide' && "bg-[#2d2d30] text-white")}
-                   >
-                     <Square size={10} /> Slide
-                   </button>
-                   <button 
-                     onClick={() => setIdeAiTarget('design')} 
-                     className={cn("px-2 py-1 transition-colors flex items-center gap-1", ideAiTarget === 'design' && "bg-[#2d2d30] text-white")}
-                   >
-                     <Palette size={10} /> Design
-                   </button>
-                 </div>
-               </div>
-
-               {showIdePromptSettings && (
-                 <div className="bg-[#252526] border border-[#333] rounded-lg p-2 mb-2">
-                   <PromptSettingsForm settings={idePromptSettings} setSettings={setIdePromptSettings} />
-                 </div>
-               )}
-               
-               <div className="flex items-center justify-end mb-1">
-                 <div className="flex items-center bg-[#252526] rounded-md border border-[#333] overflow-hidden text-[9px] font-bold text-gray-400">
-                   <button onClick={() => setIdeAiMode('ai')} className={cn("px-2 py-1 transition-colors", ideAiMode === 'ai' && "bg-[#2d2d30] text-white")}>AI Generate</button>
-                   <button onClick={() => setIdeAiMode('prompt')} className={cn("px-2 py-1 transition-colors", ideAiMode === 'prompt' && "bg-[#2d2d30] text-white")}>Raw Prompt</button>
-                 </div>
-               </div>
-               <div className="relative">
-                 <Textarea 
-                   value={ideAiPrompt}
-                   onChange={e => setIdeAiPrompt(e.target.value)}
-                   placeholder={ideAiTarget === 'slide' ? "e.g., Convert this to a modern 3-column layout..." : "e.g., Make the theme more dark and futuristic..."}
-                   className="w-full bg-[#252526] border border-[#333] text-gray-200 text-sm focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-sans resize-none rounded-lg p-3 pr-10 min-h-[60px]"
-                   disabled={isIdeAiLoading}
-                   onKeyDown={(e) => {
-                     if(e.key === 'Enter' && !e.shiftKey) {
-                       e.preventDefault();
-                       if (ideAiMode === 'ai') {
-                         handleIdeAiGenerate();
-                       } else if (ideAiPrompt.trim()) {
-                         const textPrompt = ideAiTarget === 'slide' 
-                           ? buildLayoutPrompt(ideAiPrompt, activeSlide?.code || "", JSON.stringify(activeSlide?.content || {}), idePromptSettings)
-                           : buildDesignUpdatePrompt(ideAiPrompt, designConfig, idePromptSettings);
-                         navigator.clipboard.writeText(textPrompt);
-                         setCopiedIdePrompt(true);
-                         setTimeout(() => setCopiedIdePrompt(false), 2000);
-                       }
-                     }
-                   }}
-                 />
-                 <button 
-                   onClick={() => {
-                     if (ideAiMode === 'ai') {
-                       handleIdeAiGenerate();
-                     } else if (ideAiPrompt.trim()) {
-                        const textPrompt = ideAiTarget === 'slide' 
-                          ? buildLayoutPrompt(ideAiPrompt, activeSlide?.code || "", JSON.stringify(activeSlide?.content || {}), idePromptSettings)
-                          : buildDesignUpdatePrompt(ideAiPrompt, designConfig, idePromptSettings);
-                       navigator.clipboard.writeText(textPrompt);
-                       setCopiedIdePrompt(true);
-                       setTimeout(() => setCopiedIdePrompt(false), 2000);
-                     }
-                   }}
-                   disabled={isIdeAiLoading || !ideAiPrompt.trim()}
-                   className="absolute right-3 bottom-3 text-[#5c403d] hover:text-[#D62828] disabled:opacity-50 transition-colors bg-[#1e1e1e] p-1 rounded"
-                   title={ideAiMode === 'ai' ? "Generate with AI" : "Copy Prompt"}
-                 >
-                   {isIdeAiLoading ? <span className="animate-pulse">...</span> : (ideAiMode === 'ai' ? <Sparkles size={16} /> : (copiedIdePrompt ? <Check size={16} className="text-green-500" /> : <Copy size={16} />))}
-                 </button>
-               </div>
-               {ideAiMode === 'prompt' && (
-                 <div className="relative mt-2">
-                   <Textarea 
-                     value={ideAiResponse}
-                     onChange={e => setIdeAiResponse(e.target.value)}
-                     placeholder={ideAiTarget === 'slide' ? "Paste AI generated code here..." : "Paste AI generated Design JSON here..."}
-                     className="w-full bg-[#252526] border border-[#333] text-gray-200 text-sm focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-sans resize-none rounded-lg p-3 min-h-[60px]"
-                   />
-                   <button 
-                     onClick={() => {
-                       if (ideAiResponse.trim()) {
-                         let finalCode = "";
-                         let finalJson = "";
-                         
-                         const slideMatch = ideAiResponse.match(/<slide>([\s\S]*?)<\/slide>/i);
-                         finalCode = slideMatch ? slideMatch[1].trim() : "";
-                         if (!finalCode) {
-                           let match = ideAiResponse.match(/```(?:html|handlebars)?\n([\s\S]*?)```/);
-                           finalCode = match ? match[1] : ideAiResponse;
-                         }
-                         
-                         const jsonMatch = ideAiResponse.match(/<json>([\s\S]*?)<\/json>/i);
-                         if (jsonMatch && jsonMatch[1]) {
-                           finalJson = jsonMatch[1].trim();
-                         }
-
-                         if (ideAiTarget === 'slide' && finalCode) {
-                           const updatedSlides = slides.map(s => 
-                             s.id === activeSlide.id 
-                               ? { ...s, code: finalCode, content: finalJson ? JSON.parse(finalJson) : s.content } 
-                               : s
-                           );
-                           setSlides(updatedSlides);
-                         } else if (ideAiTarget === 'design' && finalJson) {
-                            setDesignConfig({ ...designConfig, ...JSON.parse(finalJson) });
-                         } else if (ideAiTarget === 'design') {
-                            // Fallback if no <json> tag
-                            try {
-                               setDesignConfig({ ...designConfig, ...JSON.parse(ideAiResponse) });
-                            } catch(e) {}
-                         }
-                         setIdeAiResponse("");
-                       }
-                     }}
-                     disabled={!ideAiResponse.trim()}
-                     className="absolute right-3 bottom-3 bg-[#D62828] hover:bg-[#b20112] text-white disabled:opacity-50 transition-colors px-2 py-1 rounded text-xs font-bold"
-                   >
-                     Apply
-                   </button>
-                 </div>
-               )}
-             </div>
-             )}
-          </div>
-        </div>
-      </div>
-
-      {/* Right: Slide List */}
-      <div className="w-64 border-l border-[#2d2d30] flex flex-col bg-[#161618] shrink-0">
+      {/* Main UI */}
+      <DesignSystemLoader config={designConfig} />
+      <GoogleFontLoader fonts={[designConfig?.fontFamily || 'Inter', designConfig?.headingFont || 'Inter']} />
+      
+      {/* Left Panel: Navigation & Slides */}
+      <div className="w-64 bg-[#161618] border-r border-[#2d2d30] flex flex-col shrink-0">
         <div className="p-4 border-b border-[#2d2d30] flex items-center justify-between">
-          <h3 className="font-bold text-white text-sm">Slides</h3>
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Add Slide">
-            <Plus size={14} />
-          </Button>
+           <Button variant="ghost" onClick={() => navigate("/")} className="p-0 h-auto text-gray-400 hover:text-white"><ChevronLeft size={20}/></Button>
+           <h2 className="font-bold text-sm text-white">Magic Slides</h2>
+           <Button variant="ghost" onClick={() => navigate("/")} className="p-0 h-auto text-gray-400 hover:text-white"><X size={20}/></Button>
         </div>
+        
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {slides.map((s, idx) => (
             <div 
               key={s.id}
               onClick={() => setActiveSlideId(s.id)}
               className={cn(
-                "group relative border-2 rounded-xl aspect-video w-full cursor-pointer transition-all overflow-hidden bg-[#1e1e1e]",
-                activeSlideId === s.id ? "border-[#D62828] shadow-lg shadow-[#D62828]/10" : "border-[#2d2d30] hover:border-[#3d3d40]"
+                "relative group cursor-pointer border-2 rounded-xl aspect-video w-full flex flex-col bg-[#1e1e1e] transition-all overflow-hidden",
+                activeSlideId === s.id ? "border-[#D62828] shadow-lg shadow-[#D62828]/20" : "border-[#2d2d30] hover:border-[#3d3d40]"
               )}
             >
               <div 
-                className="w-full h-full p-2 flex items-center justify-center text-center"
+                className="flex-1 flex items-center justify-center p-2 text-center"
                 style={{ backgroundColor: designConfig?.bg }}
               >
-                <div 
-                  className="text-[8px] font-bold line-clamp-2"
-                  style={{ color: designConfig?.primary }}
-                >
-                  {s.content?.title || s.content?.heading || `Slide ${idx + 1}`}
-                </div>
+                 <div className="line-clamp-2 text-[8px] font-bold" style={{ color: designConfig?.primary }}>
+                   {s.content.title || "Slide " + (idx + 1)}
+                 </div>
               </div>
-              <div className="absolute bottom-0 left-0 right-0 h-5 bg-[#161618]/80 backdrop-blur-sm border-t border-[#2d2d30] px-2 flex items-center justify-between">
-                <span className="text-[9px] font-bold text-gray-500">{idx + 1}</span>
-                <button className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-red-500">
-                  <Trash2 size={10} />
-                </button>
+              <div className="h-6 border-t border-[#2d2d30] px-2 flex items-center justify-between bg-[#161618]">
+                 <span className="text-[8px] font-bold text-gray-500">{idx + 1}</span>
               </div>
             </div>
           ))}
         </div>
+        
+        <div className="p-4 border-t border-[#2d2d30] space-y-2">
+           <Button 
+            onClick={handleExportPDF} 
+            disabled={isExporting}
+            className="w-full bg-[#D62828] hover:bg-[#b20112] text-white h-10 gap-2"
+           >
+             {isExporting ? <Loader2 size={16} className="animate-spin"/> : <Download size={16}/>} Export PDF
+           </Button>
+        </div>
       </div>
 
-      {/* Design Settings Panel Overlay */}
-      {showDesignSettings && designConfig && (
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-end animate-in fade-in duration-300">
-           <div className="w-[450px] h-full bg-[#161618] border-l border-[#2d2d30] shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-              <div className="p-6 border-b border-[#2d2d30] flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Palette className="text-[#D62828]" />
-                  <h3 className="font-bold text-lg text-white">Design System</h3>
-                </div>
-                <button onClick={() => setShowDesignSettings(false)} className="text-gray-500 hover:text-white transition-colors">
-                  <X size={20} />
-                </button>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                {/* AI Refinement Section */}
-                <div className="bg-gradient-to-br from-[#1a1a1c] to-[#111] border border-[#D62828]/20 rounded-2xl p-5 space-y-3 relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <Sparkles size={40} className="text-[#D62828]" />
-                  </div>
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-[#D62828] flex items-center gap-2">
-                    <Sparkles size={14} /> AI Refinement
-                  </h4>
-                  <p className="text-[10px] text-gray-400 leading-relaxed">
-                    Ask the AI to transform your entire design system at once.
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => {
-                      setIdeAiTarget('design');
-                      setShowDesignSettings(false);
-                      // Scroll to AI panel or highlight it? It's absolute so it's already there.
-                    }}
-                    className="w-full border-[#D62828]/30 hover:border-[#D62828] hover:bg-[#D62828]/10 text-xs text-[#D62828]"
-                  >
-                    Use AI Assistant for Design
-                  </Button>
-                </div>
-
-                {/* Colors Section */}
-                <div className="space-y-4">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2">
-                    <div className="w-1 h-3 bg-[#D62828] rounded-full" /> Colors
-                  </h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] text-gray-400">Primary</label>
-                      <div className="flex gap-2">
-                        <input type="color" value={designConfig.primary} onChange={e => setDesignConfig({...designConfig, primary: e.target.value})} className="h-8 w-8 rounded cursor-pointer bg-transparent border-none" />
-                        <input type="text" value={designConfig.primary} onChange={e => setDesignConfig({...designConfig, primary: e.target.value})} className="flex-1 bg-[#1a1a1c] border border-[#2d2d30] rounded px-2 text-xs text-gray-300" />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] text-gray-400">Background</label>
-                      <div className="flex gap-2">
-                        <input type="color" value={designConfig.bg} onChange={e => setDesignConfig({...designConfig, bg: e.target.value})} className="h-8 w-8 rounded cursor-pointer bg-transparent border-none" />
-                        <input type="text" value={designConfig.bg} onChange={e => setDesignConfig({...designConfig, bg: e.target.value})} className="flex-1 bg-[#1a1a1c] border border-[#2d2d30] rounded px-2 text-xs text-gray-300" />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] text-gray-400">Surface</label>
-                      <div className="flex gap-2">
-                        <input type="color" value={designConfig.surface} onChange={e => setDesignConfig({...designConfig, surface: e.target.value})} className="h-8 w-8 rounded cursor-pointer bg-transparent border-none" />
-                        <input type="text" value={designConfig.surface} onChange={e => setDesignConfig({...designConfig, surface: e.target.value})} className="flex-1 bg-[#1a1a1c] border border-[#2d2d30] rounded px-2 text-xs text-gray-300" />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] text-gray-400">Text</label>
-                      <div className="flex gap-2">
-                        <input type="color" value={designConfig.text} onChange={e => setDesignConfig({...designConfig, text: e.target.value})} className="h-8 w-8 rounded cursor-pointer bg-transparent border-none" />
-                        <input type="text" value={designConfig.text} onChange={e => setDesignConfig({...designConfig, text: e.target.value})} className="flex-1 bg-[#1a1a1c] border border-[#2d2d30] rounded px-2 text-xs text-gray-300" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Typography Section */}
-                <div className="space-y-4">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2">
-                    <div className="w-1 h-3 bg-[#D62828] rounded-full" /> Typography
-                  </h4>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] text-gray-400">Heading Font</label>
-                      <div className="relative">
-                        <Input 
-                          value={fontSearch.heading}
-                          onChange={e => setFontSearch({...fontSearch, heading: e.target.value})}
-                          placeholder="Search fonts..."
-                          className="bg-[#1a1a1c] border-[#2d2d30] h-9 text-xs"
-                        />
-                        <div className="mt-2 flex flex-wrap gap-1 max-h-32 overflow-y-auto p-1 bg-[#111] rounded-lg border border-[#2d2d30]">
-                          {headingFonts.slice(0, 20).map(f => (
-                            <button 
-                              key={f}
-                              onClick={() => setDesignConfig({...designConfig, headingFont: f})}
-                              className={cn(
-                                "px-2 py-1 rounded text-[10px] border transition-all",
-                                designConfig.headingFont === f ? "bg-[#D62828] border-[#D62828] text-white" : "bg-[#1a1a1c] border-[#2d2d30] text-gray-400 hover:border-[#3d3d40]"
-                              )}
-                              style={{ fontFamily: f }}
-                            >
-                              {f}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] text-gray-400">Body Font</label>
-                      <div className="relative">
-                        <Input 
-                          value={fontSearch.body}
-                          onChange={e => setFontSearch({...fontSearch, body: e.target.value})}
-                          placeholder="Search fonts..."
-                          className="bg-[#1a1a1c] border-[#2d2d30] h-9 text-xs"
-                        />
-                        <div className="mt-2 flex flex-wrap gap-1 max-h-32 overflow-y-auto p-1 bg-[#111] rounded-lg border border-[#2d2d30]">
-                          {bodyFonts.slice(0, 20).map(f => (
-                            <button 
-                              key={f}
-                              onClick={() => setDesignConfig({...designConfig, fontFamily: f})}
-                              className={cn(
-                                "px-2 py-1 rounded text-[10px] border transition-all",
-                                designConfig.fontFamily === f ? "bg-[#D62828] border-[#D62828] text-white" : "bg-[#1a1a1c] border-[#2d2d30] text-gray-400 hover:border-[#3d3d40]"
-                              )}
-                              style={{ fontFamily: f }}
-                            >
-                              {f}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Shapes Section */}
-                <div className="space-y-4">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2">
-                    <div className="w-1 h-3 bg-[#D62828] rounded-full" /> Shapes & Effects
-                  </h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] text-gray-400">Border Radius ({designConfig.borderRadius})</label>
-                      <input type="range" min="0" max="40" value={parseInt(designConfig.borderRadius)} onChange={e => setDesignConfig({...designConfig, borderRadius: `${e.target.value}px`})} className="w-full h-1 bg-[#2d2d30] rounded-lg appearance-none cursor-pointer accent-[#D62828]" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] text-gray-400">Card Radius ({designConfig.cardRadius})</label>
-                      <input type="range" min="0" max="40" value={parseInt(designConfig.cardRadius)} onChange={e => setDesignConfig({...designConfig, cardRadius: `${e.target.value}px`})} className="w-full h-1 bg-[#2d2d30] rounded-lg appearance-none cursor-pointer accent-[#D62828]" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-6 border-t border-[#2d2d30] bg-[#1a1a1c]">
-                <Button onClick={() => setShowDesignSettings(false)} className="w-full bg-[#D62828] hover:bg-[#b20112] text-white">
-                   Close & Preview Changes
-                </Button>
-              </div>
-           </div>
+      {/* Center: Canvas */}
+      <div className="flex-1 flex flex-col min-w-0 bg-[#0a0a0a]">
+        <div className="h-16 border-b border-[#2d2d30] bg-[#161618] flex items-center justify-between px-6 shrink-0">
+          <div className="flex items-center gap-4">
+            <span className="font-bold text-white text-lg">Magic Editor</span>
+            <div className="flex bg-[#1e1e1e] rounded-lg p-1 border border-[#2d2d30]">
+               <button onClick={() => setViewMode('preview')} className={cn("px-3 py-1 text-xs font-bold rounded-md transition-colors", viewMode === 'preview' ? "bg-[#333] text-white" : "text-gray-400")}>Visual</button>
+               <button onClick={() => setViewMode('code')} className={cn("px-3 py-1 text-xs font-bold rounded-md transition-colors", viewMode === 'code' ? "bg-[#333] text-white" : "text-gray-400")}>Code</button>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+             <Button variant="outline" className="border-[#2d2d30] text-gray-300" onClick={() => setShowDesignSettings(!showDesignSettings)}>
+                <Palette size={16} className="mr-2" /> Design
+             </Button>
+             <Button className="bg-[#2d2d30] hover:bg-[#3d3d40] text-white">
+                <Save size={16} className="mr-2" /> Saved
+             </Button>
+          </div>
         </div>
-      )}
 
-      {/* Hidden Export Helper */}
-      <div className="absolute opacity-0 pointer-events-none" style={{ left: -2000, top: 0 }}>
+        <div className="flex-1 relative flex flex-col overflow-hidden">
+          <div className="flex-1 flex items-center justify-center p-8 lg:p-12 overflow-auto">
+             {activeSlide && (
+               <SlidePreview 
+                 templateCode={activeSlide.code || ""} 
+                 data={activeSlide.content} 
+                 designConfig={designConfig || undefined}
+               />
+             )}
+          </div>
+          
+          {/* AI Chat Drawer */}
+          <div className={cn(
+            "absolute bottom-0 left-0 right-0 bg-[#161618] border-t border-[#2d2d30] transition-all duration-500 ease-in-out z-20",
+            isAiAssistantCollapsed ? "h-12" : "h-64"
+          )}>
+             <div className="h-12 flex items-center justify-between px-6 border-b border-[#2d2d30]">
+                <div className="flex items-center gap-2">
+                   <Sparkles size={16} className="text-[#D62828]" />
+                   <span className="text-xs font-bold text-white uppercase tracking-wider">AI Assistant</span>
+                </div>
+                <button onClick={() => setIsAiAssistantCollapsed(!isAiAssistantCollapsed)} className="text-gray-500 hover:text-white transition-colors">
+                   {isAiAssistantCollapsed ? <ChevronUp size={20}/> : <ChevronDown size={20}/>}
+                </button>
+             </div>
+             
+             {!isAiAssistantCollapsed && (
+                <div className="p-4 flex h-[calc(100%-48px)] gap-4">
+                   <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-hide">
+                      {chatHistory.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-gray-500 space-y-2 opacity-50">
+                           <Sparkles size={32} />
+                           <p className="text-xs">Ask AI to change colors, add points, or rewrite code...</p>
+                        </div>
+                      ) : (
+                        chatHistory.map((msg, i) => (
+                           <div key={i} className={cn("flex", msg.role === 'user' ? "justify-end" : "justify-start")}>
+                              <div className={cn("max-w-[80%] rounded-2xl px-4 py-2 text-sm", msg.role === 'user' ? "bg-[#D62828] text-white" : "bg-[#2d2d30] text-gray-200")}>
+                                 {msg.content}
+                              </div>
+                           </div>
+                        ))
+                      )}
+                      {isRefining && <div className="flex justify-start"><div className="bg-[#2d2d30] px-4 py-2 rounded-2xl animate-pulse text-xs text-gray-400">AI is thinking...</div></div>}
+                   </div>
+                   <div className="w-80 flex flex-col gap-2">
+                      <Textarea 
+                        value={chatInput}
+                        onChange={e => setChatInput(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleRefineSlide())}
+                        placeholder="Refine this slide..."
+                        className="flex-1 bg-[#1a1a1c] border-[#2d2d30] text-white text-xs resize-none rounded-xl focus-visible:ring-[#D62828]"
+                      />
+                      <Button onClick={handleRefineSlide} disabled={isRefining || !chatInput.trim()} className="bg-[#D62828] hover:bg-[#b20112] text-white">
+                         Send Request
+                      </Button>
+                   </div>
+                </div>
+             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Right Panel: Sidebars */}
+      <div className={cn(
+        "w-80 bg-[#161618] border-l border-[#2d2d30] transition-all flex flex-col shrink-0",
+        showDesignSettings ? "translate-x-0" : "translate-x-full lg:translate-x-0"
+      )}>
+         <div className="h-16 flex items-center px-6 border-b border-[#2d2d30] justify-between">
+            <h2 className="font-bold text-sm text-white uppercase tracking-widest">{viewMode === 'preview' ? "Content" : "Source Code"}</h2>
+            <div className="flex items-center gap-2">
+               <button onClick={() => setIdeAiMode(ideAiMode === 'ai' ? 'prompt' : 'ai')} className={cn("text-[10px] font-bold px-2 py-0.5 rounded border transition-colors", ideAiMode === 'ai' ? "border-[#D62828] text-[#D62828]" : "border-gray-600 text-gray-500")}>
+                  {ideAiMode === 'ai' ? "AI" : "Prompt"}
+               </button>
+               <button onClick={() => setShowIdePromptSettings(!showIdePromptSettings)} className={cn("text-gray-500 hover:text-white transition-colors", showIdePromptSettings && "text-white")}>
+                  <Settings2 size={16} />
+               </button>
+            </div>
+         </div>
+         
+         <div className="flex-1 flex flex-col overflow-hidden relative">
+            {showIdePromptSettings && (
+               <div className="absolute top-0 left-0 right-0 bg-[#1e1e20] border-b border-[#2d2d30] p-4 z-30 shadow-2xl animate-in slide-in-from-top-4">
+                  <PromptSettingsForm settings={idePromptSettings} setSettings={setIdePromptSettings} />
+               </div>
+            )}
+            
+            <div className="flex-1 p-4 overflow-y-auto space-y-6">
+               {viewMode === 'preview' ? (
+                  <div className="flex flex-col h-full space-y-4">
+                     <Textarea 
+                       value={localJson}
+                       onChange={e => handleUpdateContent(e.target.value)}
+                       spellCheck={false}
+                       className="flex-1 bg-[#1a1a1c] border-[#2d2d30] text-gray-300 font-mono text-[11px] resize-none focus-visible:ring-[#D62828]"
+                     />
+                  </div>
+               ) : (
+                  <div className="flex flex-col h-full space-y-4">
+                     <Textarea 
+                       value={activeSlide?.code || ""}
+                       onChange={e => handleUpdateCode(e.target.value)}
+                       spellCheck={false}
+                       className="flex-1 bg-[#1a1a1c] border-[#2d2d30] text-gray-300 font-mono text-[11px] resize-none focus-visible:ring-[#D62828]"
+                     />
+                  </div>
+               )}
+            </div>
+            
+            {/* Contextual AI Assistant */}
+            <div className="p-4 bg-[#1a1a1c] border-t border-[#2d2d30] space-y-3">
+               <div className="flex items-center gap-2 mb-1">
+                  <button onClick={() => setIdeAiTarget('slide')} className={cn("text-[9px] font-bold px-2 py-1 rounded transition-colors", ideAiTarget === 'slide' ? "bg-[#D62828] text-white" : "text-gray-500 hover:text-white")}>Update Slide</button>
+                  <button onClick={() => setIdeAiTarget('design')} className={cn("text-[9px] font-bold px-2 py-1 rounded transition-colors", ideAiTarget === 'design' ? "bg-[#D62828] text-white" : "text-gray-500 hover:text-white")}>Update Brand</button>
+               </div>
+               <div className="relative">
+                  <Textarea 
+                    value={ideAiPrompt}
+                    onChange={e => setIdeAiPrompt(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleIdeAiGenerate())}
+                    placeholder={ideAiTarget === 'slide' ? "e.g. Add a 3-column table..." : "e.g. Make it more professional..."}
+                    className="w-full bg-[#161618] border-[#333] text-white text-xs min-h-[80px] resize-none pr-10 focus-visible:ring-[#D62828]"
+                  />
+                  <button 
+                    onClick={handleIdeAiGenerate}
+                    disabled={isIdeAiLoading || !ideAiPrompt.trim()}
+                    className="absolute right-2 bottom-2 p-1.5 rounded-lg bg-[#2d2d30] text-white hover:bg-[#D62828] transition-colors disabled:opacity-50"
+                  >
+                    {isIdeAiLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                  </button>
+               </div>
+               {ideAiMode === 'prompt' && (
+                  <div className="relative animate-in fade-in duration-300 mt-2">
+                     <Textarea 
+                       value={ideAiResponse}
+                       onChange={e => setIdeAiResponse(e.target.value)}
+                       placeholder="Paste AI response here..."
+                       className="w-full bg-[#161618] border-[#333] text-gray-400 text-[10px] min-h-[60px] font-mono"
+                     />
+                     <Button 
+                       size="sm" 
+                       className="absolute right-2 bottom-2 bg-[#D62828] h-6 text-[9px]"
+                       onClick={() => {
+                          try {
+                            const jsonMatch = ideAiResponse.match(/<json>([\s\S]*?)<\/json>/i) || ideAiResponse.match(/```json\n([\s\S]*?)```/i);
+                            const jsonStr = jsonMatch ? jsonMatch[1].trim() : ideAiResponse.trim();
+                            const parsed = JSON.parse(jsonStr);
+                            if (ideAiTarget === 'slide') {
+                               handleUpdateCode(parsed.code || activeSlide?.code);
+                               handleUpdateContent(JSON.stringify(parsed.content || activeSlide?.content, null, 2));
+                            } else {
+                               setDesignConfig({ ...designConfig!, ...parsed });
+                            }
+                            setIdeAiResponse("");
+                          } catch(e) {
+                             alert("Invalid response format.");
+                          }
+                       }}
+                     >
+                        Apply
+                     </Button>
+                  </div>
+               )}
+            </div>
+         </div>
+      </div>
+
+      {/* Design Sidebar (Overlay) */}
+      {showDesignSettings && (
+         <div className="fixed inset-0 z-50 flex justify-end">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowDesignSettings(false)} />
+            <div className="w-96 bg-[#161618] h-full shadow-2xl relative flex flex-col border-l border-[#2d2d30] animate-in slide-in-from-right duration-300">
+               <div className="h-16 flex items-center px-6 border-b border-[#2d2d30] justify-between">
+                  <h2 className="font-bold text-sm text-white uppercase tracking-widest">Brand System</h2>
+                  <button onClick={() => setShowDesignSettings(false)} className="text-gray-500 hover:text-white"><X size={20}/></button>
+               </div>
+               <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                  {/* Colors */}
+                  <div className="space-y-4">
+                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Color Palette</h3>
+                     <div className="grid grid-cols-2 gap-4">
+                        {[
+                           { label: "Primary", key: "primary" },
+                           { label: "Secondary", key: "secondary" },
+                           { label: "Accent", key: "accent" },
+                           { label: "Background", key: "bg" },
+                           { label: "Surface", key: "surface" },
+                           { label: "Text", key: "textPrimary" },
+                        ].map((c) => (
+                           <div key={c.key} className="space-y-1.5">
+                              <label className="text-[10px] text-gray-500">{c.label}</label>
+                              <div className="flex items-center gap-2 bg-[#1a1a1c] p-1.5 rounded-lg border border-[#2d2d30]">
+                                 <input 
+                                   type="color" 
+                                   value={designConfig?.[c.key as keyof DesignConfig] as string} 
+                                   onChange={e => setDesignConfig({ ...designConfig!, [c.key]: e.target.value })}
+                                   className="w-6 h-6 rounded border-none bg-transparent"
+                                 />
+                                 <span className="text-[10px] font-mono text-gray-400">{designConfig?.[c.key as keyof DesignConfig] as string}</span>
+                              </div>
+                           </div>
+                        ))}
+                     </div>
+                  </div>
+                  
+                  {/* Typography */}
+                  <div className="space-y-4">
+                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Typography</h3>
+                     <div className="space-y-4">
+                        <div className="space-y-2">
+                           <label className="text-[10px] text-gray-500">Heading Font</label>
+                           <input 
+                             type="text" 
+                             value={fontSearch.heading}
+                             onChange={e => setFontSearch({ ...fontSearch, heading: e.target.value })}
+                             placeholder="Search Google Fonts..."
+                             className="w-full bg-[#1a1a1c] border border-[#2d2d30] rounded-lg px-3 py-2 text-xs text-white"
+                           />
+                           <div className="flex flex-wrap gap-2 mt-2">
+                              {headingFonts.slice(0, 8).map(f => (
+                                 <button 
+                                   key={f}
+                                   onClick={() => setDesignConfig({ ...designConfig!, headingFont: f })}
+                                   className={cn(
+                                      "px-2 py-1 text-[10px] rounded border transition-colors",
+                                      designConfig?.headingFont === f ? "border-[#D62828] text-white bg-[#D62828]/10" : "border-[#2d2d30] text-gray-500 hover:text-white"
+                                   )}
+                                 >
+                                    {f}
+                                 </button>
+                              ))}
+                           </div>
+                        </div>
+                        <div className="space-y-2">
+                           <label className="text-[10px] text-gray-500">Body Font</label>
+                           <input 
+                             type="text" 
+                             value={fontSearch.body}
+                             onChange={e => setFontSearch({ ...fontSearch, body: e.target.value })}
+                             placeholder="Search Google Fonts..."
+                             className="w-full bg-[#1a1a1c] border border-[#2d2d30] rounded-lg px-3 py-2 text-xs text-white"
+                           />
+                           <div className="flex flex-wrap gap-2 mt-2">
+                              {bodyFonts.slice(0, 8).map(f => (
+                                 <button 
+                                   key={f}
+                                   onClick={() => setDesignConfig({ ...designConfig!, fontFamily: f })}
+                                   className={cn(
+                                      "px-2 py-1 text-[10px] rounded border transition-colors",
+                                      designConfig?.fontFamily === f ? "border-[#D62828] text-white bg-[#D62828]/10" : "border-[#2d2d30] text-gray-500 hover:text-white"
+                                   )}
+                                 >
+                                    {f}
+                                 </button>
+                              ))}
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+               <div className="p-6 border-t border-[#2d2d30]">
+                  <Button className="w-full bg-[#D62828] text-white h-12" onClick={() => setShowDesignSettings(false)}>Apply Brand Updates</Button>
+               </div>
+            </div>
+         </div>
+      )}
+      
+      {/* Off-screen high-fidelity export container */}
+      <div 
+        className="fixed pointer-events-none z-[-2000]" 
+        style={{ left: '-10000px', top: 0, width: 1280, height: 720, overflow: 'hidden' }} 
+        aria-hidden="true"
+      >
         {slides.map(slide => (
-          <div key={`magic-export-${slide.id}`} id={`magic-export-slide-${slide.id}`} className="w-[1280px] h-[720px] bg-white relative overflow-hidden">
-            <SlidePreview 
-              templateCode={slide.code || ""} 
-              data={slide.content} 
-              designConfig={designConfig || templates.find(t => t.id === activePresentation?.templateId)?.designConfig}
+          <div 
+            key={`magic-export-${slide.id}`} 
+            id={`magic-export-slide-${slide.id}`} 
+            className="w-[1280px] h-[720px] bg-white relative overflow-hidden" 
+            style={{ 
+              fontFamily: designConfig?.fontFamily ? `"${designConfig.fontFamily}", sans-serif` : 'sans-serif' 
+            }}
+          >
+            <SlideStatic 
+              templateCode={slide.code || ""}
+              data={slide.content}
+              designConfig={designConfig || undefined}
             />
           </div>
         ))}
