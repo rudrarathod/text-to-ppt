@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAppStore, DesignConfig } from "../store";
 import { Button } from "../components/ui";
-import { Plus, Presentation as PresentationIcon, Trash2, Edit2, Sparkles, Loader2, Copy, Check, Settings2, Layout as LayoutIcon, ChevronRight, ChevronLeft, X, Search, ArrowUpDown } from "lucide-react";
+import { Plus, Presentation as PresentationIcon, Trash2, Edit2, Sparkles, Loader2, Copy, Check, Settings2, Layout as LayoutIcon, ChevronRight, ChevronLeft, X, Search, ArrowUpDown, Play } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "../lib/utils";
@@ -207,9 +207,24 @@ export function PresentationGallery() {
                      >
                         {presentation.slides[0]?.content.title || presentation.name}
                      </h3>
-                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Button className="bg-[#D62828] hover:bg-[#b20112] text-white border-none shadow-xl gap-2 font-bold px-6 py-2 rounded-full transform translate-y-2 group-hover:translate-y-0 transition-all pointer-events-none">
-                          <Edit2 size={16} /> Edit Presentation
+                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4">
+                        <Button 
+                          onClick={() => {
+                            setActivePresentation(presentation.id);
+                            navigate(`/presentations/${presentation.id}`);
+                          }}
+                          className="bg-[#D62828] hover:bg-[#b20112] text-white border-none shadow-xl gap-2 font-black uppercase tracking-widest text-[10px] px-8 py-2.5 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all duration-300"
+                        >
+                          <Edit2 size={14} /> Edit
+                        </Button>
+                        <Button 
+                          onClick={() => {
+                            setActivePresentation(presentation.id);
+                            navigate(`/presentations/${presentation.id}/present`);
+                          }}
+                          className="bg-white hover:bg-gray-200 text-black border-none shadow-xl gap-2 font-black uppercase tracking-widest text-[10px] px-8 py-2.5 rounded-full transform translate-y-8 group-hover:translate-y-0 transition-all duration-300 delay-75"
+                        >
+                          <Play size={14} className="fill-current" /> Present
                         </Button>
                      </div>
                    </div>

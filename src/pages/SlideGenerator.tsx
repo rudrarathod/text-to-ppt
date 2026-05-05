@@ -1,12 +1,13 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useAppStore, SlideData } from "../store";
+import Editor from "@monaco-editor/react";
 import { SlidePreview, SlideStatic } from "../components/SlidePreview";
 import { Button, Textarea } from "../components/ui";
-import { Download, Plus, Trash2, LayoutTemplate, Sparkles, X, Mic, Copy, Check, Settings2, ChevronDown, ChevronUp, Save, Loader2, Palette, Code2, Presentation as PresentationIcon, Layout as LayoutIcon, ArrowLeft } from "lucide-react";
+import { Download, Plus, Trash2, LayoutTemplate, Sparkles, X, Mic, Copy, Check, Settings2, ChevronDown, ChevronUp, Save, Loader2, Palette, Code2, Presentation as PresentationIcon, Layout as LayoutIcon, ArrowLeft, Play, ChevronLeft, ChevronRight, Maximize, Minimize } from "lucide-react";
 import jsPDF from "jspdf";
 import { toJpeg } from "html-to-image";
 import { cn } from "../lib/utils";
-import { askAiForSlideContent, buildSlideContentPrompt, askAiForFullPresentation, buildPresentationPrompt, PromptSettings } from "../lib/gemini";
+import { askAiForSlideContent, buildSlideContentPrompt, askAiForFullPresentation, buildPresentationPrompt, PromptSettings, askAiForLayoutCode, buildLayoutPrompt } from "../lib/gemini";
 
 const IMAGE_PLACEHOLDER = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300' width='100%25' height='100%25'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Cpath stroke='%239ca3af' stroke-width='4' stroke-dasharray='10,10' d='M20 20 h360 v260 h-360 z' fill='none'/%3E%3Ccircle cx='200' cy='120' r='40' fill='%23d1d5db'/%3E%3Cpath d='M200 160 l50 -50 l80 80 v90 h-260 v-40 l60 -60 z' fill='%23d1d5db'/%3E%3Ctext x='50%25' y='85%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%239ca3af'%3EImage Placeholder%3C/text%3E%3C/svg%3E";
 
@@ -95,6 +96,14 @@ export function SlideGenerator() {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [activeSidebarTab, setActiveSidebarTab] = useState<'design' | 'content'>('design');
+  const [isEditingLayoutCode, setIsEditingLayoutCode] = useState(false);
+  const [layoutEditCode, setLayoutEditCode] = useState("");
+  const [layoutAiPrompt, setLayoutAiPrompt] = useState("");
+  const [isLayoutAiLoading, setIsLayoutAiLoading] = useState(false);
+  const [layoutAiMode, setLayoutAiMode] = useState<'ai' | 'prompt'>('ai');
+  const [layoutAiResponse, setLayoutAiResponse] = useState("");
+  const [tempJsonInput, setTempJsonInput] = useState<string | null>(null);
+  const [layoutEditorSubTab, setLayoutEditorSubTab] = useState<'code' | 'data'>('code');
 
   const [generatorMode, setGeneratorMode] = useState<'individual' | 'presentation'>('individual');
   const [deckAiMode, setDeckAiMode] = useState<'ai' | 'prompt'>('ai');
@@ -256,6 +265,32 @@ export function SlideGenerator() {
     }
   };
 
+
+
+  const previewData = useMemo(() => {
+    if (selectedSlide && isEditingLayoutCode && tempJsonInput) {
+      try { return JSON.parse(tempJsonInput); } catch(e) { return selectedSlide.content; }
+    }
+    return selectedSlide?.content || {};
+  }, [selectedSlide, isEditingLayoutCode, tempJsonInput]);
+
+  const handleLayoutAiGenerate = async () => {
+    if (!layoutAiPrompt.trim() || !activeLayout) return;
+    setIsLayoutAiLoading(true);
+    try {
+      const { code, json } = await askAiForLayoutCode(layoutAiPrompt, layoutEditCode, tempJsonInput || jsonInput, designConfig, promptSettings);
+      setLayoutEditCode(code);
+      if (json) {
+        setTempJsonInput(json);
+      }
+      setLayoutAiPrompt("");
+    } catch (e: any) {
+      alert("AI Generation failed: " + e.message);
+    } finally {
+      setIsLayoutAiLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col lg:flex-row h-full w-full bg-[#111111] text-gray-200 overflow-y-auto lg:overflow-hidden relative">
       {/* Export Progress Overlay */}
@@ -288,7 +323,10 @@ export function SlideGenerator() {
       )}
 
       {/* Left Panel: Thumbnails */}
-      <div className="w-full h-32 lg:h-full lg:w-64 bg-[#161618] border-b lg:border-b-0 lg:border-r border-[#2d2d30] flex flex-col shrink-0">
+      <div className={cn(
+        "h-32 lg:h-full bg-[#161618] border-b lg:border-b-0 lg:border-r border-[#2d2d30] flex flex-col shrink-0 transition-all duration-500 overflow-hidden",
+        isEditingLayoutCode ? "w-0 opacity-0 border-r-0 pointer-events-none" : "w-full lg:w-64 opacity-100"
+      )}>
         <div className="p-3 lg:p-4 border-b border-[#2d2d30] flex items-center justify-between shrink-0">
           <h2 className="font-bold text-sm text-white flex items-center gap-2">Slides <span className="bg-[#2d2d30] text-xs px-2 py-0.5 rounded-full">{slides.length}</span></h2>
           <Button onClick={handleAddSlide} variant="ghost" className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-[#2d2d30]" title="Add Slide"><Plus size={16} /></Button>
@@ -371,6 +409,12 @@ export function SlideGenerator() {
               {isSaved ? <><Check size={14} className="text-green-500" /> <span className="hidden sm:inline text-green-500">Saved</span></> : <><Save size={14} /> <span className="hidden sm:inline">Save</span></>}
             </Button>
             <Button 
+              onClick={() => navigate(`/presentations/${activePresentationId}/present`)}
+              className="gap-2 border-[#333] hover:bg-[#2d2d30] shrink-0 h-8 lg:h-10 text-xs lg:text-sm px-3 bg-[#1c1c1e] text-white transition-colors border"
+            >
+              <Play size={14} className="fill-current" /> <span className="hidden sm:inline">Present</span>
+            </Button>
+            <Button 
               onClick={handleExportPDF} 
               disabled={isExporting}
               className="gap-2 border-none shrink-0 h-8 lg:h-10 text-xs lg:text-sm px-3 bg-[#D62828] hover:bg-[#b20112] text-white transition-colors shadow-lg"
@@ -383,14 +427,22 @@ export function SlideGenerator() {
         <div className="flex-1 overflow-hidden flex items-center justify-center p-2 sm:p-4 lg:p-12 bg-[#111111] relative min-h-[50vh] lg:min-h-0">
           {selectedSlide && activeLayout ? (
              <SlidePreview 
-               templateCode={activeLayout.code} 
-               data={selectedSlide.content} 
+               templateCode={isEditingLayoutCode ? layoutEditCode : (activeLayout?.code || "")} 
+               data={previewData} 
                designConfig={designConfig}
                interactive={true}
                onImageUpload={(key, path) => {
-                 const newContent = { ...selectedSlide.content, [key]: path };
-                 updateSlideContent(selectedSlide.id, newContent);
-                 setJsonInput(JSON.stringify(newContent, null, 2));
+                 if (isEditingLayoutCode) {
+                   try {
+                     const current = tempJsonInput ? JSON.parse(tempJsonInput) : selectedSlide.content;
+                     const next = { ...current, [key]: path };
+                     setTempJsonInput(JSON.stringify(next, null, 2));
+                   } catch(e) {}
+                 } else {
+                   const newContent = { ...selectedSlide.content, [key]: path };
+                   updateSlideContent(selectedSlide.id, newContent);
+                   setJsonInput(JSON.stringify(newContent, null, 2));
+                 }
                }}
              />
           ) : (
@@ -403,7 +455,10 @@ export function SlideGenerator() {
       </div>
 
       {/* Right Panel: JSON Editor & Layout Selector */}
-      <div className="lg:w-80 w-full h-[50vh] lg:h-full bg-[#161618] border-t lg:border-t-0 lg:border-l border-[#2d2d30] flex flex-col shrink-0 relative lg:min-h-0">
+      <div className={cn(
+        "h-[50vh] lg:h-full bg-[#161618] border-t lg:border-t-0 lg:border-l border-[#2d2d30] flex flex-col shrink-0 relative lg:min-h-0 transition-all duration-500 ease-in-out",
+        isEditingLayoutCode ? "lg:w-[500px]" : "lg:w-80 w-full"
+      )}>
         <div className="p-4 lg:p-6 pb-4 shrink-0 border-b border-[#2d2d30] bg-[#161618]">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
@@ -579,59 +634,268 @@ export function SlideGenerator() {
         ) : selectedSlide ? (
           <div className="flex-1 overflow-y-auto min-h-0 relative">
             {activeSidebarTab === 'design' ? (
-              <div className="p-6 space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Layout Library</label>
-                    <span className="text-[10px] font-bold text-[#D62828] bg-[#D62828]/10 px-2 py-0.5 rounded-full">{layouts.length} Layouts</span>
-                  </div>
-                  <div className="grid grid-cols-1 gap-3">
-                    {layouts.map(l => (
-                       <div 
-                         key={l.id}
-                         onClick={() => {
-                           const newLayout = layouts.find(x => x.id === l.id);
-                           if (newLayout && selectedSlide) {
-                             const newContent = extractDefaultContent(newLayout.code, selectedSlide.content);
-                             updateSlideLayout(selectedSlide.id, l.id);
-                             updateSlideContent(selectedSlide.id, newContent);
-                             setJsonInput(JSON.stringify(newContent, null, 2));
-                           }
+              <div className="p-6 space-y-6 h-full flex flex-col min-h-0">
+                {isEditingLayoutCode ? (
+                  <div className="flex-1 flex flex-col min-h-0 animate-in slide-in-from-right-4 duration-300">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                         <button 
+                           onClick={() => {
+                           setIsEditingLayoutCode(false);
+                           setTempJsonInput(null);
                          }}
-                         className={cn(
-                           "group relative p-4 rounded-2xl cursor-pointer transition-all border flex flex-col gap-3",
-                           selectedSlide.layoutId === l.id 
-                             ? "bg-[#D62828]/5 border-[#D62828] shadow-lg shadow-[#D62828]/5" 
-                             : "bg-[#1c1c1e] border-[#2d2d30] hover:border-[#444] hover:bg-[#252526]"
-                         )}
-                       >
-                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                               <div className={cn(
-                                 "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
-                                 selectedSlide.layoutId === l.id ? "bg-[#D62828] text-white" : "bg-[#2d2d30] text-gray-400 group-hover:text-white"
-                               )}>
-                                 {l.variant === 'title' && <PresentationIcon size={14} />}
-                                 {l.variant === 'content' && <LayoutIcon size={14} />}
-                                 {l.variant === 'image-text' && <Sparkles size={14} />}
-                                 {l.variant === 'comparison' && <ArrowLeft size={14} className="rotate-180" />}
-                                 {l.variant === 'divider' && <Plus size={14} />}
-                               </div>
-                               <div>
-                                 <h4 className="text-xs font-bold text-white mb-0.5">{l.name}</h4>
-                                 <p className="text-[9px] text-gray-500 font-medium uppercase tracking-wider">{l.variant}</p>
-                               </div>
-                            </div>
-                            {selectedSlide.layoutId === l.id && (
-                               <div className="w-5 h-5 rounded-full bg-[#D62828] flex items-center justify-center">
-                                  <Check size={12} className="text-white" />
-                               </div>
-                            )}
+                           className="p-1.5 hover:bg-[#252526] rounded-lg text-gray-400 hover:text-white transition-colors"
+                         >
+                           <ArrowLeft size={14} />
+                         </button>
+                         <div className="flex bg-[#111111] rounded-lg p-1 border border-[#2d2d30] ml-2">
+                            <button 
+                              onClick={() => setLayoutEditorSubTab('code')} 
+                              className={cn("px-3 py-1 text-[10px] font-bold rounded-md transition-all", layoutEditorSubTab === 'code' ? "bg-[#D62828] text-white shadow-sm" : "text-gray-500 hover:text-gray-300")}
+                            >
+                              Code
+                            </button>
+                            <button 
+                              onClick={() => setLayoutEditorSubTab('data')} 
+                              className={cn("px-3 py-1 text-[10px] font-bold rounded-md transition-all", layoutEditorSubTab === 'data' ? "bg-[#D62828] text-white shadow-sm" : "text-gray-500 hover:text-gray-300")}
+                            >
+                              Data
+                            </button>
                          </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          onClick={() => {
+                            if (activeLayout) {
+                              (useAppStore.getState() as any).updateLayoutInActiveTemplate(activeLayout.id, { code: layoutEditCode });
+                              if (tempJsonInput) {
+                                try {
+                                  const parsed = JSON.parse(tempJsonInput);
+                                  setJsonInput(tempJsonInput);
+                                  updateSlideContent(selectedSlideId!, parsed);
+                                } catch(e) {}
+                              }
+                              setIsEditingLayoutCode(false);
+                              setTempJsonInput(null);
+                            }
+                          }}
+                          className="h-7 text-[10px] px-4 bg-[#D62828] hover:bg-[#b20112] text-white font-bold"
+                        >
+                          Apply Changes
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 rounded-2xl overflow-hidden border border-[#2d2d30] bg-[#1e1e1e] mb-20 relative shadow-2xl">
+                       {layoutEditorSubTab === 'code' ? (
+                         <Editor
+                           height="100%"
+                           defaultLanguage="handlebars"
+                           theme="vs-dark"
+                           value={layoutEditCode}
+                           onChange={(val) => setLayoutEditCode(val || "")}
+                           options={{
+                             minimap: { enabled: false },
+                             fontSize: 12,
+                             wordWrap: "on",
+                             padding: { top: 12 },
+                             scrollBeyondLastLine: false,
+                             lineNumbers: "on",
+                             fontFamily: "JetBrains Mono, monospace"
+                           }}
+                         />
+                       ) : (
+                         <Editor
+                           height="100%"
+                           defaultLanguage="json"
+                           theme="vs-dark"
+                           value={tempJsonInput || ""}
+                           onChange={(val) => setTempJsonInput(val || "")}
+                           options={{
+                             minimap: { enabled: false },
+                             fontSize: 12,
+                             wordWrap: "on",
+                             padding: { top: 12 },
+                             scrollBeyondLastLine: false,
+                             lineNumbers: "on",
+                             fontFamily: "JetBrains Mono, monospace"
+                           }}
+                         />
+                       )}
+                    </div>
+
+                    {/* Layout AI Assistant Panel */}
+                    <div className="absolute bottom-6 left-6 right-6 bg-[#161618] border border-[#2d2d30] rounded-2xl shadow-2xl flex flex-col shrink-0 overflow-hidden z-20">
+                       <div className="flex items-center justify-between px-4 py-3 border-b border-[#2d2d30] bg-[#1c1c1e]">
+                         <div className="flex items-center gap-3">
+                           <div className="w-6 h-6 rounded-lg bg-[#fe6247]/10 flex items-center justify-center">
+                             <Sparkles size={12} className="text-[#fe6247] animate-pulse" />
+                           </div>
+                           <span className="text-white text-[11px] font-black uppercase tracking-widest">Layout AI</span>
+                           <div className="flex items-center bg-[#111111] rounded-md border border-[#2d2d30] overflow-hidden text-[9px] font-bold text-gray-500 p-0.5">
+                             <button onClick={() => setLayoutAiMode('ai')} className={cn("px-2 py-1 rounded transition-all", layoutAiMode === 'ai' ? "bg-[#252526] text-white shadow-sm" : "hover:text-gray-300")}>Auto</button>
+                             <button onClick={() => setLayoutAiMode('prompt')} className={cn("px-2 py-1 rounded transition-all", layoutAiMode === 'prompt' ? "bg-[#252526] text-white shadow-sm" : "hover:text-gray-300")}>Draft</button>
+                           </div>
+                         </div>
+                         <button onClick={() => setShowPromptSettings(!showPromptSettings)} title="Prompt Settings" className={cn("text-gray-500 hover:text-white transition-colors", showPromptSettings && "text-[#fe6247]")}>
+                            <Settings2 size={14} />
+                         </button>
                        </div>
-                    ))}
+                       
+                       {showPromptSettings && (
+                         <div className="px-3 pb-3 border-b border-[#2d2d30] bg-[#1a1a1a]">
+                           <span className="text-[10px] font-bold text-white uppercase opacity-50 block mt-2">Settings</span>
+                           <PromptSettingsForm settings={promptSettings} setSettings={setPromptSettings} />
+                         </div>
+                       )}
+                       
+                       <div className="p-2 space-y-2">
+                         <div className="relative">
+                           <Textarea 
+                             value={layoutAiPrompt}
+                             onChange={e => setLayoutAiPrompt(e.target.value)}
+                             placeholder="e.g. Add a 3-column feature list with icons..."
+                             className="w-full bg-[#252526] border border-[#333] text-gray-200 text-xs focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-sans resize-none rounded-lg p-2 pr-8 min-h-[50px]"
+                             disabled={isLayoutAiLoading}
+                             onKeyDown={(e) => {
+                               if(e.key === 'Enter' && !e.shiftKey) {
+                                 e.preventDefault();
+                                 if (layoutAiMode === 'ai') {
+                                   handleLayoutAiGenerate();
+                                 } else if (layoutAiPrompt.trim()) {
+                                   const fullPrompt = buildLayoutPrompt(layoutAiPrompt, layoutEditCode, jsonInput, designConfig, promptSettings);
+                                   navigator.clipboard.writeText(fullPrompt);
+                                   setCopiedPrompt(true);
+                                   setTimeout(() => setCopiedPrompt(false), 2000);
+                                 }
+                               }
+                             }}
+                           />
+                           <button 
+                             onClick={() => {
+                               if (layoutAiMode === 'ai') {
+                                 handleLayoutAiGenerate();
+                               } else if (layoutAiPrompt.trim()) {
+                                 const fullPrompt = buildLayoutPrompt(layoutAiPrompt, layoutEditCode, jsonInput, designConfig, promptSettings);
+                                 navigator.clipboard.writeText(fullPrompt);
+                                 setCopiedPrompt(true);
+                                 setTimeout(() => setCopiedPrompt(false), 2000);
+                               }
+                             }}
+                             disabled={isLayoutAiLoading || !layoutAiPrompt.trim()}
+                             className="absolute right-2 bottom-2 text-[#5c403d] hover:text-[#fe6247] disabled:opacity-50 transition-colors bg-[#1e1e1e] p-1 rounded"
+                             title={layoutAiMode === 'ai' ? "Generate with AI" : "Copy Prompt"}
+                           >
+                             {isLayoutAiLoading ? <span className="animate-pulse flex items-center justify-center p-0.5">...</span> : (layoutAiMode === 'ai' ? <Sparkles size={14} /> : (copiedPrompt ? <Check size={14} className="text-green-500" /> : <Copy size={14} />))}
+                           </button>
+                         </div>
+                         {layoutAiMode === 'prompt' && (
+                           <div className="relative mt-1">
+                             <Textarea 
+                               value={layoutAiResponse}
+                               onChange={e => setLayoutAiResponse(e.target.value)}
+                               placeholder="Paste JSON/Code here..."
+                               className="w-full bg-[#252526] border border-[#333] text-gray-200 text-xs focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-sans resize-none rounded-lg p-2 pb-8 min-h-[50px]"
+                             />
+                             <button 
+                               onClick={() => {
+                                 if (layoutAiResponse.trim()) {
+                                   const slideMatch = layoutAiResponse.match(/<slide>([\s\S]*?)<\/slide>/i);
+                                   let code = slideMatch ? slideMatch[1].trim() : "";
+                                   
+                                   if (!code) {
+                                     let match = layoutAiResponse.match(/```(?:html|handlebars)?\n([\s\S]*?)```/);
+                                     code = match ? match[1] : layoutAiResponse;
+                                   }
+                                   
+                                   const jsonMatch = layoutAiResponse.match(/<json>([\s\S]*?)<\/json>/i);
+                                   if (jsonMatch && jsonMatch[1]) {
+                                      setTempJsonInput(jsonMatch[1].trim());
+                                   }
+                                   
+                                   setLayoutEditCode(code);
+                                   setLayoutAiResponse("");
+                                 }
+                               }}
+                               disabled={!layoutAiResponse.trim()}
+                               className="absolute right-2 bottom-2 bg-[#D62828] hover:bg-[#b20112] text-white disabled:opacity-50 transition-colors px-2 py-0.5 rounded text-[10px] font-bold"
+                             >
+                               Apply
+                             </button>
+                           </div>
+                         )}
+                       </div>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Layout Library</label>
+                        <div className="flex items-center gap-2">
+                           <button 
+                             onClick={() => {
+                               if (activeLayout) {
+                                 setLayoutEditCode(activeLayout.code);
+                                 setTempJsonInput(jsonInput);
+                                 setIsEditingLayoutCode(true);
+                               }
+                             }}
+                             className="text-[10px] font-bold text-gray-400 hover:text-[#fe6247] transition-colors flex items-center gap-1.5 px-2 py-1 bg-[#1c1c1e] rounded-md border border-[#2d2d30]"
+                           >
+                             <Code2 size={12} /> Edit Code
+                           </button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 gap-3">
+                        {layouts.map(l => (
+                           <div 
+                             key={l.id}
+                             onClick={() => {
+                               const newLayout = layouts.find(x => x.id === l.id);
+                               if (newLayout && selectedSlide) {
+                                 const newContent = extractDefaultContent(newLayout.code, selectedSlide.content);
+                                 updateSlideLayout(selectedSlide.id, l.id);
+                                 updateSlideContent(selectedSlide.id, newContent);
+                                 setJsonInput(JSON.stringify(newContent, null, 2));
+                               }
+                             }}
+                             className={cn(
+                               "group relative p-4 rounded-2xl cursor-pointer transition-all border flex flex-col gap-3",
+                               selectedSlide.layoutId === l.id 
+                                 ? "bg-[#D62828]/5 border-[#D62828] shadow-lg shadow-[#D62828]/5" 
+                                 : "bg-[#1c1c1e] border-[#2d2d30] hover:border-[#444] hover:bg-[#252526]"
+                             )}
+                           >
+                             <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                   <div className={cn(
+                                     "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
+                                     selectedSlide.layoutId === l.id ? "bg-[#D62828] text-white" : "bg-[#2d2d30] text-gray-400 group-hover:text-white"
+                                   )}>
+                                     {l.variant === 'title' && <PresentationIcon size={14} />}
+                                     {l.variant === 'content' && <LayoutIcon size={14} />}
+                                     {l.variant === 'image-text' && <Sparkles size={14} />}
+                                     {l.variant === 'comparison' && <ArrowLeft size={14} className="rotate-180" />}
+                                     {l.variant === 'divider' && <Plus size={14} />}
+                                   </div>
+                                   <div>
+                                     <h4 className="text-xs font-bold text-white mb-0.5">{l.name}</h4>
+                                     <p className="text-[9px] text-gray-500 font-medium uppercase tracking-wider">{l.variant}</p>
+                                   </div>
+                                </div>
+                                {selectedSlide.layoutId === l.id && (
+                                   <div className="w-5 h-5 rounded-full bg-[#D62828] flex items-center justify-center">
+                                      <Check size={12} className="text-white" />
+                                   </div>
+                                )}
+                             </div>
+                           </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
               <div className="p-6 flex flex-col h-full space-y-6">

@@ -11,6 +11,8 @@ import { TemplateGallery } from "./pages/TemplateGallery";
 import { PresentationGallery } from "./pages/PresentationGallery";
 import { MagicBuilder } from "./pages/MagicBuilder";
 
+import { PresentationViewer } from "./pages/PresentationViewer";
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -20,6 +22,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<PresentationGallery />} />
             <Route path="/presentations/:id" element={<SlideGenerator />} />
+            <Route path="/presentations/:id/present" element={<PresentationViewer />} />
             <Route path="/templates" element={<TemplateGallery />} />
             <Route path="/templates/:id" element={<TemplateBuilder />} />
             <Route path="/magic-builder" element={<MagicBuilder />} />
