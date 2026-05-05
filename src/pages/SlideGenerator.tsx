@@ -8,6 +8,7 @@ import jsPDF from "jspdf";
 import { toJpeg } from "html-to-image";
 import { cn } from "../lib/utils";
 import { askAiForSlideContent, buildSlideContentPrompt, askAiForFullPresentation, buildPresentationPrompt, PromptSettings, askAiForLayoutCode, buildLayoutPrompt } from "../lib/gemini";
+import { generateFullPresentationHtml } from "../lib/export";
 
 const IMAGE_PLACEHOLDER = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300' width='100%25' height='100%25'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Cpath stroke='%239ca3af' stroke-width='4' stroke-dasharray='10,10' d='M20 20 h360 v260 h-360 z' fill='none'/%3E%3Ccircle cx='200' cy='120' r='40' fill='%23d1d5db'/%3E%3Cpath d='M200 160 l50 -50 l80 80 v90 h-260 v-40 l60 -60 z' fill='%23d1d5db'/%3E%3Ctext x='50%25' y='85%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%239ca3af'%3EImage Placeholder%3C/text%3E%3C/svg%3E";
 
@@ -217,46 +218,46 @@ export function SlideGenerator() {
   };
 
   const handleExportPDF = async () => {
-    if (slides.length === 0) return;
+    if (!activePresentation || slides.length === 0) return;
+    
     setIsExporting(true);
-    setExportProgress(0);
+    setExportProgress(10);
+    
     try {
-      const pdf = new jsPDF({
-        orientation: "landscape",
-        unit: "px",
-        format: [1280, 720]
+      setExportProgress(30);
+      const fullHtml = generateFullPresentationHtml(slides, layouts, designConfig);
+      
+      setExportProgress(50);
+      const response = await fetch('/api/export-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          html: fullHtml,
+          name: activePresentation.name
+        }),
       });
 
-      for (let i = 0; i < slides.length; i++) {
-        setExportProgress(Math.round((i / slides.length) * 100));
-        const slide = slides[i];
-        const element = document.getElementById(`export-slide-${slide.id}`);
-        if (!element) continue;
-        
-        await new Promise(r => setTimeout(r, 500));
-        
-        const iframe = element.querySelector("iframe");
-        let imgData;
-        try {
-          if (iframe?.contentWindow && (iframe.contentWindow as any).captureSlide) {
-            imgData = await (iframe.contentWindow as any).captureSlide();
-          } else {
-            imgData = await toJpeg(element, { quality: 0.95, pixelRatio: 2 });
-          }
-        } catch (err) {
-          console.warn("Capture failed:", err);
-          continue;
-        }
-        
-        if (!imgData) continue;
-        if (i > 0) pdf.addPage([1280, 720], "landscape");
-        pdf.addImage(imgData, "JPEG", 0, 0, 1280, 720, undefined, "FAST");
+      if (!response.ok) {
+        throw new Error(await response.text());
       }
+
+      setExportProgress(80);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${activePresentation.name || 'presentation'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
       setExportProgress(100);
-      pdf.save(`${activePresentation?.name || "Presentation"}.pdf`);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Export Error:", e);
-      alert("Failed to export PDF.");
+      alert("Failed to export PDF: " + e.message);
     } finally {
       setTimeout(() => {
         setIsExporting(false);
