@@ -33,8 +33,8 @@ export function AIAssistantPanel({
   placeholder = "Describe your vision...",
   className,
   modes = [
-    { label: "AI", value: "ai" },
-    { label: "Prompt", value: "prompt" }
+    { label: "Direct AI", value: "ai" },
+    { label: "Raw Prompt", value: "prompt" }
   ],
   defaultMode = "ai",
   onModeChange,
