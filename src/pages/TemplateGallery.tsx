@@ -8,6 +8,8 @@ import { askAiForDesignConfig, buildDesignConfigPrompt } from "../lib/gemini";
 import { GoogleFontLoader, POPULAR_FONTS } from "../lib/typography";
 import { ThemeSettingsPanel } from "../components/design-system/ThemeSettingsPanel";
 import { AIAssistantPanel } from "../components/ai/AIAssistantPanel";
+import { PageHeader } from "../components/layout/PageHeader";
+import { PreviewCard } from "../components/layout/PreviewCard";
 
 
 
@@ -327,51 +329,55 @@ export function TemplateGallery() {
 
   return (
     <div className="flex flex-col h-full bg-[#111111] overflow-auto text-gray-200">
-      <div className="h-auto md:h-16 py-4 md:py-0 border-b border-[#2d2d30] flex flex-col md:flex-row items-center justify-between px-8 bg-[#161618] shrink-0 sticky top-0 z-10 w-full shadow-sm gap-4 relative">
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <LayoutTemplate className="text-white" size={24} />
-          <h2 className="font-bold text-white text-lg">Template Gallery</h2>
-        </div>
-        <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleImport} 
-            accept=".json" 
-            className="hidden" 
-          />
-          <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="gap-2 text-gray-400 hover:text-white border-[#333] hover:bg-[#252526]">
-            <Upload size={16} /> Import
-          </Button>
-          <Button onClick={() => {
-            localStorage.clear();
-            indexedDB.deleteDatabase('keyval-store');
-            window.location.reload();
-          }} variant="outline" className="text-gray-400 hover:text-white border-[#333] hover:bg-[#252526]">
-            Reset Data
-          </Button>
-          <Button onClick={() => setShowCreateModal(true)} className="gap-2 border-none">
-             <Plus size={18} /> Create
-          </Button>
-        </div>
-      </div>
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleImport} 
+        accept=".json" 
+        className="hidden" 
+      />
+      <PageHeader 
+        title="Design Libraries"
+        icon={<LayoutTemplate size={16} className="text-[#D62828]" />}
+        actions={
+          <>
+            <Button onClick={() => {
+              if (window.confirm("This will reset all templates to default. Continue?")) {
+                localStorage.removeItem('presentation-store');
+                window.location.reload();
+              }
+            }} variant="outline" className="text-gray-400 hover:text-white border-[#333] hover:bg-[#252526]">
+              Reset Data
+            </Button>
+            <Button onClick={() => setShowCreateModal(true)} className="gap-2 border-none">
+               <Plus size={18} /> Create
+            </Button>
+          </>
+        }
+      />
 
       <div className="p-12 max-w-7xl mx-auto w-full">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {templates.map(template => (
-            <div 
+            <PreviewCard 
               key={template.id}
+              title={template.name}
+              badge={
+                <span className="text-[10px] bg-[#2d2d30] text-gray-400 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider">
+                  {template.layouts.length} Layouts
+                </span>
+              }
+              footer={
+                <>
+                  <LayoutTemplate size={12} className="text-gray-600" />
+                  <span>Custom Template Engine</span>
+                </>
+              }
               onClick={() => handleEdit(template.id)}
-              className="bg-[#1e1e1e] border border-[#2d2d30] rounded-xl overflow-hidden shadow-xl hover:shadow-[#D62828]/10 hover:border-[#D62828] transition-all cursor-pointer group flex flex-col hover:-translate-y-1 h-[300px]"
-            >
-              <div 
-                className="h-48 flex items-center justify-center border-b border-[#2d2d30] relative overflow-hidden"
-                style={{ backgroundColor: template.designConfig.bg }}
-              >
-                {/* Brand DNA Preview */}
+              preview={
                 <div 
-                  className="absolute inset-0 p-4 flex flex-col gap-3 transition-transform group-hover:scale-105 duration-700"
-                  style={{ textAlign: template.designConfig.contentAlignment }}
+                  className="absolute inset-0 p-4 flex flex-col gap-3"
+                  style={{ backgroundColor: template.designConfig.bg, textAlign: template.designConfig.contentAlignment }}
                 >
                   <div className="flex-1 flex flex-col justify-center px-4">
                      <h4 
@@ -399,9 +405,9 @@ export function TemplateGallery() {
                      <span className="text-[8px] font-mono text-gray-500 uppercase tracking-widest">{template.designConfig.headingFont} System</span>
                   </div>
                 </div>
-
-                {/* Quick Actions Overlay on Hover */}
-                <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all z-20 translate-x-2 group-hover:translate-x-0">
+              }
+              topRightActions={
+                <>
                   <button 
                     onClick={(e) => handleExport(e, template)}
                     className="h-8 w-8 flex items-center justify-center bg-black/60 hover:bg-[#2d2d30] text-white rounded-lg transition-colors backdrop-blur-sm"
@@ -423,28 +429,14 @@ export function TemplateGallery() {
                   >
                     <Trash2 size={14}/>
                   </button>
-                </div>
-
-                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Button className="bg-[#D62828] hover:bg-[#b20112] text-white border-none shadow-xl gap-2 font-bold px-6 py-2 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all">
-                      <Edit2 size={16} /> Edit Layouts
-                    </Button>
-                </div>
-              </div>
-
-              <div className="p-4 flex flex-col gap-2 bg-[#1e1e1e] flex-1 justify-center">
-                <div className="flex items-center justify-between">
-                   <h3 className="font-bold text-white truncate font-display text-base" title={template.name}>{template.name}</h3>
-                   <span className="text-[10px] bg-[#2d2d30] text-gray-400 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider">
-                     {template.layouts.length} Layouts
-                   </span>
-                </div>
-                <div className="flex items-center gap-2 text-[11px] text-gray-500">
-                  <LayoutTemplate size={12} className="text-gray-600" />
-                  <span>Custom Template Engine</span>
-                </div>
-              </div>
-            </div>
+                </>
+              }
+              actions={
+                <Button className="bg-[#D62828] hover:bg-[#b20112] text-white border-none shadow-xl gap-2 font-bold px-6 py-2 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all">
+                  <Edit2 size={16} /> Edit Layouts
+                </Button>
+              }
+            />
           ))}
 
           {/* Create New Card */}

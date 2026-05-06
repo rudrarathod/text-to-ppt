@@ -58,15 +58,21 @@ export function PresentationGallery() {
               <PreviewCard 
                 key={presentation.id}
                 title={presentation.name}
-                subtitle={`${presentation.slides.length} Slides • ${formatDistanceToNow(presentation.updatedAt, { addSuffix: true })}`}
                 badge={<span className="text-[10px] text-gray-600 bg-gray-400/5 px-2 py-0.5 rounded border border-gray-400/10">{currentTemplate?.name || "No Template"}</span>}
+                footer={
+                  <div className="flex items-center gap-2">
+                    <span className="bg-[#2d2d30] px-2 py-0.5 rounded text-gray-300">{presentation.slides.length} Slides</span>
+                    <span>&bull;</span>
+                    <span>{formatDistanceToNow(presentation.updatedAt, { addSuffix: true })}</span>
+                  </div>
+                }
                 onClick={() => {
                   setActivePresentation(presentation.id);
                   navigate(`/presentations/${presentation.id}`);
                 }}
                 preview={
                   <div 
-                    className="w-full h-full relative flex items-center justify-center transition-transform group-hover:scale-105 duration-500"
+                    className="w-full h-full relative flex items-center justify-center"
                     style={{ backgroundColor: currentTemplate?.designConfig.bg || '#fff' }}
                   >
                     <h3 
@@ -76,6 +82,21 @@ export function PresentationGallery() {
                        {presentation.slides[0]?.content.title || presentation.name}
                     </h3>
                   </div>
+                }
+                topRightActions={
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (window.confirm(`Are you sure you want to delete "${presentation.name}"?`)) {
+                        deletePresentation(presentation.id);
+                      }
+                    }}
+                    className="h-8 w-8 flex items-center justify-center bg-black/60 hover:bg-[#b20112] text-white rounded-lg transition-colors backdrop-blur-sm shadow-xl"
+                    title="Delete Presentation"
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 }
                 actions={
                   <>
@@ -99,19 +120,6 @@ export function PresentationGallery() {
                     >
                       <Play size={14} className="fill-current" /> Present
                     </Button>
-                    <button 
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (window.confirm(`Are you sure you want to delete "${presentation.name}"?`)) {
-                          deletePresentation(presentation.id);
-                        }
-                      }}
-                      className="absolute top-3 right-3 h-8 w-8 flex items-center justify-center bg-black/50 hover:bg-[#b20112] text-white rounded-full opacity-0 group-hover:opacity-100 transition-all z-20 backdrop-blur-sm"
-                      title="Delete Presentation"
-                    >
-                      <Trash2 size={14} />
-                    </button>
                   </>
                 }
               />
@@ -137,25 +145,23 @@ export function PresentationGallery() {
 
 
         </div>
-      </div>
-
-      <FullScreenModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        title={
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#D62828]/10 flex items-center justify-center">
-              <PresentationIcon className="text-[#D62828]" size={24}/>
+      </div>      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-[#1e1e1e] border border-[#2d2d30] rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
+            <div className="flex items-center justify-between p-6 border-b border-[#2d2d30] bg-[#161618]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#D62828]/10 flex items-center justify-center">
+                  <PresentationIcon className="text-[#D62828]" size={24}/>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">Create New Presentation</h3>
+                  <p className="text-xs text-gray-500">Select a design style to get started</p>
+                </div>
+              </div>
+              <button onClick={() => setShowCreateModal(false)} className="text-gray-500 hover:text-white transition-colors">
+                <X size={24} />
+              </button>
             </div>
-            <div>
-              <h3 className="text-xl font-bold text-white">Create New Presentation</h3>
-              <p className="text-xs text-gray-500">Select a design style to get started</p>
-            </div>
-          </div>
-        }
-      >
-        <div className="flex h-full w-full mx-auto max-w-7xl px-6 py-6">
-          <div className="bg-[#1e1e1e] border border-[#2d2d30] rounded-2xl shadow-2xl w-full overflow-hidden flex max-h-[85vh]">
             
             <div className="flex flex-1 min-h-0">
               {/* Left Sidebar: Template List */}
@@ -223,12 +229,14 @@ export function PresentationGallery() {
                           >
                             {t.name.charAt(0)}
                           </div>
-                          <div className="min-w-0">
-                            <p className={cn("text-sm font-bold truncate", selectedTemplateId === t.id ? "text-white" : "text-gray-400")}>{t.name}</p>
-                            <p className="text-[10px] text-gray-500 truncate">{t.layouts.length} Layouts</p>
+                          <div className="min-w-0 flex-1">
+                             <h4 className="font-bold text-sm text-white truncate">{t.name}</h4>
+                             <p className="text-xs text-gray-500 truncate">{t.layouts.length} slides</p>
                           </div>
                         </div>
-                        {selectedTemplateId === t.id && <div className="w-2 h-2 rounded-full bg-[#D62828] animate-pulse shadow-[0_0_8px_rgba(214,40,40,0.5)]"></div>}
+                        {selectedTemplateId === t.id && (
+                          <div className="w-2 h-2 rounded-full bg-[#D62828]" />
+                        )}
                       </div>
                     ))}
                   </div>
@@ -354,9 +362,7 @@ export function PresentationGallery() {
             </div>
           </div>
         </div>
-      </FullScreenModal>
-
-
+      )}
     </div>
   );
 }
