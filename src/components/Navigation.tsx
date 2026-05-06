@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Presentation, LayoutTemplate, Settings, User, LogOut, ChevronLeft, ChevronRight, Menu } from "lucide-react";
+import { LayoutGrid, Presentation, LayoutTemplate, Settings, User, LogOut, ChevronLeft, ChevronRight, Menu } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useState, useEffect } from "react";
 
@@ -13,20 +13,28 @@ export function Navigation() {
     localStorage.setItem("sidebar-pinned", String(isExpanded));
   }, [isExpanded]);
 
-  const navItems = [
+  interface NavItem {
+    label: string;
+    icon: any;
+    path: string;
+    match: (path: string) => boolean;
+  }
+
+  const navItems: NavItem[] = [
     { 
-      label: "Presentations", 
-      icon: Presentation, 
+      label: "Gallery", 
+      icon: LayoutGrid, 
       path: "/", 
-      match: (p: string) => p === "/" || p.startsWith("/presentations") 
-    },
-    { 
-      label: "Design Library", 
-      icon: LayoutTemplate, 
-      path: "/templates", 
-      match: (p: string) => p.startsWith("/templates") 
+      match: (p: string) => p === "/"
     }
   ];
+
+  navItems.push({ 
+    label: "Design Library", 
+    icon: LayoutTemplate, 
+    path: "/templates", 
+    match: (p: string) => p.startsWith("/templates") 
+  });
 
   return (
     <div 

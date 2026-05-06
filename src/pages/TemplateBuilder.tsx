@@ -569,8 +569,8 @@ export function TemplateBuilder() {
                          <Sparkles className="text-[#D62828]" /> AI Full Template Generator
                        </h3>
                        <div className="flex items-center bg-[#252526] rounded-md border border-[#333] overflow-hidden text-[10px] font-bold text-gray-400">
-                         <button onClick={() => setAiMode('ai')} className={cn("px-3 py-1.5 transition-colors", aiMode === 'ai' && "bg-[#2d2d30] text-white")}>AI Generate</button>
-                         <button onClick={() => setAiMode('prompt')} className={cn("px-3 py-1.5 transition-colors", aiMode === 'prompt' && "bg-[#2d2d30] text-white")}>Raw Prompt</button>
+                         <button onClick={() => setAiMode('ai')} className={cn("px-3 py-1.5 transition-colors", aiMode === 'ai' && "bg-[#2d2d30] text-white")}>AI</button>
+                         <button onClick={() => setAiMode('prompt')} className={cn("px-3 py-1.5 transition-colors", aiMode === 'prompt' && "bg-[#2d2d30] text-white")}>Prompt</button>
                        </div>
                     </div>
                     <p className="text-[#85858b] text-sm mb-6">Describe your presentation's purpose to generate a cohesive set of slide layouts.</p>

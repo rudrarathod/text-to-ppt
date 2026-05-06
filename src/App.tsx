@@ -5,7 +5,7 @@
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Navigation } from "./components/Navigation";
-import { SlideGenerator } from "./pages/SlideGenerator";
+import { PresentationBuilder } from "./pages/PresentationBuilder";
 import { TemplateBuilder } from "./pages/TemplateBuilder";
 import { TemplateGallery } from "./pages/TemplateGallery";
 import { PresentationGallery } from "./pages/PresentationGallery";
@@ -22,8 +22,8 @@ export default function App() {
         <main className="flex-1 overflow-hidden h-full relative">
           <Routes>
             <Route path="/" element={<PresentationGallery />} />
-            <Route path="/presentations/:id" element={<SlideGenerator />} />
-            <Route path="/presentations/:id/present" element={<PresentationViewer />} />
+            <Route path="/builder/:id" element={<PresentationBuilder />} />
+            <Route path="/builder/:id/present" element={<PresentationViewer />} />
             <Route path="/templates" element={<TemplateGallery />} />
             <Route path="/templates/:id" element={<TemplateBuilder />} />
 

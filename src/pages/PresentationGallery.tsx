@@ -9,6 +9,7 @@ import { cn } from "../lib/utils";
 import { SlidePreview } from "../components/SlidePreview";
 import { PageHeader } from "../components/layout/PageHeader";
 import { PreviewCard } from "../components/layout/PreviewCard";
+import { GalleryLayout } from "../components/layout/GalleryLayout";
 import { FullScreenModal } from "../components/layout/FullScreenModal";
 
 export function PresentationGallery() {
@@ -29,7 +30,7 @@ export function PresentationGallery() {
     setActivePresentation(newId);
     setShowCreateModal(false);
     setNewTitle("");
-    navigate(`/presentations/${newId}`);
+    navigate(`/builder/${newId}`);
   };
 
 
@@ -44,108 +45,94 @@ export function PresentationGallery() {
     });
 
   return (
-    <div className="flex flex-col h-full bg-[#111111] overflow-auto text-gray-200">
-      <PageHeader 
-        title="Presentations"
-        icon={<PresentationIcon size={16} className="text-[#D62828]" />}
-      />
-
-      <div className="p-12 max-w-7xl mx-auto w-full">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {presentations.map(presentation => {
-            const currentTemplate = templates.find(t => t.id === presentation.templateId);
-            return (
-              <PreviewCard 
-                key={presentation.id}
-                title={presentation.name}
-                badge={<span className="text-[10px] text-gray-600 bg-gray-400/5 px-2 py-0.5 rounded border border-gray-400/10">{currentTemplate?.name || "No Template"}</span>}
-                footer={
-                  <div className="flex items-center gap-2">
-                    <span className="bg-[#2d2d30] px-2 py-0.5 rounded text-gray-300">{presentation.slides.length} Slides</span>
-                    <span>&bull;</span>
-                    <span>{formatDistanceToNow(presentation.updatedAt, { addSuffix: true })}</span>
-                  </div>
-                }
-                onClick={() => {
-                  setActivePresentation(presentation.id);
-                  navigate(`/presentations/${presentation.id}`);
-                }}
-                preview={
-                  <div 
-                    className="w-full h-full relative flex items-center justify-center"
-                    style={{ backgroundColor: currentTemplate?.designConfig.bg || '#fff' }}
-                  >
-                    <h3 
-                      className="text-center font-bold px-6 line-clamp-3 text-xl drop-shadow-sm pointer-events-none"
-                      style={{ color: currentTemplate?.designConfig.primary || '#000' }}
-                    >
-                       {presentation.slides[0]?.content.title || presentation.name}
-                    </h3>
-                  </div>
-                }
-                topRightActions={
-                  <button 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      if (window.confirm(`Are you sure you want to delete "${presentation.name}"?`)) {
-                        deletePresentation(presentation.id);
-                      }
-                    }}
-                    className="h-8 w-8 flex items-center justify-center bg-black/60 hover:bg-[#b20112] text-white rounded-lg transition-colors backdrop-blur-sm shadow-xl"
-                    title="Delete Presentation"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                }
-                actions={
-                  <>
-                    <Button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActivePresentation(presentation.id);
-                        navigate(`/presentations/${presentation.id}`);
-                      }}
-                      className="bg-[#D62828] hover:bg-[#b20112] text-white border-none shadow-xl gap-2 font-black uppercase tracking-widest text-[10px] px-8 py-2.5 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all duration-300"
-                    >
-                      <Edit2 size={14} /> Edit
-                    </Button>
-                    <Button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActivePresentation(presentation.id);
-                        navigate(`/presentations/${presentation.id}/present`);
-                      }}
-                      className="bg-white hover:bg-gray-200 text-black border-none shadow-xl gap-2 font-black uppercase tracking-widest text-[10px] px-8 py-2.5 rounded-full transform translate-y-8 group-hover:translate-y-0 transition-all duration-300 delay-75"
-                    >
-                      <Play size={14} className="fill-current" /> Present
-                    </Button>
-                  </>
-                }
-              />
-            );
-          })}
-
-          {/* Create New Card */}
-          <div 
+    <>
+    <GalleryLayout 
+      title="Presentations"
+      icon={<PresentationIcon size={16} className="text-[#D62828]" />}
+    >
+      {presentations.map(presentation => {
+        const currentTemplate = templates.find(t => t.id === presentation.templateId);
+        return (
+          <PreviewCard
+            key={presentation.id}
+            title={presentation.name}
+            subtitle={formatDistanceToNow(presentation.updatedAt, { addSuffix: true })}
+            badge={
+              <span className="text-[10px] text-gray-500 font-medium">
+                {presentation.slides.length} slides
+              </span>
+            }
             onClick={() => {
-              setShowCreateModal(true);
-              if (templates.length > 0) {
-                setSelectedTemplateId(templates[0].id);
-                setCurrentLayoutIndex(0);
-              }
+              setActivePresentation(presentation.id);
+              navigate(`/builder/${presentation.id}`);
             }}
-            className="border-2 border-dashed border-[#2d2d30] rounded-xl flex flex-col items-center justify-center p-8 text-gray-500 hover:text-white hover:border-gray-500 hover:bg-gray-500/10 transition-all cursor-pointer min-h-[260px] bg-[#161618]"
-          >
-             <div className="w-16 h-16 rounded-full bg-[#2d2d30] flex items-center justify-center mb-5 group-hover:bg-gray-500 shadow-sm transition-colors">
-               <Plus size={32} className="text-gray-400 group-hover:text-white" />
-             </div>
-             <p className="font-bold font-display text-xl text-white">Manual Presentation</p>
+            preview={
+              <div
+                className="w-full h-full relative flex items-center justify-center"
+                style={{ backgroundColor: currentTemplate?.designConfig.bg || '#1a1a1a' }}
+              >
+                <h3
+                  className="text-center font-bold px-6 line-clamp-3 text-xl drop-shadow-sm pointer-events-none"
+                  style={{ color: currentTemplate?.designConfig.primary || '#ffffff' }}
+                >
+                  {presentation.slides[0]?.content.title || presentation.name}
+                </h3>
+              </div>
+            }
+            menuItems={[
+              {
+                label: 'Open Builder',
+                icon: <Edit2 size={14} />,
+                onClick: (e) => {
+                  e.stopPropagation();
+                  setActivePresentation(presentation.id);
+                  navigate(`/builder/${presentation.id}`);
+                }
+              },
+              {
+                label: 'Present',
+                icon: <Play size={14} />,
+                onClick: (e) => {
+                  e.stopPropagation();
+                  setActivePresentation(presentation.id);
+                  navigate(`/builder/${presentation.id}/present`);
+                }
+              },
+              {
+                label: 'Delete',
+                icon: <Trash2 size={14} />,
+                danger: true,
+                onClick: (e) => {
+                  e.stopPropagation();
+                  if (window.confirm(`Delete "${presentation.name}"?`)) {
+                    deletePresentation(presentation.id);
+                  }
+                }
+              }
+            ]}
+          />
+        );
+      })}
+
+      {/* Create New Card */}
+      <PreviewCard 
+        isCreateCard
+        title="Manual Presentation"
+        onClick={() => {
+          setShowCreateModal(true);
+          if (templates.length > 0) {
+            setSelectedTemplateId(templates[0].id);
+            setCurrentLayoutIndex(0);
+          }
+        }}
+        preview={
+          <div className="w-16 h-16 rounded-full bg-[#2d2d30] flex items-center justify-center group-hover:bg-[#D62828] group-hover:scale-110 transition-all duration-300 shadow-xl">
+            <Plus size={32} className="text-gray-400 group-hover:text-white" />
           </div>
-
-
-        </div>
-      </div>      {showCreateModal && (
+        }
+      />
+    </GalleryLayout>
+    {showCreateModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
           <div className="bg-[#1e1e1e] border border-[#2d2d30] rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
             <div className="flex items-center justify-between p-6 border-b border-[#2d2d30] bg-[#161618]">
@@ -363,6 +350,6 @@ export function PresentationGallery() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

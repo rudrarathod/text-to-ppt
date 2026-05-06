@@ -45,7 +45,7 @@ const extractDefaultContent = (layoutCode: string, existingContent: Record<strin
 
 import { useParams, useNavigate } from "react-router-dom";
 
-export function SlideGenerator() {
+export function PresentationBuilder() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { templates, presentations, activePresentationId, setSlides, addSlide, removeSlide, updateSlideContent, updateSlideLayout, setActiveTemplate, setPresentationTemplate, setActivePresentation } = useAppStore();
@@ -58,7 +58,7 @@ export function SlideGenerator() {
         navigate("/");
       }
     } else if (!id && activePresentationId) {
-      navigate(`/presentations/${activePresentationId}`);
+      navigate(`/builder/${activePresentationId}`);
     }
   }, [id, activePresentationId, presentations, setActivePresentation, navigate]);
 
@@ -411,7 +411,7 @@ export function SlideGenerator() {
               {isSaved ? <><Check size={14} className="text-green-500" /> <span className="hidden sm:inline text-green-500">Saved</span></> : <><Save size={14} /> <span className="hidden sm:inline">Save</span></>}
             </Button>
             <Button 
-              onClick={() => navigate(`/presentations/${activePresentationId}/present`)}
+              onClick={() => navigate(`/builder/${activePresentationId}/present`)}
               className="gap-2 border-[#333] hover:bg-[#2d2d30] shrink-0 h-8 lg:h-10 text-xs lg:text-sm px-3 bg-[#1c1c1e] text-white transition-colors border"
             >
               <Play size={14} className="fill-current" /> <span className="hidden sm:inline">Present</span>
