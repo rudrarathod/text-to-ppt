@@ -13,6 +13,7 @@ import { generateFullPresentationHtml } from "../lib/export";
 const IMAGE_PLACEHOLDER = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300' width='100%25' height='100%25'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Cpath stroke='%239ca3af' stroke-width='4' stroke-dasharray='10,10' d='M20 20 h360 v260 h-360 z' fill='none'/%3E%3Ccircle cx='200' cy='120' r='40' fill='%23d1d5db'/%3E%3Cpath d='M200 160 l50 -50 l80 80 v90 h-260 v-40 l60 -60 z' fill='%23d1d5db'/%3E%3Ctext x='50%25' y='85%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%239ca3af'%3EImage Placeholder%3C/text%3E%3C/svg%3E";
 
 import { PromptSettingsForm, MOOD_OPTIONS, LANGUAGE_OPTIONS, LENGTH_OPTIONS, STYLE_OPTIONS, PRESET_PROMPTS, SINGLE_SLIDE_PROMPTS, DETAIL_OPTIONS, SelectOrCustom } from "../components/PromptSettingsUI";
+import { AIAssistantPanel } from "../components/ai/AIAssistantPanel";
 
 const extractDefaultContent = (layoutCode: string, existingContent: Record<string, any> = {}) => {
   const regex = /\{\{\{?\s*(?:[#^]?(?:if|each|unless)\s+)?([a-zA-Z0-9_]+)\s*\}\}\}?/g;
@@ -939,131 +940,57 @@ export function SlideGenerator() {
             {/* AI Assistant fixed to bottom inside Right Panel */}
             {generatorMode === 'individual' && selectedSlide && (
             <div className={cn(
-              "absolute bottom-6 left-6 right-6 bg-[#161618] border border-[#2d2d30] rounded-2xl shadow-2xl flex flex-col shrink-0 overflow-hidden z-20 transition-all duration-500",
+              "absolute bottom-6 left-6 right-6 z-20 transition-all duration-500",
               activeSidebarTab === 'content' ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none"
             )}>
-               <div className="flex items-center justify-between px-4 py-3 border-b border-[#2d2d30] bg-[#1c1c1e]">
-                 <div className="flex items-center gap-3">
-                   <div className="w-6 h-6 rounded-lg bg-[#D62828]/10 flex items-center justify-center">
-                     <Sparkles size={12} className="text-[#D62828] animate-pulse" />
-                   </div>
-                   <span className="text-white text-[11px] font-black uppercase tracking-widest">AI Designer</span>
-                   <div className="flex items-center bg-[#111111] rounded-md border border-[#2d2d30] overflow-hidden text-[9px] font-bold text-gray-500 p-0.5">
-                     <button onClick={() => setAiMode('ai')} className={cn("px-2 py-1 rounded transition-all", aiMode === 'ai' ? "bg-[#252526] text-white shadow-sm" : "hover:text-gray-300")}>Auto</button>
-                     <button onClick={() => setAiMode('prompt')} className={cn("px-2 py-1 rounded transition-all", aiMode === 'prompt' ? "bg-[#252526] text-white shadow-sm" : "hover:text-gray-300")}>Draft</button>
-                   </div>
-                 </div>
-                 <button onClick={() => setShowPromptSettings(!showPromptSettings)} title="Prompt Settings" className={cn("text-gray-500 hover:text-white transition-colors", showPromptSettings && "text-[#D62828]")}>
-                    <Settings2 size={14} />
-                 </button>
-               </div>
-               
-               {showPromptSettings && (
-                 <div className="px-3 pb-3 border-b border-[#2d2d30] bg-[#1a1a1a]">
-                   <span className="text-[10px] font-bold text-white uppercase opacity-50 block mt-2">Settings</span>
-                   <PromptSettingsForm settings={promptSettings} setSettings={setPromptSettings} />
-                 </div>
-               )}
-               
-               <div className="p-2 space-y-2">
-                 <div className="relative">
-                   <div className="mb-2">
-                     <select 
-                       onChange={e => {
-                          if (e.target.value !== "custom" && e.target.value !== "") {
-                             setAiPrompt(e.target.value);
-                          } else if (e.target.value === "custom") {
-                             if (SINGLE_SLIDE_PROMPTS.some(p => p.value === aiPrompt)) {
-                                 setAiPrompt("");
-                             }
-                          } else {
-                             setAiPrompt("");
-                          }
-                       }}
-                       value={SINGLE_SLIDE_PROMPTS.some(p => p.value === aiPrompt) ? aiPrompt : (aiPrompt ? "custom" : "")}
-                       className="w-full bg-[#1a1a1c] border border-[#333] text-gray-400 text-[10px] rounded p-1.5 outline-none focus:border-[#D62828] font-sans"
-                     >
-                       <option value="">Start from scratch...</option>
-                       {SINGLE_SLIDE_PROMPTS.map(p => (
-                         <option key={p.label} value={p.value}>{p.label}</option>
-                       ))}
-                       <option value="custom">Custom topic...</option>
-                     </select>
-                   </div>
+               <AIAssistantPanel 
+                 promptValue={aiPrompt}
+                 onPromptChange={setAiPrompt}
+                 onGenerate={handleAiGenerate}
+                 isGenerating={isAiLoading}
+                 showPromptSettings={true}
+                 promptSettings={promptSettings}
+                 onPromptSettingsChange={setPromptSettings}
+                 placeholder="e.g. Generate 3 key points..."
+                 defaultMode={aiMode}
+                 onModeChange={(mode) => setAiMode(mode as 'ai' | 'prompt')}
+                 systemPromptBuilder={(p) => buildSlideContentPrompt(p, activeLayout?.code || "", jsonInput, promptSettings)}
+               />
+               {aiMode === 'prompt' && (
+                 <div className="relative mt-2 bg-[#1e1e1e] border border-[#2d2d30] rounded-xl p-2 shadow-2xl">
                    <Textarea 
-                     value={aiPrompt}
-                     onChange={e => setAiPrompt(e.target.value)}
-                     placeholder="e.g. Generate 3 key points..."
-                     className="w-full bg-[#252526] border border-[#333] text-gray-200 text-xs focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-sans resize-none rounded-lg p-2 pr-8 min-h-[50px]"
-                     disabled={isAiLoading}
-                     onKeyDown={(e) => {
-                       if(e.key === 'Enter' && !e.shiftKey) {
-                         e.preventDefault();
-                         if (aiMode === 'ai') {
-                           handleAiGenerate();
-                         } else if (aiPrompt.trim()) {
-                           const fullPrompt = buildSlideContentPrompt(aiPrompt, activeLayout?.code || "", jsonInput, promptSettings);
-                           navigator.clipboard.writeText(fullPrompt);
-                           setCopiedPrompt(true);
-                           setTimeout(() => setCopiedPrompt(false), 2000);
-                         }
-                       }
-                     }}
+                     value={aiResponse}
+                     onChange={e => setAiResponse(e.target.value)}
+                     placeholder="Paste JSON here..."
+                     className="w-full bg-[#252526] border border-[#333] text-gray-200 text-xs focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-sans resize-none rounded-lg p-2 pb-8 min-h-[50px]"
                    />
                    <button 
                      onClick={() => {
-                       if (aiMode === 'ai') {
-                         handleAiGenerate();
-                       } else if (aiPrompt.trim()) {
-                         const fullPrompt = buildSlideContentPrompt(aiPrompt, activeLayout?.code || "", jsonInput, promptSettings);
-                         navigator.clipboard.writeText(fullPrompt);
-                         setCopiedPrompt(true);
-                         setTimeout(() => setCopiedPrompt(false), 2000);
+                       if (aiResponse.trim()) {
+                         const jsonMatch = aiResponse.match(/<json>([\s\S]*?)<\/json>/i);
+                         let jsonStr = jsonMatch ? jsonMatch[1].trim() : aiResponse;
+                         if (!jsonMatch) {
+                             const markdownMatch = aiResponse.match(/```json\n([\s\S]*?)```/i);
+                             jsonStr = markdownMatch ? markdownMatch[1].trim() : aiResponse.trim();
+                         }
+                         setJsonInput(jsonStr);
+                         try {
+                           const parsed = JSON.parse(jsonStr);
+                           updateSlideContent(selectedSlideId!, parsed);
+                           setJsonError("");
+                         } catch(e: any) {
+                           setJsonError("Invalid JSON pasted: " + e.message);
+                         }
+                         setAiResponse("");
                        }
                      }}
-                     disabled={isAiLoading || !aiPrompt.trim()}
-                     className="absolute right-2 bottom-2 text-[#5c403d] hover:text-[#D62828] disabled:opacity-50 transition-colors bg-[#1e1e1e] p-1 rounded"
-                     title={aiMode === 'ai' ? "Generate with AI" : "Copy Prompt"}
+                     disabled={!aiResponse.trim()}
+                     className="absolute right-3 bottom-3 bg-[#D62828] hover:bg-[#b20112] text-white disabled:opacity-50 transition-colors px-2 py-0.5 rounded text-[10px] font-bold"
                    >
-                     {isAiLoading ? <span className="animate-pulse flex items-center justify-center p-0.5"><Mic size={14} className="opacity-0"/>...</span> : (aiMode === 'ai' ? <Sparkles size={14} /> : (copiedPrompt ? <Check size={14} className="text-green-500" /> : <Copy size={14} />))}
+                     Apply
                    </button>
                  </div>
-                 {aiMode === 'prompt' && (
-                   <div className="relative mt-1">
-                     <Textarea 
-                       value={aiResponse}
-                       onChange={e => setAiResponse(e.target.value)}
-                       placeholder="Paste JSON here..."
-                       className="w-full bg-[#252526] border border-[#333] text-gray-200 text-xs focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-sans resize-none rounded-lg p-2 pb-8 min-h-[50px]"
-                     />
-                     <button 
-                       onClick={() => {
-                         if (aiResponse.trim()) {
-                           const jsonMatch = aiResponse.match(/<json>([\s\S]*?)<\/json>/i);
-                           let jsonStr = jsonMatch ? jsonMatch[1].trim() : aiResponse;
-                           if (!jsonMatch) {
-                               const markdownMatch = aiResponse.match(/```json\n([\s\S]*?)```/i);
-                               jsonStr = markdownMatch ? markdownMatch[1].trim() : aiResponse.trim();
-                           }
-                           setJsonInput(jsonStr);
-                           try {
-                             const parsed = JSON.parse(jsonStr);
-                             updateSlideContent(selectedSlideId!, parsed);
-                             setJsonError("");
-                           } catch(e: any) {
-                             setJsonError("Invalid JSON pasted: " + e.message);
-                           }
-                           setAiResponse("");
-                         }
-                       }}
-                       disabled={!aiResponse.trim()}
-                       className="absolute right-2 bottom-2 bg-[#D62828] hover:bg-[#b20112] text-white disabled:opacity-50 transition-colors px-2 py-0.5 rounded text-[10px] font-bold"
-                     >
-                       Apply
-                     </button>
-                   </div>
-                 )}
-               </div>
+               )}
             </div>
             )}
 

@@ -5,39 +5,11 @@ import { Button, Textarea } from "../components/ui";
 import { Plus, LayoutTemplate, Trash2, Edit2, X, Download, Upload, Copy, Palette, ChevronRight, Sparkles, Wand2, Loader2, Check, Settings2, ChevronUp, ChevronDown, Search } from "lucide-react";
 import { cn } from "../lib/utils";
 import { askAiForDesignConfig, buildDesignConfigPrompt } from "../lib/gemini";
+import { GoogleFontLoader, POPULAR_FONTS } from "../lib/typography";
+import { ThemeSettingsPanel } from "../components/design-system/ThemeSettingsPanel";
+import { AIAssistantPanel } from "../components/ai/AIAssistantPanel";
 
-const GoogleFontLoader = ({ fonts }: { fonts: string[] }) => {
-  useEffect(() => {
-    if (fonts.length === 0) return;
-    
-    const uniqueFonts = Array.from(new Set(fonts)).filter(f => f && f !== 'sans-serif' && f !== 'serif' && f !== 'monospace');
-    if (uniqueFonts.length === 0) return;
 
-    const fontFamilies = uniqueFonts.map(f => f.replace(/\s+/g, '+')).join('|');
-    const linkId = 'dynamic-google-fonts';
-    let link = document.getElementById(linkId) as HTMLLinkElement;
-    
-    if (!link) {
-      link = document.createElement('link');
-      link.id = linkId;
-      link.rel = 'stylesheet';
-      document.head.appendChild(link);
-    }
-    
-    link.href = `https://fonts.googleapis.com/css2?family=${uniqueFonts.map(f => `${f.replace(/\s+/g, '+')}:wght@100;200;300;400;500;600;700;800;900`).join('&family=')}&display=swap`;
-  }, [fonts]);
-
-  return null;
-};
-
-const POPULAR_FONTS = [
-  "Inter", "Montserrat", "Open Sans", "Roboto", "Lato", "Poppins", "Oswald", "Lora", 
-  "Montserrat", "Raleway", "Ubuntu", "Merriweather", "Playfair Display", "Nunito", 
-  "Muli", "Quicksand", "Work Sans", "Rubik", "Kanit", "Nanum Gothic", "Fira Sans", 
-  "PT Sans", "Josefin Sans", "Bebas Neue", "Arvo", "Libre Baskerville", "Exo 2", 
-  "Pacifico", "Caveat", "Indie Flower", "Dancing Script", "Zilla Slab", "Space Grotesk", 
-  "Outfit", "Be Vietnam Pro", "JetBrains Mono", "Space Mono", "Syne", "Urbanist", "Clash Display"
-];
 
 const RealtimePreview = ({ config }: { config: any }) => {
   return (
@@ -297,36 +269,7 @@ export function TemplateGallery() {
     }
   };
 
-  const [fontSearch, setFontSearch] = useState({ heading: "", body: "" });
-  
-  const headingFonts = useMemo(() => {
-    const base = fontSearch.heading 
-      ? [fontSearch.heading, ...POPULAR_FONTS.filter(f => f.toLowerCase().includes(fontSearch.heading.toLowerCase()) && f !== fontSearch.heading)]
-      : POPULAR_FONTS;
-    if (designConfig.headingFont && !base.includes(designConfig.headingFont)) {
-      return [designConfig.headingFont, ...base];
-    }
-    return Array.from(new Set(base));
-  }, [fontSearch.heading, designConfig.headingFont]);
 
-  const bodyFonts = useMemo(() => {
-    const base = fontSearch.body 
-      ? [fontSearch.body, ...POPULAR_FONTS.filter(f => f.toLowerCase().includes(fontSearch.body.toLowerCase()) && f !== fontSearch.body)]
-      : POPULAR_FONTS;
-    if (designConfig.fontFamily && !base.includes(designConfig.fontFamily)) {
-      return [designConfig.fontFamily, ...base];
-    }
-    return Array.from(new Set(base));
-  }, [fontSearch.body, designConfig.fontFamily]);
-
-  const radii = [
-    { name: 'None', value: '0px' },
-    { name: 'Small', value: '0.25rem' },
-    { name: 'Medium', value: '0.5rem' },
-    { name: 'Large', value: '0.75rem' },
-    { name: 'X-Large', value: '1.25rem' },
-    { name: 'Full', value: '9999px' },
-  ];
 
   const handleDelete = (e: React.MouseEvent, id: string, name: string) => {
     e.stopPropagation();
@@ -632,86 +575,38 @@ export function TemplateGallery() {
                               <p className="text-gray-400 text-xs opacity-70">Synthesize icons, fonts, and colors into a production design system.</p>
                            </div>
 
-                           <div className="bg-[#1e1e1e] border border-[#2d2d30] rounded-xl shadow-2xl flex flex-col shrink-0 overflow-hidden z-10 w-full">
-                              <div className="flex items-center justify-between px-4 py-3 border-b border-[#2d2d30] bg-[#1a1a1a]">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-2 h-2 rounded-full bg-[#D62828] animate-pulse"></div>
-                                  <span className="text-white text-xs font-bold flex items-center gap-2 tracking-tight">AI Assistant</span>
-                                </div>
-                                <div className="flex items-center bg-[#252526] rounded-md border border-[#333] overflow-hidden text-[9px] font-bold text-gray-400 p-0.5">
-                                  <button 
-                                    onClick={() => setAiMode('ai')} 
-                                    className={cn("px-2.5 py-1 rounded transition-colors", aiMode === 'ai' ? "bg-[#2d2d30] text-white" : "hover:text-gray-200")}
-                                  >Direct AI</button>
-                                  <button 
-                                    onClick={() => setAiMode('prompt')} 
-                                    className={cn("px-2.5 py-1 rounded transition-colors", aiMode === 'prompt' ? "bg-[#2d2d30] text-white" : "hover:text-gray-200")}
-                                  >Raw Prompt</button>
-                                </div>
-                              </div>
-                              <div className="p-4 space-y-4">
-                                <div className="relative">
+                           <div className="z-10 w-full">
+                              <AIAssistantPanel 
+                                promptValue={aiDesignPrompt}
+                                onPromptChange={setAiDesignPrompt}
+                                onGenerate={handleAiDesignGenerate}
+                                isGenerating={isGeneratingDesign}
+                                placeholder="Describe your brand's mood, color palette, or vibe..."
+                                defaultMode={aiMode}
+                                onModeChange={(mode) => setAiMode(mode as 'ai' | 'prompt')}
+                                systemPromptBuilder={buildDesignConfigPrompt}
+                              />
+                              {aiMode === 'prompt' && (
+                                <div className="relative mt-2 bg-[#1e1e1e] border border-[#2d2d30] rounded-xl p-4 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-300">
+                                  <div className="flex items-center justify-between mb-2">
+                                     <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Apply AI Result</span>
+                                     <span className="text-[9px] text-[#D62828] font-mono">Expects: &lt;json&gt; content</span>
+                                  </div>
                                   <Textarea 
-                                    value={aiDesignPrompt}
-                                    onChange={e => setAiDesignPrompt(e.target.value)}
-                                    placeholder="Describe your brand's mood, color palette, or vibe..."
-                                    className="w-full bg-[#252526] border border-[#333] text-gray-200 text-sm focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-sans resize-none rounded-lg p-3 pr-10 min-h-[100px]"
-                                    disabled={isGeneratingDesign}
-                                    onKeyDown={(e) => {
-                                      if(e.key === 'Enter' && !e.shiftKey) {
-                                        e.preventDefault();
-                                        if (aiMode === 'ai') {
-                                          handleAiDesignGenerate();
-                                        } else if (aiDesignPrompt.trim()) {
-                                          const textPrompt = buildDesignConfigPrompt(aiDesignPrompt);
-                                          navigator.clipboard.writeText(textPrompt);
-                                          setCopiedPrompt(true);
-                                          setTimeout(() => setCopiedPrompt(false), 2000);
-                                        }
-                                      }
-                                    }}
+                                    value={aiResponseText}
+                                    onChange={e => setAiResponseText(e.target.value)}
+                                    placeholder="Paste the full AI response here..."
+                                    className="w-full bg-[#252526] border border-[#333] text-gray-200 text-[11px] focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-mono resize-none rounded-lg p-3 min-h-[80px]"
                                   />
                                   <button 
-                                    onClick={() => {
-                                      if (aiMode === 'ai') {
-                                        handleAiDesignGenerate();
-                                      } else if (aiDesignPrompt.trim()) {
-                                        const textPrompt = buildDesignConfigPrompt(aiDesignPrompt);
-                                        navigator.clipboard.writeText(textPrompt);
-                                        setCopiedPrompt(true);
-                                        setTimeout(() => setCopiedPrompt(false), 2000);
-                                      }
-                                    }}
-                                    disabled={isGeneratingDesign || !aiDesignPrompt.trim()}
-                                    className="absolute right-3 bottom-3 text-[#5c403d] hover:text-[#D62828] disabled:opacity-50 transition-colors bg-[#1e1e1e] p-1.5 rounded-lg border border-white/5"
-                                    title={aiMode === 'ai' ? "Generate Design" : "Copy System Prompt"}
+                                    onClick={handleApplyAiResponse}
+                                    disabled={!aiResponseText.trim()}
+                                    className="absolute right-6 bottom-6 bg-[#D62828] hover:bg-[#b20112] text-white disabled:opacity-50 transition-colors px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-2 shadow-lg"
                                   >
-                                    {isGeneratingDesign ? <Loader2 size={16} className="animate-spin" /> : (aiMode === 'ai' ? <Sparkles size={16} /> : (copiedPrompt ? <Check size={16} className="text-green-500" /> : <Copy size={16} />))}
+                                    <Download size={14} /> Apply
                                   </button>
                                 </div>
-
-                                {aiMode === 'prompt' && (
-                                  <div className="relative animate-in fade-in slide-in-from-top-2 duration-300">
-                                    <div className="flex items-center justify-between mb-2">
-                                       <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Apply AI Result</span>
-                                       <span className="text-[9px] text-[#D62828] font-mono">Expection: &lt;json&gt; content</span>
-                                    </div>
-                                    <Textarea 
-                                      value={aiResponseText}
-                                      onChange={e => setAiResponseText(e.target.value)}
-                                      placeholder="Paste the full AI response here..."
-                                      className="w-full bg-[#252526] border border-[#333] text-gray-200 text-[11px] focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-mono resize-none rounded-lg p-3 min-h-[80px]"
-                                    />
-                                    <button 
-                                      onClick={handleApplyAiResponse}
-                                      disabled={!aiResponseText.trim()}
-                                      className="absolute right-3 bottom-3 bg-[#D62828] hover:bg-[#b20112] text-white disabled:opacity-50 transition-colors px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-2 shadow-lg"
-                                    >
-                                      <Download size={14} /> Apply
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
+                              )}
                            </div>
                         </div>
 
@@ -740,169 +635,11 @@ export function TemplateGallery() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 py-8">
                        {/* Manual Controls */}
                        <div className="space-y-12">
-                          <div className="space-y-10">
-                            {/* Color Palette section */}
-                            <section className="space-y-6">
-                               <h4 className="text-sm font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                                 <Palette size={14} className="text-[#D62828]" /> Brand Palette
-                               </h4>
-                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                 {[
-                                   { label: 'Primary Brand', key: 'primary' },
-                                   { label: 'Accent / Highlight', key: 'accent' },
-                                   { label: 'Secondary', key: 'secondary' },
-                                   { label: 'Background', key: 'bg' },
-                                   { label: 'Surface', key: 'surface' },
-                                   { label: 'Surface Contrast', key: 'surfaceContrast' }
-                                 ].map(item => (
-                                   <div key={item.key} className="group">
-                                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-2">{item.label}</label>
-                                      <div className="flex items-center gap-3 bg-white/5 p-2 rounded-xl border border-white/5 group-focus-within:border-[#D62828]/50 transition-all">
-                                        <input 
-                                          type="color" 
-                                          value={(designConfig as any)[item.key]} 
-                                          onChange={(e) => setDesignConfig({...designConfig, [item.key]: e.target.value})}
-                                          className="w-10 h-10 rounded-lg cursor-pointer border-none bg-transparent"
-                                        />
-                                        <input 
-                                          type="text" 
-                                          value={(designConfig as any)[item.key]}
-                                          onChange={(e) => setDesignConfig({...designConfig, [item.key]: e.target.value})}
-                                          className="flex-1 bg-transparent text-white font-mono text-[11px] outline-none"
-                                        />
-                                      </div>
-                                   </div>
-                                 ))}
-                               </div>
-                            </section>
-
-                             {/* Typography section */}
-                             <section className="space-y-6">
-                                <h4 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Typography Systems</h4>
-                                <div className="space-y-8">
-                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                      <div className="space-y-3">
-                                         <div className="flex items-center justify-between">
-                                            <label className="text-[10px] font-bold text-gray-400">Heading Font</label>
-                                            <div className="relative group/search">
-                                               <Search size={10} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-600" />
-                                               <input 
-                                                 type="text" 
-                                                 value={fontSearch.heading}
-                                                 onChange={e => setFontSearch({...fontSearch, heading: e.target.value})}
-                                                 placeholder="Search or Type Any Google Font..."
-                                                 className="bg-white/5 border border-white/5 rounded-md px-6 py-1 text-[9px] text-white outline-none focus:border-[#D62828] w-40 transition-all"
-                                               />
-                                            </div>
-                                         </div>
-                                         <select 
-                                           value={designConfig.headingFont}
-                                           onChange={(e) => setDesignConfig({...designConfig, headingFont: e.target.value})}
-                                           className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#D62828]"
-                                         >
-                                           {headingFonts.map(f => <option key={f} value={f} className="bg-[#1e1e1e]">{f}</option>)}
-                                         </select>
-                                      </div>
-                                      <div className="space-y-3">
-                                         <div className="flex items-center justify-between">
-                                            <label className="text-[10px] font-bold text-gray-400">Body Font</label>
-                                            <div className="relative group/search">
-                                               <Search size={10} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-600" />
-                                               <input 
-                                                 type="text" 
-                                                 value={fontSearch.body}
-                                                 onChange={e => setFontSearch({...fontSearch, body: e.target.value})}
-                                                 placeholder="Search or Type Any Google Font..."
-                                                 className="bg-white/5 border border-white/5 rounded-md px-6 py-1 text-[9px] text-white outline-none focus:border-[#D62828] w-40 transition-all"
-                                               />
-                                            </div>
-                                         </div>
-                                         <select 
-                                           value={designConfig.fontFamily}
-                                           onChange={(e) => setDesignConfig({...designConfig, fontFamily: e.target.value})}
-                                           className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#D62828]"
-                                         >
-                                           {bodyFonts.map(f => <option key={f} value={f} className="bg-[#1e1e1e]">{f}</option>)}
-                                         </select>
-                                      </div>
-                                   </div>
-
-                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                                     <div>
-                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-2">Heading Wt</label>
-                                        <input 
-                                          type="text" 
-                                          value={designConfig.headingWeight}
-                                          onChange={e => setDesignConfig({...designConfig, headingWeight: e.target.value})}
-                                          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-xs font-mono"
-                                        />
-                                     </div>
-                                     <div>
-                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-2">H size</label>
-                                        <input 
-                                          type="text" 
-                                          value={designConfig.headingSize}
-                                          onChange={e => setDesignConfig({...designConfig, headingSize: e.target.value})}
-                                          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-xs font-mono"
-                                        />
-                                     </div>
-                                     <div>
-                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-2">Body size</label>
-                                        <input 
-                                          type="text" 
-                                          value={designConfig.bodySize}
-                                          onChange={e => setDesignConfig({...designConfig, bodySize: e.target.value})}
-                                          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-xs font-mono"
-                                        />
-                                     </div>
-                                     <div>
-                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-2">Spacing</label>
-                                        <input 
-                                          type="text" 
-                                          value={designConfig.letterSpacing}
-                                          onChange={e => setDesignConfig({...designConfig, letterSpacing: e.target.value})}
-                                          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-xs font-mono"
-                                        />
-                                     </div>
-                                  </div>
-                               </div>
-                            </section>
-
-                            {/* Shapes & Structure */}
-                            <section className="space-y-6">
-                               <h4 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Shapes & Rhythm</h4>
-                               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                  <div className="space-y-4">
-                                     <label className="text-[10px] font-bold text-gray-400">Global Radius</label>
-                                     <div className="grid grid-cols-3 gap-2">
-                                       {radii.map(r => (
-                                         <button
-                                           key={r.name}
-                                           onClick={() => setDesignConfig({...designConfig, borderRadius: r.value})}
-                                           className={cn(
-                                             "px-3 py-2 text-[9px] font-bold rounded-lg border transition-all",
-                                             designConfig.borderRadius === r.value ? "bg-white text-black border-white" : "bg-white/5 border-white/10 text-gray-500"
-                                           )}
-                                         >{r.name}</button>
-                                       ))}
-                                     </div>
-                                  </div>
-                                  <div className="space-y-4">
-                                     <label className="text-[10px] font-bold text-gray-400">Alignment Strategy</label>
-                                     <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
-                                        <button 
-                                          onClick={() => setDesignConfig({...designConfig, contentAlignment: 'left'})}
-                                          className={cn("flex-1 py-2 text-xs font-bold rounded-lg transition-all", designConfig.contentAlignment === 'left' ? "bg-white text-black" : "text-gray-500")}
-                                        >Left</button>
-                                        <button 
-                                          onClick={() => setDesignConfig({...designConfig, contentAlignment: 'center'})}
-                                          className={cn("flex-1 py-2 text-xs font-bold rounded-lg transition-all", designConfig.contentAlignment === 'center' ? "bg-white text-black" : "text-gray-500")}
-                                        >Center</button>
-                                     </div>
-                                  </div>
-                               </div>
-                            </section>
-                          </div>
+                          <ThemeSettingsPanel 
+                            config={designConfig}
+                            onChange={(updates) => setDesignConfig(prev => ({ ...prev, ...updates }))}
+                            layout="grid"
+                          />
                        </div>
 
                        {/* Preview persistence */}

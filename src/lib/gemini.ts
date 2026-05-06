@@ -1,17 +1,81 @@
-import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
+import { openrouter, StreamOptions } from "./openrouter";
+import * as errors from "@openrouter/sdk/models/errors";
+import { useAppStore } from "../store";
 
-let aiInstance: GoogleGenAI | null = null;
+export async function askAi(prompt: string, options?: { model?: string, stream?: boolean } & StreamOptions): Promise<string | null> {
+  const openRouterKey = process.env.OPENROUTER_API_KEY;
+  
+  if (openRouterKey && openRouterKey !== "your_api_key_here") {
+    let retries = 3;
+    let delay = 1000;
 
-export function getGemini() {
-  if (!aiInstance) {
-    const key = process.env.GEMINI_API_KEY;
-    if (!key) {
-      console.error("GEMINI_API_KEY environment variable is missing.");
-      return null;
+    while (retries >= 0) {
+      try {
+        const stream = await openrouter.chat.send({
+          chatRequest: {
+            model: options?.model || "google/gemma-4-31b-it:free",
+            messages: [
+              {
+                role: "user",
+                content: prompt
+              }
+            ],
+            stream: options?.stream ?? false
+          }
+        });
+
+        let response = "";
+        
+        // If streaming is requested, we use the for await loop
+        if (options?.stream) {
+          // @ts-ignore
+          for await (const chunk of stream) {
+            const content = chunk.choices[0]?.delta?.content;
+            if (content) {
+              response += content;
+              if (options.onChunk) options.onChunk(content);
+            }
+
+            if (chunk.usage && options.onUsage) {
+              options.onUsage({
+                reasoningTokens: (chunk.usage as any).reasoning_tokens || (chunk.usage as any).reasoningTokens,
+                promptTokens: chunk.usage.promptTokens,
+                completionTokens: chunk.usage.completionTokens,
+                totalTokens: chunk.usage.totalTokens
+              });
+            }
+          }
+          return response;
+        } else {
+          // Non-streaming response
+          const res = stream as any; // The SDK returns the full response if stream is false
+          return res.choices[0]?.message?.content || "";
+        }
+      } catch (e: any) {
+        const isRateLimit = e instanceof errors.TooManyRequestsResponseError || e.status === 429 || e.name === 'TooManyRequestsResponseError';
+        
+        if (isRateLimit && retries > 0) {
+          console.warn(`OpenRouter rate limit hit. Retrying in ${delay}ms... (${retries} retries left)`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          retries--;
+          delay *= 2;
+          continue;
+        }
+
+        const errorMsg = isRateLimit 
+          ? "AI rate limit reached. Please try again later." 
+          : `AI Error: ${e.message || "An unexpected error occurred"}`;
+        
+        useAppStore.getState().addToast(errorMsg, "error");
+        console.error("OpenRouter Error:", e);
+        return null;
+      }
     }
-    aiInstance = new GoogleGenAI({ apiKey: key });
+  } else {
+    useAppStore.getState().addToast("OpenRouter API key missing. Please check your .env file.", "error");
   }
-  return aiInstance;
+
+  return null;
 }
 
 export function buildLayoutPrompt(prompt: string, currentCode: string, currentJson: string, designConfig?: any, options?: PromptSettings): string {
@@ -72,6 +136,7 @@ export interface PromptSettings {
   language?: string;
   style?: string;
   detailLevel?: string;
+  model?: string;
 }
 
 function buildOptionsString(options?: PromptSettings): string {
@@ -109,14 +174,8 @@ IMPORTANT: You may see image URLs starting with 'idb-image://'. These are valid 
 }
 
 export async function askAiForSlideContent(prompt: string, layoutCode: string, currentJson: string, options?: PromptSettings): Promise<string | null> {
-  const ai = getGemini();
-  if (!ai) return null;
-  const res = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: [{ role: "user", parts: [{ text: buildSlideContentPrompt(prompt, layoutCode, currentJson, options) }] }]
-  });
-
-  const text = res.text || "";
+  const text = await askAi(buildSlideContentPrompt(prompt, layoutCode, currentJson, options), { model: options?.model });
+  if (!text) return null;
   const jsonMatch = text.match(/<json>([\s\S]*?)<\/json>/i);
   if (jsonMatch && jsonMatch[1]) {
     return jsonMatch[1].trim();
@@ -154,14 +213,8 @@ Do not include any HTML or markdown formatting outside these tags.`;
 }
 
 export async function askAiForFullPresentation(prompt: string, layouts: {id: string, name: string, code: string}[], options?: PromptSettings): Promise<any[] | null> {
-  const ai = getGemini();
-  if (!ai) return null;
-  const res = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: [{ role: "user", parts: [{ text: buildPresentationPrompt(prompt, layouts, options) }] }]
-  });
-
-  const text = res.text || "";
+  const text = await askAi(buildPresentationPrompt(prompt, layouts, options), { model: options?.model });
+  if (!text) return null;
   const jsonMatch = text.match(/<json>([\s\S]*?)<\/json>/i);
   let jsonStr = "";
   if (jsonMatch && jsonMatch[1]) {
@@ -237,14 +290,8 @@ Return ONLY the FLAT JSON object inside <json>...</json> tags.`;
 }
 
 export async function askAiForDesignConfig(prompt: string, options?: PromptSettings): Promise<any | null> {
-  const ai = getGemini();
-  if (!ai) return null;
-  const res = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: [{ role: "user", parts: [{ text: buildDesignConfigPrompt(prompt, options) }] }]
-  });
-
-  const text = res.text || "";
+  const text = await askAi(buildDesignConfigPrompt(prompt, options), { model: options?.model });
+  if (!text) return null;
   const jsonMatch = text.match(/<json>([\s\S]*?)<\/json>/i) || text.match(/```json\n([\s\S]*?)```/i);
   let jsonStr = jsonMatch ? jsonMatch[1].trim() : text.trim();
   try {
@@ -293,14 +340,8 @@ Important: Return ONLY valid JSON inside <json> tags.`;
 }
 
 export async function askAiForDesignUpdate(prompt: string, currentConfig: any, options?: PromptSettings): Promise<any | null> {
-  const ai = getGemini();
-  if (!ai) return null;
-  const res = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: [{ role: "user", parts: [{ text: buildDesignUpdatePrompt(prompt, currentConfig, options) }] }]
-  });
-
-  const text = res.text || "";
+  const text = await askAi(buildDesignUpdatePrompt(prompt, currentConfig, options), { model: options?.model });
+  if (!text) return null;
   const jsonMatch = text.match(/<json>([\s\S]*?)<\/json>/i) || text.match(/```json\n([\s\S]*?)```/i);
   let jsonStr = jsonMatch ? jsonMatch[1].trim() : text.trim();
   try {
@@ -311,14 +352,8 @@ export async function askAiForDesignUpdate(prompt: string, currentConfig: any, o
 }
 
 export async function askAiForLayoutCode(prompt: string, currentCode: string, currentJson: string, designConfig?: any, options?: PromptSettings): Promise<{code: string, json: string | null}> {
-  const ai = getGemini();
-  if (!ai) return { code: currentCode, json: null };
-  const res = await ai.models.generateContent({
-    model: "gemini-2.0-flash", // Complex coding task
-    contents: [{ role: "user", parts: [{ text: buildLayoutPrompt(prompt, currentCode, currentJson, designConfig, options) }] }]
-  });
-
-  const text = res.text || "";
+  const text = await askAi(buildLayoutPrompt(prompt, currentCode, currentJson, designConfig, options), { model: options?.model });
+  if (!text) return { code: currentCode, json: null };
   let finalCode = currentCode;
   let finalJson = null;
 
@@ -378,14 +413,8 @@ Important: Do not answer with anything outside the <json> tags.`;
 }
 
 export async function askAiForFullTemplate(prompt: string, currentLayouts: {id: string, name: string}[], options?: PromptSettings): Promise<any[] | null> {
-  const ai = getGemini();
-  if (!ai) return null;
-  const res = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: [{ role: "user", parts: [{ text: buildFullTemplatePrompt(prompt, currentLayouts, options) }] }]
-  });
-  
-  const text = res.text || "";
+  const text = await askAi(buildFullTemplatePrompt(prompt, currentLayouts, options), { model: options?.model });
+  if (!text) return null;
   const jsonMatch = text.match(/<json>([\s\S]*?)<\/json>/i) || text.match(/```json\n([\s\S]*?)```/i);
   let jsonStr = jsonMatch ? jsonMatch[1].trim() : text.trim();
   try {
@@ -499,14 +528,8 @@ Generate the final presentation now.`;
 }
 
 export async function askAiForFullPresentationMagic(prompt: string, designConfig?: any, options?: PromptSettings): Promise<any[] | null> {
-  const ai = getGemini();
-  if (!ai) return null;
-  const res = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: [{ role: "user", parts: [{ text: buildPresentationMagicPrompt(prompt, designConfig, options) }] }]
-  });
-
-  const text = res.text || "";
+  const text = await askAi(buildPresentationMagicPrompt(prompt, designConfig, options), { model: options?.model });
+  if (!text) return null;
   const jsonMatch = text.match(/<json>([\s\S]*?)<\/json>/i) || text.match(/```json\n([\s\S]*?)```/i);
   let jsonStr = jsonMatch ? jsonMatch[1].trim() : text.trim();
 
@@ -548,14 +571,8 @@ Ensure the slide remains perfectly contained within the 1280x720 canvas with no 
 }
 
 export async function askAiForSlideRefinement(prompt: string, currentCode: string, currentJson: string, designConfig?: any, options?: PromptSettings): Promise<{code: string, content: any} | null> {
-  const ai = getGemini();
-  if (!ai) return null;
-  const res = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: [{ role: "user", parts: [{ text: buildSlideRefinementPrompt(prompt, currentCode, currentJson, designConfig, options) }] }]
-  });
-
-  const text = res.text || "";
+  const text = await askAi(buildSlideRefinementPrompt(prompt, currentCode, currentJson, designConfig, options), { model: options?.model });
+  if (!text) return null;
   const jsonMatch = text.match(/<json>([\s\S]*?)<\/json>/i) || text.match(/```json\n([\s\S]*?)```/i);
   let jsonStr = jsonMatch ? jsonMatch[1].trim() : text.trim();
 

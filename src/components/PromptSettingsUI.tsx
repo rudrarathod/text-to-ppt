@@ -58,6 +58,14 @@ export const DETAIL_OPTIONS = [
   { label: "Comprehensive", value: "Highly detailed and comprehensive analysis" }
 ];
 
+export const MODEL_OPTIONS = [
+  { label: "Gemma 4 31B (Free)", value: "google/gemma-4-31b-it:free" },
+  { label: "Gemini 2.0 Flash (OpenRouter)", value: "google/gemini-2.0-flash-001" },
+  { label: "DeepSeek V3", value: "deepseek/deepseek-chat" },
+  { label: "Claude 3.5 Sonnet", value: "anthropic/claude-3.5-sonnet" },
+  { label: "GPT-4o", value: "openai/gpt-4o" }
+];
+
 export const SelectOrCustom = ({ 
   label, 
   value, 
@@ -155,6 +163,13 @@ export const PromptSettingsForm = ({ settings, setSettings }: { settings: Prompt
          onChange={v => setSettings({...settings, style: v})} 
          options={STYLE_OPTIONS} 
          placeholder="e.g. Corporate" 
+      />
+      <SelectOrCustom 
+         label="AI Model" 
+         value={settings.model || ''} 
+         onChange={v => setSettings({...settings, model: v})} 
+         options={MODEL_OPTIONS} 
+         placeholder="e.g. google/gemma-4-31b-it:free" 
       />
     </div>
   );

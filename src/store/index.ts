@@ -23,7 +23,7 @@ export interface Presentation {
   id: string;
   name: string;
   templateId: string;
-  builder?: 'default' | 'magic';
+
   slides: SlideData[];
   createdAt: number;
   updatedAt: number;
@@ -70,6 +70,12 @@ export interface SlideTemplate {
   layouts: LayoutDef[];
 }
 
+export interface Toast {
+  id: string;
+  message: string;
+  type: 'success' | 'error' | 'info';
+}
+
 interface AppState {
   templates: SlideTemplate[];
   activeTemplateId: string; // Deprecating or keeping as template focus
@@ -89,7 +95,7 @@ interface AppState {
   renameLayoutInActiveTemplate: (layoutId: string, name: string) => void;
   removeLayoutFromActiveTemplate: (layoutId: string) => void;
 
-  createPresentation: (name: string, templateId: string, builder?: 'default' | 'magic') => string;
+  createPresentation: (name: string, templateId: string) => string;
   deletePresentation: (id: string) => void;
   setActivePresentation: (id: string | null) => void;
   renamePresentation: (id: string, name: string) => void;
@@ -103,6 +109,10 @@ interface AppState {
   addSlide: (slide: SlideData) => void;
   removeSlide: (slideId: string) => void;
   updateTemplateDesign: (templateId: string, config: Partial<DesignConfig>) => void;
+  
+  toasts: Toast[];
+  addToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+  removeToast: (id: string) => void;
 }
 
 const DEFAULT_LAYOUTS: LayoutDef[] = [
@@ -267,7 +277,7 @@ export const useAppStore = create<AppState>()(
           id: "p-default",
           name: "My First Presentation",
           templateId: "t-default",
-          builder: 'default',
+
           slides: DEFAULT_SLIDES,
           createdAt: Date.now(),
           updatedAt: Date.now()
@@ -381,14 +391,14 @@ export const useAppStore = create<AppState>()(
         )
       })),
 
-      createPresentation: (name, templateId, builder = 'default') => {
+      createPresentation: (name, templateId) => {
         const id = `p-${Date.now()}`;
         set((state) => {
           const newPresentation: Presentation = {
             id,
             name,
             templateId,
-            builder,
+
             slides: [],
             createdAt: Date.now(),
             updatedAt: Date.now()
@@ -454,10 +464,23 @@ export const useAppStore = create<AppState>()(
           p.id === state.activePresentationId ? { ...p, slides: p.slides.filter(s => s.id !== id), updatedAt: Date.now() } : p
         )
       })),
-      updateTemplateDesign: (templateId, config) => set((state) => ({
+      updateTemplateDesign: (templateId: string, config) => set((state) => ({
         templates: state.templates.map(t => 
           t.id === templateId ? { ...t, designConfig: { ...t.designConfig, ...config } } : t
         )
+      })),
+
+      toasts: [],
+      addToast: (message, type = 'info') => set((state) => {
+        const id = Math.random().toString(36).substring(2, 9);
+        // Auto remove toast after 5 seconds
+        setTimeout(() => {
+          set((s) => ({ toasts: s.toasts.filter(t => t.id !== id) }));
+        }, 5000);
+        return { toasts: [...state.toasts, { id, message, type }] };
+      }),
+      removeToast: (id) => set((state) => ({
+        toasts: state.toasts.filter(t => t.id !== id)
       }))
     }),
     {

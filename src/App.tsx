@@ -9,9 +9,10 @@ import { SlideGenerator } from "./pages/SlideGenerator";
 import { TemplateBuilder } from "./pages/TemplateBuilder";
 import { TemplateGallery } from "./pages/TemplateGallery";
 import { PresentationGallery } from "./pages/PresentationGallery";
-import { MagicBuilder } from "./pages/MagicBuilder";
+
 
 import { PresentationViewer } from "./pages/PresentationViewer";
+import { ToastContainer } from "./components/Toast";
 
 export default function App() {
   return (
@@ -25,10 +26,10 @@ export default function App() {
             <Route path="/presentations/:id/present" element={<PresentationViewer />} />
             <Route path="/templates" element={<TemplateGallery />} />
             <Route path="/templates/:id" element={<TemplateBuilder />} />
-            <Route path="/magic-builder" element={<MagicBuilder />} />
-            <Route path="/magic-builder/:id" element={<MagicBuilder />} />
+
           </Routes>
         </main>
+        <ToastContainer />
       </div>
     </BrowserRouter>
   );

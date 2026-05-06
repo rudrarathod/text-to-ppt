@@ -9,38 +9,12 @@ import { askAiForLayoutCode, buildLayoutPrompt, askAiForFullTemplate, buildFullT
 import { cn } from "../lib/utils";
 import Handlebars from "handlebars";
 import { PromptSettingsForm, PRESET_PROMPTS } from "../components/PromptSettingsUI";
+import { GoogleFontLoader, POPULAR_FONTS } from "../lib/typography";
+import { ThemeSettingsPanel } from "../components/design-system/ThemeSettingsPanel";
+import { AIAssistantPanel } from "../components/ai/AIAssistantPanel";
+import { PageHeader } from "../components/layout/PageHeader";
 
-const GoogleFontLoader = ({ fonts }: { fonts: string[] }) => {
-  useEffect(() => {
-    if (fonts.length === 0) return;
-    
-    const uniqueFonts = Array.from(new Set(fonts)).filter(f => f && f !== 'sans-serif' && f !== 'serif' && f !== 'monospace');
-    if (uniqueFonts.length === 0) return;
 
-    const linkId = 'dynamic-google-fonts';
-    let link = document.getElementById(linkId) as HTMLLinkElement;
-    
-    if (!link) {
-      link = document.createElement('link');
-      link.id = linkId;
-      link.rel = 'stylesheet';
-      document.head.appendChild(link);
-    }
-    
-    link.href = `https://fonts.googleapis.com/css2?family=${uniqueFonts.map(f => `${f.replace(/\s+/g, '+')}:wght@100;200;300;400;500;600;700;800;900`).join('&family=')}&display=swap`;
-  }, [fonts]);
-
-  return null;
-};
-
-const POPULAR_FONTS = [
-  "Inter", "Montserrat", "Open Sans", "Roboto", "Lato", "Poppins", "Oswald", "Lora", 
-  "Montserrat", "Raleway", "Ubuntu", "Merriweather", "Playfair Display", "Nunito", 
-  "Muli", "Quicksand", "Work Sans", "Rubik", "Kanit", "Nanum Gothic", "Fira Sans", 
-  "PT Sans", "Josefin Sans", "Bebas Neue", "Arvo", "Libre Baskerville", "Exo 2", 
-  "Pacifico", "Caveat", "Indie Flower", "Dancing Script", "Zilla Slab", "Space Grotesk", 
-  "Outfit", "Be Vietnam Pro", "JetBrains Mono", "Space Mono", "Syne", "Urbanist", "Clash Display"
-];
 
 const SAMPLE_DATA: Record<LayoutVariant, any> = {
   title: { title: "Sample Title Slide", subtitle: "This is a sample subtitle" },
@@ -176,78 +150,84 @@ export function TemplateBuilder() {
     setSelectedLayoutId(newId);
   };
 
+  // Add refs to track the debounce timers
+  const aiDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const fullDeckDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+
   const handleAiGenerate = async () => {
-    if (!aiPrompt.trim() || !activeLayout) return;
-    setIsAiLoading(true);
-    try {
-      const { code, json } = await askAiForLayoutCode(aiPrompt, workingCode, workingJson, promptSettings);
-      setWorkingCode(code);
-      if (json) {
-        setWorkingJson(json);
-      }
-      setAiPrompt("");
-    } catch (e: any) {
-      alert("AI Generation failed: " + e.message);
-    } finally {
-      setIsAiLoading(false);
+    // 1. Loading Lock: Prevent duplicate requests
+    if (!aiPrompt.trim() || !activeLayout || isAiLoading) return;
+    
+    // 2. Clear existing timer if user triggers again quickly
+    if (aiDebounceTimer.current) {
+      clearTimeout(aiDebounceTimer.current);
     }
+
+    // 3. Debounce: Wait 750ms before making the API call
+    aiDebounceTimer.current = setTimeout(async () => {
+      setIsAiLoading(true);
+      
+      try {
+        const { code, json } = await askAiForLayoutCode(aiPrompt, workingCode, workingJson, promptSettings);
+        setWorkingCode(code);
+        if (json) {
+          setWorkingJson(json);
+        }
+        setAiPrompt("");
+      } catch (e: any) {
+        alert("AI Generation failed: " + e.message);
+      } finally {
+        setIsAiLoading(false);
+      }
+    }, 750);
   };
 
   const handleFullDeckGenerate = async () => {
-    if (!fullPrompt.trim()) return;
-    setIsAiLoading(true);
-    try {
-      const simplifiedLayouts = layouts.map(l => ({ id: l.id, name: l.name }));
-      const newLayouts = await askAiForFullTemplate(fullPrompt, simplifiedLayouts, promptSettings);
-      
-      if (newLayouts && newLayouts.length > 0) {
-        let firstNewId: string | null = null;
-        newLayouts.forEach((nl, index) => {
-          const newId = `l-gen-${Date.now()}-${index}`;
-          if (index === 0) firstNewId = newId;
-          
-          addLayoutToActiveTemplate({
-            id: newId,
-            name: nl.name || `Generated Layout ${index + 1}`,
-            variant: nl.variant || "content",
-            code: nl.code || "<div>Empty</div>",
-            mockData: nl.mockData || undefined
-          });
-        });
-        
-        if (firstNewId) setSelectedLayoutId(firstNewId);
-        setFullPrompt("");
-      } else {
-        alert("AI did not return valid layouts array.");
-      }
-    } catch (e: any) {
-      alert("AI Generation failed: " + e.message);
-    } finally {
-      setIsAiLoading(false);
+    // 1. Loading Lock: Prevent duplicate requests
+    if (!fullPrompt.trim() || isAiLoading) return;
+    
+    // 2. Clear existing timer
+    if (fullDeckDebounceTimer.current) {
+      clearTimeout(fullDeckDebounceTimer.current);
     }
+
+    // 3. Debounce: Wait 750ms
+    fullDeckDebounceTimer.current = setTimeout(async () => {
+      setIsAiLoading(true);
+      
+      try {
+        const simplifiedLayouts = layouts.map(l => ({ id: l.id, name: l.name }));
+        const newLayouts = await askAiForFullTemplate(fullPrompt, simplifiedLayouts, promptSettings);
+        
+        if (newLayouts && newLayouts.length > 0) {
+          let firstNewId: string | null = null;
+          newLayouts.forEach((nl, index) => {
+            const newId = `l-gen-${Date.now()}-${index}`;
+            if (index === 0) firstNewId = newId;
+            
+            addLayoutToActiveTemplate({
+              id: newId,
+              name: nl.name || `Generated Layout ${index + 1}`,
+              variant: nl.variant || "content",
+              code: nl.code || "<div>Empty</div>",
+              mockData: nl.mockData || undefined
+            });
+          });
+          
+          if (firstNewId) setSelectedLayoutId(firstNewId);
+          setFullPrompt("");
+        } else {
+          alert("AI did not return valid layouts array.");
+        }
+      } catch (e: any) {
+        alert("AI Generation failed: " + e.message);
+      } finally {
+        setIsAiLoading(false);
+      }
+    }, 750);
   };
 
-  const [fontSearch, setFontSearch] = useState({ heading: "", body: "" });
 
-  const headingFonts = useMemo(() => {
-    const base = fontSearch.heading 
-      ? [fontSearch.heading, ...POPULAR_FONTS.filter(f => f.toLowerCase().includes(fontSearch.heading.toLowerCase()) && f !== fontSearch.heading)]
-      : POPULAR_FONTS;
-    if (designConfig.headingFont && !base.includes(designConfig.headingFont)) {
-      return [designConfig.headingFont, ...base];
-    }
-    return Array.from(new Set(base));
-  }, [fontSearch.heading, designConfig.headingFont]);
-
-  const bodyFonts = useMemo(() => {
-    const base = fontSearch.body 
-      ? [fontSearch.body, ...POPULAR_FONTS.filter(f => f.toLowerCase().includes(fontSearch.body.toLowerCase()) && f !== fontSearch.body)]
-      : POPULAR_FONTS;
-    if (designConfig.fontFamily && !base.includes(designConfig.fontFamily)) {
-      return [designConfig.fontFamily, ...base];
-    }
-    return Array.from(new Set(base));
-  }, [fontSearch.body, designConfig.fontFamily]);
 
   if (!activeTemplate || !activeLayout) {
      return <div className="p-8">Loading...</div>;
@@ -264,13 +244,11 @@ export function TemplateBuilder() {
     <div className="flex flex-col h-full w-full bg-[#111111] text-gray-200 overflow-y-auto lg:overflow-hidden relative">
       <GoogleFontLoader fonts={[designConfig.fontFamily, designConfig.headingFont]} />
       {/* Top Bar for Layout Editor */}
-      <div className="h-auto md:h-16 border-b border-[#2d2d30] flex flex-col md:flex-row items-start md:items-center justify-between p-4 md:px-6 bg-[#161618] shrink-0 gap-4">
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <Link to="/templates" className="text-gray-400 hover:text-white flex items-center gap-2 border border-[#2d2d30] px-3 py-1.5 rounded-lg transition-colors text-sm font-medium bg-[#1e1e1e] shrink-0">
-             <ArrowLeft size={16} /> <span className="hidden sm:inline">Back</span>
-          </Link>
-          <div className="h-6 w-px bg-[#333] mx-1 md:mx-2 shrink-0"></div>
-          <div className="flex-1 flex items-center min-w-0">
+      {/* Top Bar for Layout Editor */}
+      <PageHeader 
+        backTo="/templates"
+        title={
+          <div className="flex items-center min-w-0">
             {isEditingTemplateName ? (
               <input 
                 autoFocus
@@ -307,44 +285,45 @@ export function TemplateBuilder() {
             {builderMode === 'individual' && (
               <>
                 <span className="opacity-50 mx-2 text-[#85858b]">|</span> 
-                <span className="text-[#85858b] truncate">{activeLayout.name}</span>
+                <span className="text-[#85858b] truncate text-sm">{activeLayout.name}</span>
               </>
             )}
           </div>
-        </div>
-
-        {/* Builder Mode Toggle */}
-        <div className="flex items-center bg-[#111111] rounded-lg p-1 border border-[#2d2d30] shrink-0 w-full sm:w-auto overflow-x-auto">
-           <button 
-             onClick={() => setBuilderMode('individual')} 
-             className={cn("px-3 py-1.5 text-xs sm:text-sm font-bold rounded flex items-center gap-2 transition-colors whitespace-nowrapflex-1 justify-center", builderMode === 'individual' ? "bg-[#252526] text-white shadow-sm" : "text-gray-500 hover:text-gray-300")}
-           >
-             <LayoutTemplate size={14} /> Single Layout
-           </button>
-           <button 
-             onClick={() => setBuilderMode('full')} 
-             className={cn("px-3 py-1.5 text-xs sm:text-sm font-bold rounded flex items-center gap-2 transition-colors whitespace-nowrap flex-1 justify-center", builderMode === 'full' ? "bg-[#252526] text-white shadow-sm" : "text-gray-500 hover:text-gray-300")}
-           >
-             <Sparkles size={14} /> Full Deck
-           </button>
-        </div>
-
-        <div className="flex items-center gap-4 w-full md:w-auto justify-end shrink-0">
-          <Button onClick={handleExport} variant="outline" className="gap-2 shrink-0 border-[#333] hover:bg-[#252526] text-gray-300 hover:text-white">
-             <Download size={16} /> Export
-          </Button>
-          <Button onClick={() => setShowThemeEditor(!showThemeEditor)} className="gap-2 shrink-0 bg-[#252526] hover:bg-[#2d2d30] text-gray-300 hover:text-white border border-[#333]">
-             <Palette size={16} /> Theme
-          </Button>
-          <Button onClick={handleSave} disabled={workingCode === activeLayout.code && (() => {
-            try {
-              return JSON.stringify(JSON.parse(workingJson)) === JSON.stringify(activeLayout.mockData || SAMPLE_DATA[activeLayout.variant] || { title: "Sample" });
-            } catch(e) { return true; }
-          })()} className="gap-2 shrink-0 border-none bg-[#b20112] hover:bg-[#d62828] text-white">
-             Save Changes
-          </Button>
-        </div>
-      </div>
+        }
+        actions={
+          <>
+            {/* Builder Mode Toggle */}
+            <div className="flex items-center bg-[#111111] rounded-lg p-1 border border-[#2d2d30] shrink-0 mr-4">
+               <button 
+                 onClick={() => setBuilderMode('individual')} 
+                 className={cn("px-3 py-1.5 text-xs sm:text-sm font-bold rounded flex items-center gap-2 transition-colors", builderMode === 'individual' ? "bg-[#252526] text-white shadow-sm" : "text-gray-500 hover:text-gray-300")}
+               >
+                 <LayoutTemplate size={14} /> Single Layout
+               </button>
+               <button 
+                 onClick={() => setBuilderMode('full')} 
+                 className={cn("px-3 py-1.5 text-xs sm:text-sm font-bold rounded flex items-center gap-2 transition-colors", builderMode === 'full' ? "bg-[#252526] text-white shadow-sm" : "text-gray-500 hover:text-gray-300")}
+               >
+                 <Sparkles size={14} /> Full Deck
+               </button>
+            </div>
+            
+            <Button onClick={handleExport} variant="outline" className="gap-2 shrink-0 border-[#333] hover:bg-[#252526] text-gray-300 hover:text-white">
+               <Download size={16} /> Export
+            </Button>
+            <Button onClick={() => setShowThemeEditor(!showThemeEditor)} className="gap-2 shrink-0 bg-[#252526] hover:bg-[#2d2d30] text-gray-300 hover:text-white border border-[#333]">
+               <Palette size={16} /> Theme
+            </Button>
+            <Button onClick={handleSave} disabled={workingCode === activeLayout.code && (() => {
+              try {
+                return JSON.stringify(JSON.parse(workingJson)) === JSON.stringify(activeLayout.mockData || SAMPLE_DATA[activeLayout.variant] || { title: "Sample" });
+              } catch(e) { return true; }
+            })()} className="gap-2 shrink-0 border-none bg-[#b20112] hover:bg-[#d62828] text-white">
+               Save Changes
+            </Button>
+          </>
+        }
+      />
 
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {builderMode === 'individual' ? (
@@ -482,106 +461,55 @@ export function TemplateBuilder() {
                   )}
 
                   {/* Floating AI Panel */}
-                  <div className="absolute bottom-6 left-6 right-6 bg-[#1e1e1e] border border-[#2d2d30] rounded-xl shadow-2xl flex flex-col shrink-0 overflow-hidden z-10 lg:w-[450px]">
-                     <div className="flex items-center justify-between px-4 py-3 border-b border-[#2d2d30]">
-                       <div className="flex items-center gap-3">
-                         <span className="text-white text-sm font-bold flex items-center gap-2">AI Assistant</span>
-                       </div>
-                     </div>
-                     <div className="p-3 space-y-2">
-			           <button 
-                         onClick={() => setShowPromptSettings(!showPromptSettings)}
-                         className="flex items-center gap-2 text-[11px] font-medium text-[#85858b] hover:text-white transition-colors"
-                       >
-                         <Settings2 size={12} /> Prompt Settings {showPromptSettings ? <ChevronUp size={12}/> : <ChevronDown size={12}/>}
-                       </button>
-                       {showPromptSettings && (
-                         <div className="bg-[#252526] border border-[#333] rounded-lg p-2 mb-2">
-                           <PromptSettingsForm settings={promptSettings} setSettings={setPromptSettings} />
-                         </div>
-                       )}
-                       
-                       <div className="flex items-center justify-end mb-1">
-                         <div className="flex items-center bg-[#252526] rounded-md border border-[#333] overflow-hidden text-[9px] font-bold text-gray-400">
-                           <button onClick={() => setAiMode('ai')} className={cn("px-2 py-1 transition-colors", aiMode === 'ai' && "bg-[#2d2d30] text-white")}>AI Generate</button>
-                           <button onClick={() => setAiMode('prompt')} className={cn("px-2 py-1 transition-colors", aiMode === 'prompt' && "bg-[#2d2d30] text-white")}>Raw Prompt</button>
-                         </div>
-                       </div>
-                       <div className="relative">
+                  <div className="absolute bottom-6 left-6 right-6 z-10 lg:w-[450px]">
+                     <AIAssistantPanel 
+                       promptValue={aiPrompt}
+                       onPromptChange={setAiPrompt}
+                       onGenerate={handleAiGenerate}
+                       isGenerating={isAiLoading}
+                       showPromptSettings={true}
+                       promptSettings={promptSettings}
+                       onPromptSettingsChange={setPromptSettings}
+                       placeholder="e.g., Convert this to a modern 3-column layout..."
+                       defaultMode={aiMode}
+                       onModeChange={(mode) => setAiMode(mode as 'ai' | 'prompt')}
+                       systemPromptBuilder={(p) => buildLayoutPrompt(p, workingCode, workingJson, promptSettings)}
+                     />
+                     {aiMode === 'prompt' && (
+                       <div className="relative mt-2 bg-[#1e1e1e] border border-[#2d2d30] rounded-xl p-2 shadow-2xl">
                          <Textarea 
-                           value={aiPrompt}
-                           onChange={e => setAiPrompt(e.target.value)}
-                           placeholder="e.g., Convert this to a modern 3-column layout..."
-                           className="w-full bg-[#252526] border border-[#333] text-gray-200 text-sm focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-sans resize-none rounded-lg p-3 pr-10 min-h-[60px]"
-                           disabled={isAiLoading}
-                           onKeyDown={(e) => {
-                             if(e.key === 'Enter' && !e.shiftKey) {
-                               e.preventDefault();
-                               if (aiMode === 'ai') {
-                                 handleAiGenerate();
-                               } else if (aiPrompt.trim()) {
-                                 const textPrompt = buildLayoutPrompt(aiPrompt, workingCode, workingJson, promptSettings);
-                                 navigator.clipboard.writeText(textPrompt);
-                                 setCopiedPrompt(true);
-                                 setTimeout(() => setCopiedPrompt(false), 2000);
-                               }
-                             }
-                           }}
+                           value={aiResponse}
+                           onChange={e => setAiResponse(e.target.value)}
+                           placeholder="Paste AI generated code here..."
+                           className="w-full bg-[#252526] border border-[#333] text-gray-200 text-sm focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-sans resize-none rounded-lg p-3 min-h-[60px]"
                          />
                          <button 
                            onClick={() => {
-                             if (aiMode === 'ai') {
-                               handleAiGenerate();
-                             } else if (aiPrompt.trim()) {
-                               const textPrompt = buildLayoutPrompt(aiPrompt, workingCode, workingJson, promptSettings);
-                               navigator.clipboard.writeText(textPrompt);
-                               setCopiedPrompt(true);
-                               setTimeout(() => setCopiedPrompt(false), 2000);
+                             if (aiResponse.trim()) {
+                               const slideMatch = aiResponse.match(/<slide>([\s\S]*?)<\/slide>/i);
+                               let code = slideMatch ? slideMatch[1].trim() : "";
+                               
+                               if (!code) {
+                                 let match = aiResponse.match(/```(?:html|handlebars)?\n([\s\S]*?)```/);
+                                 code = match ? match[1] : aiResponse;
+                               }
+                               
+                               const jsonMatch = aiResponse.match(/<json>([\s\S]*?)<\/json>/i);
+                               if (jsonMatch && jsonMatch[1]) {
+                                 setWorkingJson(jsonMatch[1].trim());
+                               }
+                               
+                               setWorkingCode(code);
+                               setAiResponse("");
                              }
                            }}
-                           disabled={isAiLoading || !aiPrompt.trim()}
-                           className="absolute right-3 bottom-3 text-[#5c403d] hover:text-[#D62828] disabled:opacity-50 transition-colors bg-[#1e1e1e] p-1 rounded"
-                           title={aiMode === 'ai' ? "Generate with AI" : "Copy Prompt"}
+                           disabled={!aiResponse.trim()}
+                           className="absolute right-3 bottom-3 bg-[#D62828] hover:bg-[#b20112] text-white disabled:opacity-50 transition-colors px-2 py-1 rounded text-xs font-bold"
                          >
-                           {isAiLoading ? <span className="animate-pulse">...</span> : (aiMode === 'ai' ? <Sparkles size={16} /> : (copiedPrompt ? <Check size={16} className="text-green-500" /> : <Copy size={16} />))}
+                           Apply
                          </button>
                        </div>
-                       {aiMode === 'prompt' && (
-                         <div className="relative mt-2">
-                           <Textarea 
-                             value={aiResponse}
-                             onChange={e => setAiResponse(e.target.value)}
-                             placeholder="Paste AI generated code here..."
-                             className="w-full bg-[#252526] border border-[#333] text-gray-200 text-sm focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-sans resize-none rounded-lg p-3 min-h-[60px]"
-                           />
-                           <button 
-                             onClick={() => {
-                               if (aiResponse.trim()) {
-                                 const slideMatch = aiResponse.match(/<slide>([\s\S]*?)<\/slide>/i);
-                                 let code = slideMatch ? slideMatch[1].trim() : "";
-                                 
-                                 if (!code) {
-                                   let match = aiResponse.match(/```(?:html|handlebars)?\n([\s\S]*?)```/);
-                                   code = match ? match[1] : aiResponse;
-                                 }
-                                 
-                                 const jsonMatch = aiResponse.match(/<json>([\s\S]*?)<\/json>/i);
-                                 if (jsonMatch && jsonMatch[1]) {
-                                   setWorkingJson(jsonMatch[1].trim());
-                                 }
-                                 
-                                 setWorkingCode(code);
-                                 setAiResponse("");
-                               }
-                             }}
-                             disabled={!aiResponse.trim()}
-                             className="absolute right-3 bottom-3 bg-[#D62828] hover:bg-[#b20112] text-white disabled:opacity-50 transition-colors px-2 py-1 rounded text-xs font-bold"
-                           >
-                             Apply
-                           </button>
-                         </div>
-                       )}
-                     </div>
+                     )}
                   </div>
                </div>
             </div>
@@ -617,149 +545,11 @@ export function TemplateBuilder() {
                      <button onClick={() => setShowThemeEditor(false)} className="text-gray-400 hover:text-white"><X size={16}/></button>
                    </div>
                    <div className="flex-1 overflow-y-auto p-6 space-y-10">
-                      {/* Colors Section */}
-                      <section className="space-y-4">
-                         <label className="block text-[10px] font-black text-[#D62828] uppercase tracking-widest mb-4">Core Palette</label>
-                         <div className="space-y-3">
-                            {[
-                              { label: 'Primary', key: 'primary' },
-                              { label: 'Secondary', key: 'secondary' },
-                              { label: 'Accent', key: 'accent' },
-                              { label: 'Surface', key: 'surface' },
-                              { label: 'Contrast', key: 'surfaceContrast' },
-                              { label: 'Border', key: 'border' },
-                            ].map(item => (
-                              <div key={item.key} className="flex items-center justify-between group">
-                                <span className="text-xs text-gray-400 font-medium">{item.label}</span>
-                                <div className="flex items-center gap-2">
-                                  <div className="relative w-6 h-6 rounded border border-white/10 overflow-hidden">
-                                    <input 
-                                      type="color" 
-                                      value={(designConfig as any)[item.key]} 
-                                      onChange={(e) => updateActiveTemplateDesign({ [item.key]: e.target.value })}
-                                      className="absolute -inset-2 w-10 h-10 cursor-pointer border-0 p-0"
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                         </div>
-                      </section>
-
-                      {/* Typography Section */}
-                      <section className="space-y-4">
-                         <label className="block text-[10px] font-black text-[#D62828] uppercase tracking-widest mb-4">System Type</label>
-                         <div className="space-y-4">
-                            <div className="space-y-2">
-                               <div className="flex items-center justify-between">
-                                 <span className="text-[10px] text-gray-500 uppercase">Heading Font</span>
-                                 <div className="relative group/search">
-                                    <Search size={8} className="absolute left-1.5 top-1/2 -translate-y-1/2 text-gray-600" />
-                                    <input 
-                                      type="text" 
-                                      value={fontSearch.heading}
-                                      onChange={e => setFontSearch({...fontSearch, heading: e.target.value})}
-                                      placeholder="Search Google Font..."
-                                      className="bg-white/5 border border-white/5 rounded-md px-4 py-0.5 text-[8px] text-white outline-none focus:border-[#D62828] w-28 transition-all"
-                                    />
-                                 </div>
-                               </div>
-                               <select 
-                                 value={designConfig.headingFont}
-                                 onChange={(e) => updateActiveTemplateDesign({ headingFont: e.target.value })}
-                                 className="w-full bg-white/5 border border-white/5 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-[#D62828]"
-                               >
-                                 {headingFonts.map(f => (
-                                   <option key={f} value={f} className="bg-[#161618]">{f}</option>
-                                 ))}
-                               </select>
-                            </div>
-                            <div className="space-y-2">
-                               <div className="flex items-center justify-between">
-                                 <span className="text-[10px] text-gray-500 uppercase">Body Font</span>
-                                 <div className="relative group/search">
-                                    <Search size={8} className="absolute left-1.5 top-1/2 -translate-y-1/2 text-gray-600" />
-                                    <input 
-                                      type="text" 
-                                      value={fontSearch.body}
-                                      onChange={e => setFontSearch({...fontSearch, body: e.target.value})}
-                                      placeholder="Search Google Font..."
-                                      className="bg-white/5 border border-white/5 rounded-md px-4 py-0.5 text-[8px] text-white outline-none focus:border-[#D62828] w-28 transition-all"
-                                    />
-                                 </div>
-                               </div>
-                               <select 
-                                 value={designConfig.fontFamily}
-                                 onChange={(e) => updateActiveTemplateDesign({ fontFamily: e.target.value })}
-                                 className="w-full bg-white/5 border border-white/5 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-[#D62828]"
-                               >
-                                 {bodyFonts.map(f => (
-                                   <option key={f} value={f} className="bg-[#161618]">{f}</option>
-                                 ))}
-                               </select>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                               <div className="space-y-2">
-                                  <span className="text-[10px] text-gray-500 uppercase">H-Size</span>
-                                  <input 
-                                    type="text" 
-                                    value={designConfig.headingSize}
-                                    onChange={(e) => updateActiveTemplateDesign({ headingSize: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/5 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-[#D62828]"
-                                  />
-                               </div>
-                               <div className="space-y-2">
-                                  <span className="text-[10px] text-gray-500 uppercase">Weight</span>
-                                  <input 
-                                    type="text" 
-                                    value={designConfig.headingWeight}
-                                    onChange={(e) => updateActiveTemplateDesign({ headingWeight: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/5 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-[#D62828]"
-                                  />
-                               </div>
-                            </div>
-                         </div>
-                      </section>
-
-                      {/* Geometry Section */}
-                      <section className="space-y-4">
-                         <label className="block text-[10px] font-black text-[#D62828] uppercase tracking-widest mb-4">Geometry</label>
-                         <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-3">
-                               <div className="space-y-2">
-                                  <span className="text-[10px] text-gray-500 uppercase">Radius</span>
-                                  <input 
-                                    type="text" 
-                                    value={designConfig.cardRadius}
-                                    onChange={(e) => updateActiveTemplateDesign({ cardRadius: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/5 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-[#D62828]"
-                                  />
-                               </div>
-                               <div className="space-y-2">
-                                  <span className="text-[10px] text-gray-500 uppercase">Spacing</span>
-                                  <input 
-                                    type="text" 
-                                    value={designConfig.sectionPadding}
-                                    onChange={(e) => updateActiveTemplateDesign({ sectionPadding: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/5 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-[#D62828]"
-                                  />
-                               </div>
-                            </div>
-                            <div className="space-y-2">
-                               <span className="text-[10px] text-gray-500 uppercase font-medium">Alignment</span>
-                               <div className="grid grid-cols-2 gap-1 bg-white/5 p-1 rounded-lg border border-white/5">
-                                  <button 
-                                    onClick={() => updateActiveTemplateDesign({ contentAlignment: 'left' })}
-                                    className={cn("py-1 text-[9px] font-black rounded uppercase transition-all", designConfig.contentAlignment === 'left' ? "bg-[#D62828] text-white" : "text-gray-500")}
-                                  >Left</button>
-                                  <button 
-                                    onClick={() => updateActiveTemplateDesign({ contentAlignment: 'center' })}
-                                    className={cn("py-1 text-[9px] font-black rounded uppercase transition-all", designConfig.contentAlignment === 'center' ? "bg-[#D62828] text-white" : "text-gray-500")}
-                                  >Center</button>
-                               </div>
-                            </div>
-                         </div>
-                      </section>
+                      <ThemeSettingsPanel 
+                        config={designConfig} 
+                        onChange={(updates) => updateActiveTemplateDesign(updates)} 
+                        layout="sidebar" 
+                      />
                    </div>
                  </div>
               )}
