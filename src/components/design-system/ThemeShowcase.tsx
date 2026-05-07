@@ -92,9 +92,9 @@ export const ThemeShowcase: React.FC<ThemeShowcaseProps> = ({ config }) => {
                   <p className="text-[9px] text-[var(--ds-on-surface-variant)] font-bold uppercase tracking-widest mb-1">{item.label}</p>
                   <p className="text-[var(--ds-on-surface)] font-black text-sm tracking-tight">{item.hex.toUpperCase()}</p>
                 </div>
-                <div className="flex gap-1">
-                   <div className="w-8 h-8 rounded-lg shadow-inner" style={{ backgroundColor: item.hex }} />
-                   <div className="w-8 h-8 rounded-lg shadow-inner border border-[var(--ds-outline-variant)]" style={{ backgroundColor: item.container }} />
+                <div className="flex gap-3">
+                   <div className="w-10 h-10 rounded-lg shadow-inner" style={{ backgroundColor: item.hex }} />
+                   <div className="w-10 h-10 rounded-lg shadow-inner border border-[var(--ds-outline-variant)]" style={{ backgroundColor: item.container }} />
                 </div>
               </div>
               

@@ -11,6 +11,8 @@ import Handlebars from "handlebars";
 import { PromptSettingsForm, PRESET_PROMPTS } from "../components/PromptSettingsUI";
 import { GoogleFontLoader, POPULAR_FONTS } from "../lib/typography";
 import { ThemeSettingsPanel } from "../components/design-system/ThemeSettingsPanel";
+import { FullScreenModal } from "../components/layout/FullScreenModal";
+import { ThemeShowcase } from "../components/design-system/ThemeShowcase";
 import { AIAssistantPanel } from "../components/ai/AIAssistantPanel";
 import { PageHeader } from "../components/layout/PageHeader";
 
@@ -104,7 +106,7 @@ export function TemplateBuilder() {
 
   const handleThemeResize = (e: MouseEvent) => {
     if (!isResizingThemeSidebar.current) return;
-    const newWidth = window.innerWidth - e.clientX;
+    const newWidth = e.clientX;
     if (newWidth >= 280 && newWidth <= 800) {
       setThemeSidebarWidth(newWidth);
     }
@@ -562,32 +564,6 @@ export function TemplateBuilder() {
                 </div>
               )}
               
-              {/* Theme Settings Sidebar Overlay */}
-              {showThemeEditor && (
-                 <div 
-                   style={{ width: themeSidebarWidth }}
-                   className="absolute right-0 top-0 bottom-0 bg-[#161618] border-l border-[#2d2d30] shadow-2xl flex flex-col z-20 group/sidebar"
-                 >
-                   {/* Resize Handle */}
-                   <div 
-                     onMouseDown={startResizingTheme}
-                     className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#D62828]/50 transition-colors z-30"
-                   />
-                   
-                   <div className="p-5 border-b border-[#2d2d30] flex items-center justify-between">
-                     <h3 className="font-bold text-white text-sm flex items-center gap-2"><Palette size={16}/> Theme Settings</h3>
-                     <button onClick={() => setShowThemeEditor(false)} className="text-gray-400 hover:text-white"><X size={16}/></button>
-                   </div>
-                   <div className="flex-1 overflow-y-auto p-6 space-y-10">
-                      <ThemeSettingsPanel 
-                        config={designConfig} 
-                        onChange={(updates) => updateActiveTemplateDesign(updates)} 
-                        layout="sidebar" 
-                        width={themeSidebarWidth}
-                      />
-                   </div>
-                 </div>
-              )}
             </div>
           </div>
         </div>
@@ -785,136 +761,50 @@ export function TemplateBuilder() {
 
            </div>
            
-           {/* Theme Settings Overlay */}
-           {showThemeEditor && (
-              <div 
-                style={{ width: themeSidebarWidth }}
-                className="fixed right-0 top-16 bottom-0 bg-[#161618] border-l border-[#2d2d30] shadow-2xl flex flex-col z-50 group/sidebar"
-              >
-                {/* Resize Handle */}
-                <div 
-                  onMouseDown={startResizingTheme}
-                  className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#D62828]/50 transition-colors z-[60]"
-                />
-                
-                <div className="p-5 border-b border-[#2d2d30] flex items-center justify-between">
-                  <h3 className="font-bold text-white text-sm flex items-center gap-2"><Palette size={16}/> Theme Settings</h3>
-                  <button onClick={() => setShowThemeEditor(false)} className="text-gray-400 hover:text-white"><X size={16}/></button>
-                </div>
-                <div className="flex-1 overflow-y-auto p-6 space-y-10">
-                   {/* Colors Section */}
-                   <section className="space-y-4">
-                      <label className="block text-[10px] font-black text-[#D62828] uppercase tracking-widest mb-4">Core Palette</label>
-                      <div className={cn("space-y-3", themeSidebarWidth > 500 && "grid grid-cols-2 gap-x-8 gap-y-0 space-y-0")}>
-                         {[
-                           { label: 'Primary', key: 'primary' },
-                           { label: 'Secondary', key: 'secondary' },
-                           { label: 'Accent', key: 'accent' },
-                           { label: 'Surface', key: 'surface' },
-                           { label: 'Contrast', key: 'surfaceContrast' },
-                           { label: 'Border', key: 'border' },
-                         ].map(item => (
-                           <div key={item.key} className="flex items-center justify-between group">
-                             <span className="text-xs text-gray-400 font-medium">{item.label}</span>
-                             <div className="flex items-center gap-2">
-                               <div className="relative w-6 h-6 rounded border border-white/10 overflow-hidden">
-                                 <input 
-                                   type="color" 
-                                   value={(designConfig as any)[item.key]} 
-                                   onChange={(e) => updateActiveTemplateDesign({ [item.key]: e.target.value })}
-                                   className="absolute -inset-2 w-10 h-10 cursor-pointer border-0 p-0"
-                                 />
-                               </div>
-                             </div>
-                           </div>
-                         ))}
-                      </div>
-                   </section>
-
-                   {/* Typography Section */}
-                   <section className="space-y-4">
-                      <label className="block text-[10px] font-black text-[#D62828] uppercase tracking-widest mb-4">System Type</label>
-                      <div className={cn("space-y-4", themeSidebarWidth > 500 && "grid grid-cols-2 gap-x-8 gap-y-0 space-y-0 items-end")}>
-                         <div className="space-y-2">
-                            <span className="text-[10px] text-gray-500 uppercase">Heading Font</span>
-                            <select 
-                              value={designConfig.headingFont}
-                              onChange={(e) => updateActiveTemplateDesign({ headingFont: e.target.value })}
-                              className="w-full bg-white/5 border border-white/5 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-[#D62828]"
-                            >
-                              {["Inter", "Be Vietnam Pro", "Outfit", "Space Grotesk", "Playfair Display", "JetBrains Mono"].map(f => (
-                                <option key={f} value={f} className="bg-[#161618]">{f}</option>
-                              ))}
-                            </select>
-                         </div>
-                         <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-2">
-                               <span className="text-[10px] text-gray-500 uppercase">H-Size</span>
-                               <input 
-                                 type="text" 
-                                 value={designConfig.headingSize}
-                                 onChange={(e) => updateActiveTemplateDesign({ headingSize: e.target.value })}
-                                 className="w-full bg-white/5 border border-white/5 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-[#D62828]"
-                               />
-                            </div>
-                            <div className="space-y-2">
-                               <span className="text-[10px] text-gray-500 uppercase">Weight</span>
-                               <input 
-                                 type="text" 
-                                 value={designConfig.headingWeight}
-                                 onChange={(e) => updateActiveTemplateDesign({ headingWeight: e.target.value })}
-                                 className="w-full bg-white/5 border border-white/5 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-[#D62828]"
-                               />
-                            </div>
-                         </div>
-                      </div>
-                   </section>
-
-                   {/* Geometry Section */}
-                   <section className="space-y-4">
-                      <label className="block text-[10px] font-black text-[#D62828] uppercase tracking-widest mb-4">Geometry</label>
-                      <div className={cn("space-y-4", themeSidebarWidth > 500 && "grid grid-cols-2 gap-x-8 gap-y-0 space-y-0 items-end")}>
-                         <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-2">
-                               <span className="text-[10px] text-gray-500 uppercase">Radius</span>
-                               <input 
-                                 type="text" 
-                                 value={designConfig.cardRadius}
-                                 onChange={(e) => updateActiveTemplateDesign({ cardRadius: e.target.value })}
-                                 className="w-full bg-white/5 border border-white/5 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-[#D62828]"
-                               />
-                            </div>
-                            <div className="space-y-2">
-                               <span className="text-[10px] text-gray-500 uppercase">Spacing</span>
-                               <input 
-                                 type="text" 
-                                 value={designConfig.sectionPadding}
-                                 onChange={(e) => updateActiveTemplateDesign({ sectionPadding: e.target.value })}
-                                 className="w-full bg-white/5 border border-white/5 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-[#D62828]"
-                               />
-                            </div>
-                         </div>
-                         <div className="space-y-2">
-                            <span className="text-[10px] text-gray-500 uppercase font-medium">Alignment</span>
-                            <div className="grid grid-cols-2 gap-1 bg-white/5 p-1 rounded-lg border border-white/5">
-                               <button 
-                                 onClick={() => updateActiveTemplateDesign({ contentAlignment: 'left' })}
-                                 className={cn("py-1 text-[9px] font-black rounded uppercase transition-all", designConfig.contentAlignment === 'left' ? "bg-[#D62828] text-white" : "text-gray-500")}
-                               >Left</button>
-                               <button 
-                                 onClick={() => updateActiveTemplateDesign({ contentAlignment: 'center' })}
-                                 className={cn("py-1 text-[9px] font-black rounded uppercase transition-all", designConfig.contentAlignment === 'center' ? "bg-[#D62828] text-white" : "text-gray-500")}
-                               >Center</button>
-                            </div>
-                         </div>
-                      </div>
-                   </section>
-                </div>
-              </div>
-           )}
+            </div>
+          )}
         </div>
-      )}
-      </div>
+      {/* Theme Engine Full Screen Modal */}
+      <FullScreenModal
+        isOpen={showThemeEditor}
+        onClose={() => setShowThemeEditor(false)}
+        title={
+          <div className="flex items-center gap-3">
+             <Palette size={20} className="text-[#D62828]" />
+             <span className="font-black uppercase tracking-widest text-sm">Theme Engine</span>
+          </div>
+        }
+      >
+        <div className="flex h-full overflow-hidden bg-[#0f0f10]">
+           {/* Left Sidebar - Settings */}
+           <div 
+             style={{ width: themeSidebarWidth }}
+             className="border-r border-white/5 bg-[#121214] flex flex-col overflow-hidden relative group/sidebar shrink-0"
+           >
+             {/* Resize Handle */}
+             <div 
+               onMouseDown={startResizingTheme}
+               className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#D62828]/50 transition-colors z-30"
+             />
+             
+             <div className="flex-1 overflow-y-auto">
+               <ThemeSettingsPanel 
+                 config={designConfig} 
+                 onChange={(updates) => updateActiveTemplateDesign(updates)} 
+                 layout="sidebar" 
+                 width={themeSidebarWidth}
+               />
+             </div>
+           </div>
+
+           {/* Main Area - Live Preview */}
+           <div className="flex-1 bg-[#0f0f10] relative flex items-center justify-center p-12 overflow-y-auto">
+              <div className="w-full max-w-6xl animate-in zoom-in-95 duration-500">
+                <ThemeShowcase config={designConfig} />
+              </div>
+           </div>
+        </div>
+      </FullScreenModal>
     </div>
   );
 }

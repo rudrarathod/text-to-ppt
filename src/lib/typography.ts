@@ -4,7 +4,10 @@ export const GoogleFontLoader = ({ fonts }: { fonts: string[] }) => {
   useEffect(() => {
     if (fonts.length === 0) return;
     
-    const uniqueFonts = Array.from(new Set(fonts)).filter(f => f && f !== 'sans-serif' && f !== 'serif' && f !== 'monospace');
+    const uniqueFonts = Array.from(new Set(fonts))
+      .map(f => f.split(',')[0].replace(/['"]/g, '').trim())
+      .filter(f => f && !['sans-serif', 'serif', 'monospace', 'cursive', 'fantasy'].includes(f.toLowerCase()));
+      
     if (uniqueFonts.length === 0) return;
 
     const linkId = 'dynamic-google-fonts';
@@ -17,7 +20,7 @@ export const GoogleFontLoader = ({ fonts }: { fonts: string[] }) => {
       document.head.appendChild(link);
     }
     
-    link.href = `https://fonts.googleapis.com/css2?family=${uniqueFonts.map(f => `${f.replace(/\\s+/g, '+')}:wght@100;200;300;400;500;600;700;800;900`).join('&family=')}&display=swap`;
+    link.href = `https://fonts.googleapis.com/css2?family=${uniqueFonts.map(f => `${f.replace(/\s+/g, '+')}:wght@100;200;300;400;500;600;700;800;900`).join('&family=')}&display=swap`;
   }, [fonts]);
 
   return null;
