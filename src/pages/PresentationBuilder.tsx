@@ -1,7 +1,7 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useAppStore, SlideData } from "../store";
 import Editor from "../components/LazyEditor";
-import { SlidePreview, SlideStatic } from "../components/SlidePreview";
+import { SlidePreview, SlideStatic, SlidePreviewRef } from "../components/SlidePreview";
 import { Button, Textarea } from "../components/ui";
 import { Download, Plus, Trash2, LayoutTemplate, Sparkles, X, Mic, Copy, Check, Settings2, ChevronDown, ChevronUp, Save, Loader2, Palette, Code2, Presentation as PresentationIcon, Layout as LayoutIcon, ArrowLeft, Play, ChevronLeft, ChevronRight, Maximize, Minimize } from "lucide-react";
 import jsPDF from "jspdf";
@@ -48,7 +48,7 @@ import { useParams, useNavigate } from "react-router-dom";
 export function PresentationBuilder() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { templates, presentations, activePresentationId, setSlides, addSlide, removeSlide, updateSlideContent, updateSlideLayout, setActiveTemplate, setPresentationTemplate, setActivePresentation } = useAppStore();
+  const { templates, presentations, activePresentationId, setSlides, addSlide, removeSlide, updateSlideContent, updateSlideLayout, setActiveTemplate, setPresentationTemplate, setActivePresentation, updateSlideThumbnail } = useAppStore();
   
   useEffect(() => {
     if (id && id !== activePresentationId) {
@@ -120,7 +120,37 @@ export function PresentationBuilder() {
     language: "",
     style: ""
   });
+  const [scrollTop, setScrollTop] = useState(0);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
+  const handleSidebarScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    setScrollTop(e.currentTarget.scrollTop);
+  };
+
+  const ITEM_HEIGHT = 160; // Approximate height of a slide thumbnail + gap
+  const VISIBLE_COUNT = 10; // Number of slides to keep in DOM
+  
+  const startIndex = Math.max(0, Math.floor(scrollTop / ITEM_HEIGHT) - 2);
+  const endIndex = Math.min(slides.length, startIndex + VISIBLE_COUNT + 4);
+  
+  const paddingTop = startIndex * ITEM_HEIGHT;
+  const paddingBottom = Math.max(0, (slides.length - endIndex) * ITEM_HEIGHT);
+
+  const previewRef = useRef<SlidePreviewRef>(null);
+
+  // Auto-capture thumbnail on content change
+  useEffect(() => {
+    if (!selectedSlideId) return;
+    const timer = setTimeout(async () => {
+       if (previewRef.current) {
+         const thumb = await previewRef.current.capture();
+         if (thumb) {
+           updateSlideThumbnail(selectedSlideId, thumb);
+         }
+       }
+    }, 1500); 
+    return () => clearTimeout(timer);
+  }, [selectedSlideId, JSON.stringify(selectedSlide?.content), updateSlideThumbnail]);
   const handleGeneratePresentation = async () => {
     if (!presentationPrompt.trim()) return;
     setIsGeneratingPresentation(true);
@@ -333,8 +363,16 @@ export function PresentationBuilder() {
           <h2 className="font-bold text-sm text-white flex items-center gap-2">Slides <span className="bg-[#2d2d30] text-xs px-2 py-0.5 rounded-full">{slides.length}</span></h2>
           <Button onClick={handleAddSlide} variant="ghost" className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-[#2d2d30]" title="Add Slide"><Plus size={16} /></Button>
         </div>
-        <div className="flex-1 overflow-x-auto lg:overflow-x-hidden overflow-y-hidden lg:overflow-y-auto p-3 lg:p-4 flex flex-row lg:flex-col gap-3 lg:gap-4">
-          {slides.map((s, idx) => {
+        <div 
+          ref={sidebarRef}
+          onScroll={handleSidebarScroll}
+          className="flex-1 overflow-x-auto lg:overflow-x-hidden overflow-y-hidden lg:overflow-y-auto p-3 lg:p-4 flex flex-row lg:flex-col gap-3 lg:gap-4"
+        >
+          {/* Top spacer for virtualization */}
+          <div className="hidden lg:block shrink-0" style={{ height: paddingTop }} />
+          
+          {slides.slice(startIndex, endIndex).map((s, sliceIdx) => {
+            const idx = startIndex + sliceIdx;
             const l = layouts.find(x => x.id === s.layoutId);
             return (
               <div 
@@ -347,15 +385,21 @@ export function PresentationBuilder() {
               >
                 {/* Visual Preview Area */}
                 <div 
-                  className="flex-1 flex items-center justify-center p-2 text-center"
+                  className="flex-1 flex items-center justify-center overflow-hidden"
                   style={{ backgroundColor: designConfig.bg }}
                 >
-                   <div 
-                     className="line-clamp-2 text-[10px] font-bold leading-tight"
-                     style={{ color: designConfig.primary }}
-                   >
-                     {s.content.title || "Untitled Slide"}
-                   </div>
+                   {s.thumbnail ? (
+                     <img src={s.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
+                   ) : (
+                     <div className="p-2 text-center">
+                        <div 
+                          className="line-clamp-2 text-[10px] font-bold leading-tight"
+                          style={{ color: designConfig.primary }}
+                        >
+                          {s.content.title || "Untitled Slide"}
+                        </div>
+                     </div>
+                   )}
                 </div>
 
                 {/* Footer with meta info */}
@@ -378,8 +422,11 @@ export function PresentationBuilder() {
                   <Trash2 size={12} />
                 </button>
               </div>
-            )
+            );
           })}
+          
+          {/* Bottom spacer for virtualization */}
+          <div className="hidden lg:block shrink-0" style={{ height: paddingBottom }} />
         </div>
       </div>
 
@@ -429,6 +476,7 @@ export function PresentationBuilder() {
         <div className="flex-1 overflow-hidden flex items-center justify-center p-2 sm:p-4 lg:p-12 bg-[#111111] relative min-h-[50vh] lg:min-h-0">
           {selectedSlide && activeLayout ? (
              <SlidePreview 
+               ref={previewRef}
                templateCode={isEditingLayoutCode ? layoutEditCode : (activeLayout?.code || "")} 
                data={previewData} 
                designConfig={designConfig}

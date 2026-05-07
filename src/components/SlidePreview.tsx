@@ -68,6 +68,9 @@ function sanitizeFontName(raw: string | undefined, fallback = 'Inter'): string {
   return (first && !GENERIC_CSS_FAMILIES.has(first.toLowerCase())) ? first : fallback;
 }
 
+// Cache for compiled Handlebars templates
+const templateCache = new Map<string, HandlebarsTemplateDelegate>();
+
 export const generateSlideHtml = (templateCode: string, data: Record<string, any>, designConfig?: Record<string, any>, interactive: boolean = false) => {
   let renderedHtml = "";
   try {
@@ -88,7 +91,20 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
           }
         );
     }
-    const template = Handlebars.compile(processedTemplate);
+    
+    // Check cache first
+    let template = templateCache.get(processedTemplate);
+    if (!template) {
+      template = Handlebars.compile(processedTemplate);
+      templateCache.set(processedTemplate, template);
+      
+      // Keep cache size reasonable
+      if (templateCache.size > 100) {
+        const firstKey = templateCache.keys().next().value;
+        if (firstKey !== undefined) templateCache.delete(firstKey);
+      }
+    }
+    
     renderedHtml = template(data || {});
   } catch (e: any) {
     renderedHtml = `<div style="color: red; padding: 20px; font-family: sans-serif;">Template error: ${e?.message}</div>`;
@@ -402,16 +418,34 @@ export const SlideStatic = forwardRef<any, {
   );
 });
 
-export const SlidePreview: React.FC<{
+export interface SlidePreviewRef {
+  capture: () => Promise<string | null>;
+}
+
+export const SlidePreview = forwardRef<SlidePreviewRef, {
   templateCode: string;
   data: Record<string, any>;
   designConfig?: Record<string, any>;
   interactive?: boolean;
   onImageUpload?: (key: string, path: string) => void;
   className?: string;
-}> = ({ templateCode, data, designConfig, interactive = false, onImageUpload, className }) => {
+}>(({ templateCode, data, designConfig, interactive = false, onImageUpload, className }, ref) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    capture: async () => {
+      if (iframeRef.current?.contentWindow) {
+        try {
+          return await (iframeRef.current.contentWindow as any).captureSlide();
+        } catch (e) {
+          console.error("Capture failed", e);
+          return null;
+        }
+      }
+      return null;
+    }
+  }));
   const [zoom, setZoom] = useState(1);
   const resolvedData = useResolvedData(data);
 
@@ -493,4 +527,4 @@ export const SlidePreview: React.FC<{
       </div>
     </div>
   );
-};
+});

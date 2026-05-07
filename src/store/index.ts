@@ -17,6 +17,7 @@ export interface SlideData {
   layoutId: string; // References LayoutDef.id (optional if code is provided)
   content: Record<string, any>;
   code?: string; // Optional inline Handlebars code for this specific slide
+  thumbnail?: string;
 }
 
 export interface Presentation {
@@ -204,6 +205,7 @@ interface AppState {
   addSlide: (slide: SlideData) => void;
   removeSlide: (slideId: string) => void;
   updateTemplateDesign: (templateId: string, config: Partial<DesignConfig>) => void;
+  updateSlideThumbnail: (slideId: string, thumbnail: string) => void;
   
   toasts: Toast[];
   addToast: (message: string, type?: 'success' | 'error' | 'info') => void;
@@ -655,6 +657,13 @@ export const useAppStore = create<AppState>()(
       updateTemplateDesign: (templateId: string, config) => set((state) => ({
         templates: state.templates.map(t => 
           t.id === templateId ? { ...t, designConfig: { ...t.designConfig, ...config } } : t
+        )
+      })),
+      updateSlideThumbnail: (slideId, thumbnail) => set((state) => ({
+        presentations: state.presentations.map(p => 
+          p.id === state.activePresentationId 
+            ? { ...p, slides: p.slides.map(s => s.id === slideId ? { ...s, thumbnail } : s) }
+            : p
         )
       })),
 
