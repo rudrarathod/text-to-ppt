@@ -27,6 +27,8 @@ interface AIAssistantPanelProps {
   onApplyResponse?: () => void;
 }
 
+import { copyToClipboard } from "../../lib/utils";
+
 export function AIAssistantPanel({
   promptValue,
   onPromptChange,
@@ -58,12 +60,14 @@ export function AIAssistantPanel({
     if (onModeChange) onModeChange(mode);
   };
 
-  const handleCopySystemPrompt = () => {
+  const handleCopySystemPrompt = async () => {
     if (!promptValue.trim()) return;
     const sysPrompt = systemPromptBuilder(promptValue);
-    navigator.clipboard.writeText(sysPrompt);
-    setCopiedPrompt(true);
-    setTimeout(() => setCopiedPrompt(false), 2000);
+    const successful = await copyToClipboard(sysPrompt);
+    if (successful) {
+      setCopiedPrompt(true);
+      setTimeout(() => setCopiedPrompt(false), 2000);
+    }
   };
 
   return (

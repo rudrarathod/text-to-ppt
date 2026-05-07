@@ -49,6 +49,15 @@ export function PresentationGallery() {
     <GalleryLayout 
       title="Presentations"
       icon={<PresentationIcon size={16} className="text-[#D62828]" />}
+      headerActions={
+        <Button 
+          onClick={() => setShowCreateModal(true)}
+          className="bg-[#D62828] hover:bg-[#b20112] text-white border-none font-bold px-4 md:px-6 h-9 md:h-10 text-xs md:text-sm"
+        >
+          <Plus size={16} className="md:mr-2" />
+          <span className="hidden md:inline">New Presentation</span>
+        </Button>
+      }
     >
       {presentations.map(presentation => {
         const currentTemplate = templates.find(t => t.id === presentation.templateId);
@@ -133,28 +142,30 @@ export function PresentationGallery() {
       />
     </GalleryLayout>
     {showCreateModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-          <div className="bg-[#1e1e1e] border border-[#2d2d30] rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
-            <div className="flex items-center justify-between p-6 border-b border-[#2d2d30] bg-[#161618]">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-0 md:p-4 animate-in fade-in duration-300">
+          <div className="bg-[#1e1e1e] border-t md:border border-[#2d2d30] rounded-t-3xl md:rounded-2xl shadow-2xl w-full max-w-6xl overflow-hidden flex flex-col h-full md:h-auto md:max-h-[90vh] animate-in slide-in-from-bottom-10 md:zoom-in-95 duration-300">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 md:p-6 border-b border-[#2d2d30] bg-[#161618] shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#D62828]/10 flex items-center justify-center">
-                  <PresentationIcon className="text-[#D62828]" size={24}/>
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-[#D62828]/10 flex items-center justify-center">
+                  <PresentationIcon className="text-[#D62828]" size={20}/>
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">Create New Presentation</h3>
-                  <p className="text-xs text-gray-500">Select a design style to get started</p>
+                  <h3 className="text-base md:text-xl font-bold text-white leading-none">New Presentation</h3>
+                  <p className="hidden md:block text-xs text-gray-500 mt-1">Select a design style to get started</p>
                 </div>
               </div>
-              <button onClick={() => setShowCreateModal(false)} className="text-gray-500 hover:text-white transition-colors">
-                <X size={24} />
+              <button onClick={() => setShowCreateModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 text-gray-500 hover:text-white transition-colors">
+                <X size={20} />
               </button>
             </div>
             
-            <div className="flex flex-1 min-h-0">
-              {/* Left Sidebar: Template List */}
-              <div className="w-80 border-r border-[#2d2d30] flex flex-col bg-[#161618]/50">
-                <div className="p-6 pb-0">
-                  <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4">Presentation Title</label>
+            {/* Modal Body */}
+            <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-y-auto md:overflow-hidden">
+              {/* Left Sidebar: Title & Template List */}
+              <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-[#2d2d30] flex flex-col bg-[#161618]/50 shrink-0">
+                <div className="p-4 md:p-6 shrink-0">
+                  <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-3">Presentation Title</label>
                   <input
                     type="text"
                     value={newTitle}
@@ -168,8 +179,8 @@ export function PresentationGallery() {
                   />
                 </div>
 
-                <div className="mt-8 flex-1 flex flex-col min-h-0">
-                  <div className="px-6 space-y-4 mb-4">
+                <div className="flex-1 flex flex-col min-h-0 px-4 md:px-6 pb-6">
+                  <div className="space-y-4 mb-4">
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Design Library</label>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" size={14} />
@@ -178,23 +189,12 @@ export function PresentationGallery() {
                         value={templateSearch}
                         onChange={(e) => setTemplateSearch(e.target.value)}
                         placeholder="Search designs..."
-                        className="w-full bg-[#1e1e1e] border border-[#2d2d30] rounded-lg pl-9 pr-4 py-2 text-xs text-white outline-none focus:border-[#D62828] transition-all"
+                        className="w-full bg-[#1e1e1e] border border-[#2d2d30] rounded-xl pl-9 pr-4 py-2 text-xs text-white outline-none focus:border-[#D62828] transition-all"
                       />
                     </div>
-                    <div className="flex items-center gap-2">
-                       <ArrowUpDown size={12} className="text-gray-600" />
-                       <select 
-                         value={templateSort}
-                         onChange={(e) => setTemplateSort(e.target.value as any)}
-                         className="bg-transparent border-none text-[10px] font-bold text-gray-500 outline-none hover:text-white transition-colors cursor-pointer"
-                       >
-                          <option value="newest">Newest First</option>
-                          <option value="name">Alphabetical</option>
-                          <option value="layouts">Most Layouts</option>
-                       </select>
-                    </div>
                   </div>
-                  <div className="flex-1 overflow-y-auto px-3 space-y-2 pb-6">
+
+                  <div className="flex-1 md:overflow-y-auto space-y-2 custom-scrollbar pr-1">
                     {filteredTemplates.map(t => (
                       <div 
                         key={t.id}
@@ -203,7 +203,7 @@ export function PresentationGallery() {
                           setCurrentLayoutIndex(0);
                         }}
                         className={cn(
-                          "group cursor-pointer p-4 rounded-xl transition-all border flex items-center justify-between",
+                          "group cursor-pointer p-3 rounded-xl transition-all border flex items-center justify-between",
                           selectedTemplateId === t.id 
                             ? "bg-[#D62828]/10 border-[#D62828] shadow-lg shadow-[#D62828]/5" 
                             : "bg-transparent border-transparent hover:bg-[#2d2d30]/50 hover:border-[#333]"
@@ -218,11 +218,11 @@ export function PresentationGallery() {
                           </div>
                           <div className="min-w-0 flex-1">
                              <h4 className="font-bold text-sm text-white truncate">{t.name}</h4>
-                             <p className="text-xs text-gray-500 truncate">{t.layouts.length} slides</p>
+                             <p className="text-[10px] text-gray-500 truncate">{t.layouts.length} layouts</p>
                           </div>
                         </div>
                         {selectedTemplateId === t.id && (
-                          <div className="w-2 h-2 rounded-full bg-[#D62828]" />
+                          <div className="w-1.5 h-1.5 rounded-full bg-[#D62828]" />
                         )}
                       </div>
                     ))}
@@ -231,7 +231,7 @@ export function PresentationGallery() {
               </div>
 
               {/* Right Side: Large Preview Area */}
-              <div className="flex-1 bg-[#111111] p-8 flex flex-col items-center justify-center relative overflow-hidden">
+              <div className="flex-1 bg-[#111111] p-4 md:p-10 flex flex-col items-center justify-center relative overflow-hidden min-h-[300px] md:min-h-0">
                 {/* Background decorative elements */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[#D62828]/5 blur-[100px] rounded-full"></div>
                 <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/5 blur-[100px] rounded-full"></div>
@@ -242,7 +242,7 @@ export function PresentationGallery() {
                   const mockData = currentLayout?.mockData || { title: t.name, subtitle: "Full Design System Preview" };
                   
                   return (
-                    <div className="w-full flex flex-col items-center gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="w-full flex flex-col items-center gap-6 md:gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
                       <div className="w-full max-w-2xl relative group/preview">
                         <div className="absolute -inset-4 bg-gradient-to-br from-[#D62828]/20 to-transparent blur-2xl opacity-50"></div>
                         <div className="relative aspect-video rounded-2xl overflow-hidden border border-[#333] shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
@@ -261,61 +261,46 @@ export function PresentationGallery() {
                                   e.stopPropagation();
                                   setCurrentLayoutIndex((prev) => (prev - 1 + t.layouts.length) % t.layouts.length);
                                 }}
-                                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover/preview:opacity-100 transition-all hover:bg-[#D62828]"
+                                className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover/preview:opacity-100 transition-all hover:bg-[#D62828]"
                               >
-                                <ChevronLeft size={24} />
+                                <ChevronLeft size={20} />
                               </button>
                               <button 
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setCurrentLayoutIndex((prev) => (prev + 1) % t.layouts.length);
                                 }}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover/preview:opacity-100 transition-all hover:bg-[#D62828]"
+                                className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover/preview:opacity-100 transition-all hover:bg-[#D62828]"
                               >
-                                <ChevronRight size={24} />
+                                <ChevronRight size={20} />
                               </button>
-                              
-                              {/* Layout Indicator */}
-                              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 p-1.5 rounded-full bg-black/40 backdrop-blur-md">
-                                {t.layouts.map((_, idx) => (
-                                  <div 
-                                    key={idx}
-                                    className={cn(
-                                      "w-1.5 h-1.5 rounded-full transition-all",
-                                      currentLayoutIndex === idx ? "bg-[#D62828] w-4" : "bg-white/40"
-                                    )}
-                                  />
-                                ))}
-                              </div>
                             </>
                           )}
                         </div>
 
                         {/* Layout Name Badge */}
-                        <div className="absolute -top-3 left-6 px-4 py-1.5 bg-[#D62828] text-white text-[10px] font-black uppercase tracking-widest rounded-lg shadow-lg">
+                        <div className="absolute -top-3 left-6 px-3 py-1 bg-[#D62828] text-white text-[9px] font-black uppercase tracking-widest rounded-lg shadow-lg">
                            {currentLayout?.name || "Layout Preview"}
                         </div>
                       </div>
 
-                      <div className="w-full max-w-2xl grid grid-cols-3 gap-6">
-                        <div className="bg-[#1e1e1e] p-4 rounded-2xl border border-[#2d2d30] space-y-2">
-                           <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Brand Palette</p>
+                      {/* Design Details (Hidden on very small height mobile screens if needed, but let's keep for now) */}
+                      <div className="w-full max-w-2xl grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
+                        <div className="bg-[#1e1e1e] p-3 md:p-4 rounded-2xl border border-[#2d2d30] flex md:flex-col items-center md:items-start justify-between md:justify-start gap-2">
+                           <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Palette</p>
                            <div className="flex gap-1.5">
-                              <div className="w-6 h-6 rounded-md shadow-inner" style={{ backgroundColor: t.designConfig.primary }} title="Primary"></div>
-                              <div className="w-6 h-6 rounded-md shadow-inner" style={{ backgroundColor: t.designConfig.secondary }} title="Secondary"></div>
-                              <div className="w-6 h-6 rounded-md shadow-inner" style={{ backgroundColor: t.designConfig.accent }} title="Accent"></div>
-                              <div className="w-6 h-6 rounded-md shadow-inner" style={{ backgroundColor: t.designConfig.bg }} title="Background"></div>
+                              <div className="w-5 h-5 rounded shadow-inner" style={{ backgroundColor: t.designConfig.primary }} title="Primary"></div>
+                              <div className="w-5 h-5 rounded shadow-inner" style={{ backgroundColor: t.designConfig.secondary }} title="Secondary"></div>
+                              <div className="w-5 h-5 rounded shadow-inner" style={{ backgroundColor: t.designConfig.bg }} title="Background"></div>
                            </div>
                         </div>
-                        <div className="bg-[#1e1e1e] p-4 rounded-2xl border border-[#2d2d30] space-y-1">
-                           <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Typography</p>
-                           <p className="text-xs font-bold text-white truncate">{t.designConfig.headingFont}</p>
-                           <p className="text-[10px] text-gray-500 truncate">{t.designConfig.fontFamily}</p>
+                        <div className="bg-[#1e1e1e] p-3 md:p-4 rounded-2xl border border-[#2d2d30] flex md:flex-col items-center md:items-start justify-between md:justify-start gap-1">
+                           <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Type</p>
+                           <p className="text-[11px] font-bold text-white truncate">{t.designConfig.headingFont}</p>
                         </div>
-                        <div className="bg-[#1e1e1e] p-4 rounded-2xl border border-[#2d2d30] space-y-1">
-                           <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Interface</p>
-                           <p className="text-xs font-bold text-white">Radius: {t.designConfig.borderRadius}</p>
-                           <p className="text-[10px] text-gray-500 capitalize">{t.designConfig.contentAlignment} Aligned</p>
+                        <div className="bg-[#1e1e1e] p-3 md:p-4 rounded-2xl border border-[#2d2d30] flex md:flex-col items-center md:items-start justify-between md:justify-start gap-1">
+                           <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">System</p>
+                           <p className="text-[11px] font-bold text-white capitalize">{t.designConfig.contentAlignment} Aligned</p>
                         </div>
                       </div>
                     </div>
@@ -329,21 +314,22 @@ export function PresentationGallery() {
               </div>
             </div>
 
-            <div className="p-6 border-t border-[#2d2d30] bg-[#161618] flex items-center justify-between">
-               <div className="flex items-center gap-2 text-xs text-gray-500">
+            {/* Modal Footer */}
+            <div className="p-4 md:p-6 border-t border-[#2d2d30] bg-[#161618] flex flex-col md:flex-row items-center justify-between gap-4 shrink-0 pb-10 md:pb-6">
+               <div className="hidden md:flex items-center gap-2 text-xs text-gray-500">
                   <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
                   AI Design Engine Ready
                </div>
-               <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setShowCreateModal(false)} className="border-[#333] hover:bg-[#252526] text-gray-300 px-6">
+               <div className="flex w-full md:w-auto gap-3">
+                <Button variant="outline" onClick={() => setShowCreateModal(false)} className="flex-1 md:flex-none border-[#333] hover:bg-[#252526] text-gray-300 px-6">
                   Cancel
                 </Button>
                 <Button 
                   onClick={handleCreate} 
                   disabled={!newTitle.trim() || !selectedTemplateId} 
-                  className="bg-[#D62828] hover:bg-[#b20112] text-white border-none font-bold px-8 shadow-lg shadow-[#D62828]/20 group"
+                  className="flex-[2] md:flex-none bg-[#D62828] hover:bg-[#b20112] text-white border-none font-bold px-8 shadow-lg shadow-[#D62828]/20 group"
                 >
-                  Create Presentation <ChevronRight size={18} className="ml-1 group-hover:translate-x-1 transition-transform" />
+                  Create <ChevronRight size={18} className="ml-1 group-hover:translate-x-1 transition-transform" />
                 </Button>
                </div>
             </div>

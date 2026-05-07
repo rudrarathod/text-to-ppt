@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import Editor from "../components/LazyEditor";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useAppStore, LayoutDef, LayoutVariant, SlideTemplate } from "../store";
+import { useAppStore, LayoutDef, LayoutVariant, SlideTemplate, DEFAULT_DESIGN } from "../store";
 import { SlidePreview } from "../components/SlidePreview";
 import { Button, Input, Textarea } from "../components/ui";
 import { Plus, Sparkles, Trash2, Code2, Play, CircleAlert, ArrowLeft, X, Mic, Palette, Copy, Check, Edit2, Settings2, ChevronDown, ChevronUp, LayoutTemplate, Download, Search } from "lucide-react";
@@ -13,6 +13,7 @@ import { GoogleFontLoader, POPULAR_FONTS } from "../lib/typography";
 import { ThemeSettingsPanel } from "../components/design-system/ThemeSettingsPanel";
 import { FullScreenModal } from "../components/layout/FullScreenModal";
 import { ThemeShowcase } from "../components/design-system/ThemeShowcase";
+import { ThemePreviewCanvas } from "../components/design-system/ThemePreviewCanvas";
 import { AIAssistantPanel } from "../components/ai/AIAssistantPanel";
 import { PageHeader } from "../components/layout/PageHeader";
 
@@ -56,7 +57,7 @@ export function TemplateBuilder() {
   }, [activeTemplate, navigate]);
 
   const layouts = activeTemplate?.layouts || [];
-  const designConfig = activeTemplate?.designConfig || templates[0].designConfig;
+  const designConfig = activeTemplate?.designConfig || (templates.length > 0 ? templates[0].designConfig : DEFAULT_DESIGN);
 
   const [selectedLayoutId, setSelectedLayoutId] = useState<string | null>(layouts[0]?.id || null);
   
@@ -807,7 +808,7 @@ export function TemplateBuilder() {
                             <span className="text-sm font-medium text-gray-200 truncate pr-2" title={l.name}>{l.name}</span>
                             <div className="flex gap-2 shrink-0">
                                <button onClick={() => { setSelectedLayoutId(l.id); setBuilderMode('individual'); }} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Edit Layout"><Edit2 size={14} /></button>
-                               {layouts.length > 1 && (
+                               {true && (
                                  <button onClick={() => { if (window.confirm("Delete layout?")) removeLayoutFromActiveTemplate(l.id); }} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Delete Layout"><Trash2 size={14} /></button>
                                )}
                             </div>
@@ -833,27 +834,34 @@ export function TemplateBuilder() {
           </div>
 }
       >
-        <div className="flex h-full overflow-hidden bg-[#0f0f10]">
-           {/* Left Sidebar - Settings */}
+        <div className="flex flex-col lg:flex-row h-full overflow-y-auto lg:overflow-hidden bg-[#0f0f10]">
+           {/* Preview Canvas */}
+           <div className="order-first lg:order-last lg:flex-1 bg-[#0f0f10] flex items-center justify-center p-4 md:p-8 lg:p-10 shrink-0">
+             <ThemePreviewCanvas className="w-full h-auto">
+               <ThemeShowcase config={designConfig} />
+             </ThemePreviewCanvas>
+           </div>
+
+           {/* Settings Sidebar */}
            <div 
-              style={{ width: themeSidebarWidth }}
-              className="border-r border-white/5 bg-[#0c0c0e] flex flex-col overflow-hidden relative group/sidebar shrink-0"
+              style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1024 ? themeSidebarWidth : undefined }}
+              className="w-full lg:border-r border-t lg:border-t-0 border-white/5 bg-[#0c0c0e] flex flex-col lg:overflow-hidden relative group/sidebar shrink-0"
             >
-              {/* Resize Handle */}
+              {/* Resize Handle — desktop only */}
               <div 
                 onMouseDown={startResizingTheme}
-                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#D62828]/50 transition-colors z-30"
+                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#D62828]/50 transition-colors z-30 hidden lg:block"
               />
               
               {/* Sidebar Header with Toggle */}
-              <div className="p-6 border-b border-white/5 bg-[#0c0c0e]">
-                <div className="flex items-center justify-between mb-4">
+              <div className="p-4 md:p-6 border-b border-white/5 bg-[#0c0c0e]">
+                <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
                   <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">Visual DNA Engine</p>
                   <div className="flex p-1 bg-white/[0.03] rounded-xl border border-white/5">
                     <button 
                       onClick={() => setThemeEntryMode('ai')}
                       className={cn(
-                        "px-4 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-2",
+                        "px-3 md:px-4 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-2",
                         themeEntryMode === 'ai' ? "bg-[#D62828] text-white shadow-lg shadow-[#D62828]/20" : "text-gray-500 hover:text-gray-300"
                       )}
                     >
@@ -862,7 +870,7 @@ export function TemplateBuilder() {
                     <button 
                       onClick={() => setThemeEntryMode('manual')}
                       className={cn(
-                        "px-4 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-2",
+                        "px-3 md:px-4 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-2",
                         themeEntryMode === 'manual' ? "bg-[#D62828] text-white shadow-lg shadow-[#D62828]/20" : "text-gray-500 hover:text-gray-300"
                       )}
                     >
@@ -872,9 +880,9 @@ export function TemplateBuilder() {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto custom-scrollbar">
+              <div className="flex-1 lg:overflow-y-auto custom-scrollbar">
                 {themeEntryMode === 'ai' ? (
-                   <div className="p-6 animate-in fade-in slide-in-from-left-4 duration-300">
+                   <div className="p-4 md:p-6 animate-in fade-in slide-in-from-left-4 duration-300">
                       <AIAssistantPanel 
                         promptValue={themeAiPrompt}
                         onPromptChange={setThemeAiPrompt}
@@ -901,14 +909,7 @@ export function TemplateBuilder() {
                 )}
               </div>
             </div>
-
-           {/* Main Area - Live Preview */}
-           <div className="flex-1 bg-[#0f0f10] relative flex items-center justify-center p-12 overflow-y-auto">
-              <div className="w-full max-w-6xl animate-in zoom-in-95 duration-500">
-                <ThemeShowcase config={designConfig} />
-              </div>
-           </div>
-        </div>
+         </div>
       </FullScreenModal>
     </div>
   );

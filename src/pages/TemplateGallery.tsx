@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppStore, DEFAULT_DESIGN } from "../store";
 import { Button, Textarea } from "../components/ui";
 import { Plus, LayoutTemplate, Trash2, Edit2, X, Download, Upload, Copy, Palette, ChevronRight, Sparkles, Wand2, Loader2, Check, Settings2, ChevronUp, ChevronDown, Search } from "lucide-react";
-import { cn } from "../lib/utils";
+import { cn, copyToClipboard } from "../lib/utils";
 import { askAiForDesignConfig, buildDesignConfigPrompt } from "../lib/gemini";
 import { GoogleFontLoader, POPULAR_FONTS } from "../lib/typography";
 import { ThemeSettingsPanel } from "../components/design-system/ThemeSettingsPanel";
@@ -12,6 +12,7 @@ import { PreviewCard } from "../components/layout/PreviewCard";
 import { GalleryLayout } from "../components/layout/GalleryLayout";
 import { FullScreenModal } from "../components/layout/FullScreenModal";
 import { ThemeShowcase } from "../components/design-system/ThemeShowcase";
+import { ThemePreviewCanvas } from "../components/design-system/ThemePreviewCanvas";
 
 
 
@@ -88,11 +89,13 @@ export function TemplateGallery() {
     }
   };
 
-  const handleCopyPrompt = () => {
+  const handleCopyPrompt = async () => {
     const prompt = buildDesignConfigPrompt(aiDesignPrompt || newTemplateName);
-    navigator.clipboard.writeText(prompt);
-    setCopySuccess(true);
-    setTimeout(() => setCopySuccess(false), 2000);
+    const successful = await copyToClipboard(prompt);
+    if (successful) {
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    }
   };
 
   const handleApplyAiResponse = () => {
@@ -170,10 +173,23 @@ export function TemplateGallery() {
         accept=".json" 
         className="hidden" 
       />
-      <GalleryLayout
-      title="Design Library"
-      icon={<LayoutTemplate size={16} className="text-[#D62828]" />}
-    >
+      <GalleryLayout 
+        title="Design Library"
+        icon={<LayoutTemplate size={16} className="text-[#D62828]" />}
+        headerActions={
+          <Button 
+            onClick={() => {
+              setDesignConfig(DEFAULT_DESIGN);
+              setNewTemplateName("My New Template");
+              setShowCreateModal(true);
+            }}
+            className="bg-[#D62828] hover:bg-[#b20112] text-white border-none font-bold px-4 md:px-6 h-9 md:h-10 text-xs md:text-sm"
+          >
+            <Plus size={16} className="md:mr-2" />
+            <span className="hidden md:inline">New Template</span>
+          </Button>
+        }
+      >
       {templates.map(template => (
         <PreviewCard 
           key={template.id}
@@ -266,15 +282,14 @@ export function TemplateGallery() {
 
       {showCreateModal && (
         <div className="fixed inset-0 bg-[#0f0f10] z-50 flex flex-col animate-in fade-in duration-500">
-          {/* Minimal Header */}
-          <div className="flex items-center justify-between px-8 py-4 border-b border-white/5 bg-[#0f0f10]/80 backdrop-blur-xl sticky top-0 z-20">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 md:px-8 py-3 md:py-4 border-b border-white/5 bg-[#0f0f10]/80 backdrop-blur-xl sticky top-0 z-20 shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-[#D62828] rounded-lg flex items-center justify-center shadow-lg shadow-[#D62828]/20">
                 <Palette size={16} className="text-white"/>
               </div>
-              <h3 className="text-lg font-black text-white tracking-tight">Create Template</h3>
+              <h3 className="text-base md:text-lg font-black text-white tracking-tight">Create Template</h3>
             </div>
-            
             <button 
               onClick={() => setShowCreateModal(false)}
               className="p-2 text-gray-400 hover:text-white transition-all bg-white/5 hover:bg-white/10 rounded-lg"
@@ -283,48 +298,55 @@ export function TemplateGallery() {
             </button>
           </div>
 
-          <div className="flex-1 flex overflow-hidden">
-            {/* Left Sidebar - Settings */}
+          {/* Body — scrollable on mobile, side-by-side on desktop */}
+          <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
+            
+            {/* Preview Canvas */}
+            <div className="order-first lg:order-last lg:flex-1 bg-[#0f0f10] flex items-center justify-center p-4 md:p-8 lg:p-10 shrink-0">
+              <ThemePreviewCanvas className="w-full h-auto">
+                <ThemeShowcase config={designConfig} />
+              </ThemePreviewCanvas>
+            </div>
+
+            {/* Settings Sidebar */}
             <div 
-              style={{ width: sidebarWidth }}
-              className="border-r border-white/5 bg-[#0c0c0e] flex flex-col overflow-hidden relative group/sidebar shrink-0"
+              style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1024 ? sidebarWidth : undefined }}
+              className="w-full lg:border-r border-t lg:border-t-0 border-white/5 bg-[#0c0c0e] flex flex-col lg:overflow-hidden relative group/sidebar shrink-0"
             >
-              {/* Resize Handle */}
+              {/* Resize Handle — desktop only */}
               <div 
                 onMouseDown={startResizing}
-                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#D62828]/50 transition-colors z-30"
+                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#D62828]/50 transition-colors z-30 hidden lg:block"
               />
               
-              <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
-                {/* Unified Header with Identity & DNA Engine Toggle */}
-                <div className="p-8 pb-4 space-y-8 bg-[#0c0c0e]">
-                   {/* Template Name Section */}
+              <div className="flex-1 lg:overflow-y-auto custom-scrollbar flex flex-col">
+                {/* Template Identity & Mode Toggle */}
+                <div className="p-4 md:p-8 pb-4 space-y-6 md:space-y-8 bg-[#0c0c0e]">
                    <div className="space-y-4">
                      <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">Template Identity</p>
                      <input
                        type="text"
                        value={newTemplateName}
                        onChange={(e) => setNewTemplateName(e.target.value)}
-                       className="w-full bg-transparent border-b border-white/10 text-white py-2 text-2xl font-black outline-none focus:border-[#D62828] transition-all placeholder:text-white/5"
+                       className="w-full bg-transparent border-b border-white/10 text-white py-2 text-xl md:text-2xl font-black outline-none focus:border-[#D62828] transition-all placeholder:text-white/5"
                        placeholder="Enter name..."
                        autoFocus
                      />
                      <div className="flex flex-wrap gap-2 pt-2">
                        {['Pitch Deck', 'Technical', 'Product', 'Creative'].map(s => (
-                         <button key={s} onClick={() => setNewTemplateName(s)} className="px-4 py-1.5 bg-white/[0.03] border border-white/10 rounded-full text-[9px] font-black text-gray-400 hover:text-white hover:border-[#D62828] transition-all uppercase tracking-wider">{s}</button>
+                         <button key={s} onClick={() => setNewTemplateName(s)} className="px-3 md:px-4 py-1.5 bg-white/[0.03] border border-white/10 rounded-full text-[9px] font-black text-gray-400 hover:text-white hover:border-[#D62828] transition-all uppercase tracking-wider">{s}</button>
                        ))}
                      </div>
                    </div>
 
-                   {/* Design Mode Selection */}
                    <div className="space-y-4 pt-4 border-t border-white/5">
-                     <div className="flex items-center justify-between">
+                     <div className="flex items-center justify-between flex-wrap gap-2">
                        <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">Visual DNA Engine</p>
                        <div className="flex p-1 bg-white/[0.03] rounded-xl border border-white/5">
                          <button 
                            onClick={() => setDesignEntryMode('auto')}
                            className={cn(
-                             "px-5 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-2",
+                             "px-4 md:px-5 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-2",
                              designEntryMode === 'auto' ? "bg-[#D62828] text-white shadow-lg shadow-[#D62828]/20" : "text-gray-500 hover:text-gray-300"
                            )}
                          >
@@ -333,7 +355,7 @@ export function TemplateGallery() {
                          <button 
                            onClick={() => setDesignEntryMode('manual')}
                            className={cn(
-                             "px-5 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-2",
+                             "px-4 md:px-5 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-2",
                              designEntryMode === 'manual' ? "bg-[#D62828] text-white shadow-lg shadow-[#D62828]/20" : "text-gray-500 hover:text-gray-300"
                            )}
                          >
@@ -346,7 +368,7 @@ export function TemplateGallery() {
 
                 <div className="flex-1">
                   {designEntryMode === 'auto' ? (
-                    <div className="p-8 pt-4 space-y-8 animate-in fade-in slide-in-from-left-4 duration-300">
+                    <div className="p-4 md:p-8 pt-4 space-y-8 animate-in fade-in slide-in-from-left-4 duration-300">
                       <AIAssistantPanel 
                         promptValue={aiDesignPrompt}
                         onPromptChange={setAiDesignPrompt}
@@ -389,22 +411,16 @@ export function TemplateGallery() {
                 </div>
               </div>
 
-              {/* Sidebar Footer */}
-              <div className="p-6 border-t border-white/5 bg-[#0c0c0e]">
+              {/* Footer CTA */}
+              <div className="p-4 md:p-6 border-t border-white/5 bg-[#0c0c0e] shrink-0">
                 <Button 
                   onClick={handleCreateSubmit}
                   disabled={!newTemplateName.trim()}
-                  className="w-full bg-[#D62828] hover:bg-[#b20112] text-white border-none h-14 rounded-[1.25rem] font-black flex items-center justify-center gap-2 text-sm shadow-xl shadow-[#D62828]/20 transition-all active:scale-[0.98] uppercase tracking-widest"
+                  className="w-full bg-[#D62828] hover:bg-[#b20112] text-white border-none h-12 md:h-14 rounded-xl md:rounded-[1.25rem] font-black flex items-center justify-center gap-2 text-sm shadow-xl shadow-[#D62828]/20 transition-all active:scale-[0.98] uppercase tracking-widest"
                 >
-                  Confirm & Create Template <ChevronRight size={18} />
+                  Confirm & Create <ChevronRight size={18} />
                 </Button>
               </div>
-            </div>
-
-            <div className="flex-1 bg-[#0f0f10] relative flex items-center justify-center p-12 overflow-y-auto">
-               <div className="w-full max-w-6xl animate-in zoom-in-95 duration-500">
-                 <ThemeShowcase config={designConfig} />
-               </div>
             </div>
           </div>
         </div>
@@ -412,3 +428,4 @@ export function TemplateGallery() {
     </>
   );
 }
+

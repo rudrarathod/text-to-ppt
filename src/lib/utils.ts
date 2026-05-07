@@ -29,3 +29,35 @@ export function getGoogleFontLink(fonts: string[]): string {
     .join('&family=');
   return `https://fonts.googleapis.com/css2?family=${fontQuery}&display=swap`;
 }
+
+export async function copyToClipboard(text: string): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+
+  // Try modern Clipboard API
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (err) {
+      console.error("Clipboard API failed, falling back", err);
+    }
+  }
+
+  // Fallback to execCommand('copy')
+  try {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-9999px";
+    textArea.style.top = "0";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    const successful = document.execCommand("copy");
+    document.body.removeChild(textArea);
+    return successful;
+  } catch (err) {
+    console.error("Fallback copy failed", err);
+    return false;
+  }
+}

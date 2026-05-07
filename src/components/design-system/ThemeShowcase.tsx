@@ -1,6 +1,5 @@
 import React from 'react';
-import { Search, Plus, Play, Download, Settings, Heart, Bell, Share2, Info, ChevronRight, User, Palette, MousePointer2, Check } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { ChevronRight, User, Settings, Bell, MousePointer2, Check, Palette } from 'lucide-react';
 import { GoogleFontLoader } from '../../lib/typography';
 import { DesignConfig } from '../../store';
 
@@ -8,10 +7,13 @@ interface ThemeShowcaseProps {
   config: DesignConfig;
 }
 
+/**
+ * ThemeShowcase — renders at a fixed 1920×1080 reference resolution.
+ * Must be placed inside a ThemePreviewCanvas for proper scaling.
+ * All dimensions are fixed px values for pixel-perfect consistency.
+ */
 export const ThemeShowcase: React.FC<ThemeShowcaseProps> = ({ config }) => {
-  // Map design config to CSS variables for live preview
   const cssVars = {
-    // Colors
     '--ds-primary': config.primary,
     '--ds-on-primary': config.onPrimary,
     '--ds-primary-container': config.primaryContainer,
@@ -21,19 +23,16 @@ export const ThemeShowcase: React.FC<ThemeShowcaseProps> = ({ config }) => {
     '--ds-on-primary-fixed': config.onPrimaryFixed,
     '--ds-on-primary-fixed-variant': config.onPrimaryFixedVariant,
     '--ds-inverse-primary': config.inversePrimary,
-
     '--ds-secondary': config.secondary,
     '--ds-on-secondary': config.onSecondary,
     '--ds-secondary-container': config.secondaryContainer,
     '--ds-on-secondary-container': config.onSecondaryContainer,
     '--ds-secondary-fixed': config.secondaryFixed,
     '--ds-secondary-fixed-dim': config.secondaryFixedDim,
-
     '--ds-tertiary': config.tertiary,
     '--ds-on-tertiary': config.onTertiary,
     '--ds-tertiary-container': config.tertiaryContainer,
     '--ds-on-tertiary-container': config.onTertiaryContainer,
-
     '--ds-surface': config.surface,
     '--ds-surface-dim': config.surfaceDim,
     '--ds-surface-bright': config.surfaceBright,
@@ -47,18 +46,14 @@ export const ThemeShowcase: React.FC<ThemeShowcaseProps> = ({ config }) => {
     '--ds-on-surface-variant': config.onSurfaceVariant,
     '--ds-inverse-surface': config.inverseSurface,
     '--ds-inverse-on-surface': config.inverseOnSurface,
-
     '--ds-outline': config.outline,
     '--ds-outline-variant': config.outlineVariant,
     '--ds-background': config.background,
     '--ds-on-background': config.onBackground,
-    
     '--ds-error': config.error,
     '--ds-on-error': config.onError,
     '--ds-error-container': config.errorContainer,
     '--ds-on-error-container': config.onErrorContainer,
-    
-    // Spacing
     '--ds-spacing-base': config.spacingBase,
     '--ds-spacing-xs': config.spacingXs,
     '--ds-spacing-sm': config.spacingSm,
@@ -66,22 +61,16 @@ export const ThemeShowcase: React.FC<ThemeShowcaseProps> = ({ config }) => {
     '--ds-spacing-lg': config.spacingLg,
     '--ds-spacing-xl': config.spacingXl,
     '--ds-spacing-gutter': config.spacingGutter,
-
-    // Radius
     '--ds-radius-sm': config.radiusSm,
     '--ds-radius-default': config.radiusDefault,
     '--ds-radius-md': config.radiusMd,
     '--ds-radius-lg': config.radiusLg,
     '--ds-radius-xl': config.radiusXl,
     '--ds-radius-full': config.radiusFull,
-    
-    // Shadows
     '--ds-shadow-sm': config.shadowSm,
     '--ds-shadow-md': config.shadowMd,
     '--ds-shadow-lg': config.shadowLg,
     '--ds-shadow-xl': config.shadowXl,
-
-    // Interaction
     '--ds-hover-opacity': config.interactionHoverOpacity,
     '--ds-active-scale': config.interactionActiveScale,
     '--ds-transition-timing': config.interactionTransitionTiming,
@@ -96,226 +85,476 @@ export const ThemeShowcase: React.FC<ThemeShowcaseProps> = ({ config }) => {
     config.typeLabelSm.fontFamily
   ]));
 
-  return (
-    <div style={cssVars} className="w-full max-w-[1400px] mx-auto p-4 lg:p-8 animate-in fade-in duration-700 select-none">
-      <GoogleFontLoader fonts={fontFamilies} />
-      
-      <div className="grid grid-cols-12 gap-8 lg:gap-12">
-        
-        {/* Left Section: Color Token Architecture */}
-        <div className="col-span-12 lg:col-span-4 space-y-6">
-          <div className="mb-8">
-            <h3 className="text-white text-2xl font-black tracking-tighter mb-2">Token Architecture</h3>
-            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em]">Material 3 Design Specification</p>
-          </div>
+  const colorTokens = [
+    { label: 'Primary', hex: config.primary, on: config.onPrimary, container: config.primaryContainer },
+    { label: 'Secondary', hex: config.secondary, on: config.onSecondary, container: config.secondaryContainer },
+    { label: 'Tertiary', hex: config.tertiary, on: config.onTertiary, container: config.tertiaryContainer },
+    { label: 'Neutral', hex: config.surface, on: config.onSurface, container: config.surfaceVariant },
+  ];
 
-          {[
-            { label: 'Primary', token: 'primary', hex: config.primary, on: config.onPrimary, container: config.primaryContainer },
-            { label: 'Secondary', token: 'secondary', hex: config.secondary, on: config.onSecondary, container: config.secondaryContainer },
-            { label: 'Tertiary', token: 'tertiary', hex: config.tertiary, on: config.onTertiary, container: config.tertiaryContainer },
-            { label: 'Neutral', token: 'surface', hex: config.surface, on: config.onSurface, container: config.surfaceVariant },
-          ].map((item) => (
-            <div 
+  const typeSpecs = [
+    { label: 'Headline LG', val: config.typeHeadlineLg },
+    { label: 'Headline MD', val: config.typeHeadlineMd },
+    { label: 'Body MD', val: config.typeBodyMd },
+  ];
+
+  return (
+    <div
+      style={{
+        ...cssVars,
+        width: 1920,
+        minHeight: 1080,
+        background: 'var(--ds-background)',
+        display: 'flex',
+        padding: 64,
+        gap: 64,
+        fontFamily: 'system-ui, sans-serif',
+        overflow: 'hidden',
+        color: 'var(--ds-on-background)',
+      }}
+    >
+      <GoogleFontLoader fonts={fontFamilies} />
+
+      {/* ── Left Column: Token Architecture (440px) ── */}
+      <div style={{ width: 440, display: 'flex', flexDirection: 'column', gap: 32, flexShrink: 0 }}>
+        {/* Header */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+             <div style={{ width: 48, height: 48, background: 'var(--ds-primary)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--ds-shadow-lg)' }}>
+                <Palette size={24} style={{ color: 'var(--ds-on-primary)' }} />
+             </div>
+             <div>
+                <h3 style={{ color: 'var(--ds-on-surface)', fontSize: 32, fontWeight: 900, letterSpacing: '-0.04em', margin: 0 }}>
+                  Design DNA
+                </h3>
+                <p style={{ color: 'var(--ds-on-surface-variant)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', marginTop: 4, opacity: 0.7 }}>
+                  M3 Specification v2.4
+                </p>
+             </div>
+          </div>
+        </div>
+
+        {/* Color Token Cards */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {colorTokens.map((item) => (
+            <div
               key={item.label}
-              className="bg-[var(--ds-surface-container)] border border-[var(--ds-outline-variant)] overflow-hidden shadow-md transition-all hover:scale-[1.01]"
-              style={{ borderRadius: 'var(--ds-radius-md)' }}
+              style={{
+                background: 'var(--ds-surface-container-high)',
+                border: '1px solid var(--ds-outline-variant)',
+                borderRadius: 'var(--ds-radius-lg)',
+                overflow: 'hidden',
+                boxShadow: 'var(--ds-shadow-md)',
+              }}
             >
-              <div className="p-4 flex items-center justify-between">
+              <div style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <p className="text-[9px] text-[var(--ds-on-surface-variant)] font-bold uppercase tracking-widest mb-1">{item.label}</p>
-                  <p className="text-[var(--ds-on-surface)] font-black text-sm tracking-tight">{item.hex.toUpperCase()}</p>
+                  <p style={{ color: 'var(--ds-on-surface-variant)', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 6 }}>
+                    {item.label}
+                  </p>
+                  <p style={{ color: 'var(--ds-on-surface)', fontWeight: 900, fontSize: 16, letterSpacing: '-0.02em' }}>
+                    {item.hex.toUpperCase()}
+                  </p>
                 </div>
-                <div className="flex gap-3">
-                   <div className="w-10 h-10 rounded-lg shadow-inner" style={{ backgroundColor: item.hex }} />
-                   <div className="w-10 h-10 rounded-lg shadow-inner border border-[var(--ds-outline-variant)]" style={{ backgroundColor: item.container }} />
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: item.hex, boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.1)' }} />
+                  <div style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: item.container, border: '1px solid var(--ds-outline-variant)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.05)' }} />
                 </div>
               </div>
-              
-              <div className="flex h-6 w-full opacity-60">
+              <div style={{ display: 'flex', height: 24, width: '100%', opacity: 0.8 }}>
                 {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 100].map((tone) => (
-                  <div 
+                  <div
                     key={tone}
-                    className="flex-1"
-                    style={{ 
+                    style={{
+                      flex: 1,
                       backgroundColor: item.hex,
-                      filter: `brightness(${tone / 60 + 0.4}) saturate(${tone > 50 ? 0.8 : 1.2})`
+                      filter: `brightness(${tone / 60 + 0.4}) saturate(${tone > 50 ? 0.8 : 1.2})`,
                     }}
                   />
                 ))}
               </div>
             </div>
           ))}
+        </div>
 
-          {/* Elevation Preview */}
-          <div className="pt-4 space-y-4">
-             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Elevation System</p>
-             <div className="grid grid-cols-2 gap-4">
-                <div className="aspect-square bg-[var(--ds-surface-container)] flex items-center justify-center border border-[var(--ds-outline-variant)] shadow-[var(--ds-shadow-sm)]" style={{ borderRadius: 'var(--ds-radius-sm)' }}>
-                   <span className="text-[8px] font-black text-[var(--ds-on-surface-variant)]">SM</span>
-                </div>
-                <div className="aspect-square bg-[var(--ds-surface-container)] flex items-center justify-center border border-[var(--ds-outline-variant)] shadow-[var(--ds-shadow-md)]" style={{ borderRadius: 'var(--ds-radius-md)' }}>
-                   <span className="text-[8px] font-black text-[var(--ds-on-surface-variant)]">MD</span>
-                </div>
-             </div>
+        {/* Elevation Preview */}
+        <div style={{ marginTop: 'auto', paddingTop: 32, borderTop: '1px solid var(--ds-outline-variant)' }}>
+          <p style={{ color: 'var(--ds-on-surface-variant)', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 24 }}>
+            Elevation System
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+            {[
+              { l: 'SM', s: 'var(--ds-shadow-sm)', r: 'var(--ds-radius-sm)' },
+              { l: 'MD', s: 'var(--ds-shadow-md)', r: 'var(--ds-radius-md)' },
+              { l: 'LG', s: 'var(--ds-shadow-lg)', r: 'var(--ds-radius-lg)' }
+            ].map(elev => (
+              <div
+                key={elev.l}
+                style={{
+                  aspectRatio: '1',
+                  background: 'var(--ds-surface-container-highest)',
+                  border: '1px solid var(--ds-outline-variant)',
+                  borderRadius: elev.r,
+                  boxShadow: elev.s,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <span style={{ fontSize: 12, fontWeight: 900, color: 'var(--ds-on-surface)' }}>{elev.l}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Right Column: Component Gallery (Flexible) ── */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 48, minWidth: 0 }}>
+
+        {/* Typography Showcase */}
+        <div
+          style={{
+            background: 'var(--ds-surface-container-low)',
+            border: '1px solid var(--ds-outline-variant)',
+            borderRadius: 32,
+            boxShadow: 'var(--ds-shadow-lg)',
+            padding: 56,
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Subtle Background Mark */}
+          <div style={{ position: 'absolute', top: -100, right: -50, fontSize: 400, fontWeight: 900, color: 'var(--ds-on-surface)', opacity: 0.03, pointerEvents: 'none', fontFamily: config.typeDisplayXl.fontFamily }}>
+            Aa
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 56, position: 'relative' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ width: 8, height: 32, background: 'var(--ds-primary)', borderRadius: 999 }} />
+              <p style={{ fontSize: 14, color: 'var(--ds-on-surface)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em' }}>
+                Typographic Engine
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: 24 }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--ds-on-surface-variant)', background: 'var(--ds-surface-variant)', padding: '6px 16px', borderRadius: 999 }}>{config.typeDisplayXl.fontFamily}</span>
+              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--ds-on-surface-variant)', background: 'var(--ds-surface-variant)', padding: '6px 16px', borderRadius: 999 }}>{config.typeBodyLg.fontFamily}</span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 64, position: 'relative' }}>
+            <div
+              style={{
+                fontSize: 180,
+                fontFamily: config.typeDisplayXl.fontFamily,
+                color: 'var(--ds-primary)',
+                fontWeight: config.typeDisplayXl.fontWeight,
+                letterSpacing: config.typeDisplayXl.letterSpacing,
+                lineHeight: 0.8,
+                userSelect: 'none',
+              }}
+            >
+              Aa
+            </div>
+            <div style={{ flex: 1, paddingTop: 16 }}>
+              <h1
+                style={{
+                  fontFamily: config.typeDisplayXl.fontFamily,
+                  color: 'var(--ds-on-surface)',
+                  fontSize: 84,
+                  fontWeight: config.typeDisplayXl.fontWeight,
+                  lineHeight: 1,
+                  letterSpacing: '-0.04em',
+                  margin: '0 0 24px 0',
+                }}
+              >
+                Modern Foundry
+              </h1>
+              <p
+                style={{
+                  fontFamily: config.typeBodyLg.fontFamily,
+                  color: 'var(--ds-on-surface-variant)',
+                  fontSize: 24,
+                  fontWeight: config.typeBodyLg.fontWeight,
+                  lineHeight: 1.5,
+                  letterSpacing: config.typeBodyLg.letterSpacing,
+                  margin: 0,
+                  maxWidth: 800,
+                }}
+              >
+                A high-fidelity design ecosystem engineered for precision and scale. Every token is meticulously crafted to ensure seamless visual harmony across all intelligent interfaces.
+              </p>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: 40,
+              borderTop: '1px solid var(--ds-outline-variant)',
+              paddingTop: 48,
+              marginTop: 56,
+              position: 'relative'
+            }}
+          >
+            {typeSpecs.map((item) => (
+              <div key={item.label}>
+                <p style={{ fontSize: 11, fontWeight: 800, color: 'var(--ds-on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12 }}>
+                  {item.label}
+                </p>
+                <p
+                  style={{
+                    fontFamily: item.val.fontFamily,
+                    fontSize: 22,
+                    fontWeight: item.val.fontWeight,
+                    color: 'var(--ds-on-surface)',
+                    margin: 0,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  Visual Precision
+                </p>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Right Section: Deep Component Testing */}
-        <div className="col-span-12 lg:col-span-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-            
-            {/* Typography Master Spec */}
-            <div className="col-span-1 md:col-span-2 p-8 bg-[var(--ds-surface-container)] border border-[var(--ds-outline-variant)] shadow-[var(--ds-shadow-md)] overflow-hidden" style={{ borderRadius: 'var(--ds-radius-xl)' }}>
-              <div className="flex items-center justify-between mb-10">
-                 <div className="flex items-center gap-3">
-                    <div className="w-1.5 h-6 bg-[var(--ds-primary)] rounded-full" />
-                    <p className="text-[10px] text-[var(--ds-on-surface)] font-black uppercase tracking-widest">Type System Engine</p>
-                 </div>
-                 <div className="flex gap-4">
-                    <span className="text-[9px] font-mono text-[var(--ds-on-surface-variant)]">{config.typeDisplayXl.fontFamily}</span>
-                    <span className="text-[9px] font-mono text-[var(--ds-on-surface-variant)]">{config.typeBodyLg.fontFamily}</span>
-                 </div>
-              </div>
-              
-              <div className="space-y-12">
-                <div className="flex items-start gap-10">
-                   <div 
-                     className="text-9xl font-black leading-none tracking-tighter select-none" 
-                     style={{ 
-                       fontFamily: config.typeDisplayXl.fontFamily, 
-                       color: 'var(--ds-primary)',
-                       fontWeight: config.typeDisplayXl.fontWeight,
-                       letterSpacing: config.typeDisplayXl.letterSpacing
-                     }}
-                   >Aa</div>
-                   <div className="space-y-6 flex-1 pt-4">
-                      <h1 
-                        className="tracking-tight" 
-                        style={{ 
-                          fontFamily: config.typeDisplayXl.fontFamily, 
-                          color: 'var(--ds-on-surface)',
-                          fontSize: config.typeDisplayXl.fontSize,
-                          fontWeight: config.typeDisplayXl.fontWeight,
-                          lineHeight: config.typeDisplayXl.lineHeight
-                        }}
-                      >Future Foundry</h1>
-                      <p 
-                        style={{ 
-                          fontFamily: config.typeBodyLg.fontFamily, 
-                          color: 'var(--ds-on-surface-variant)',
-                          fontSize: config.typeBodyLg.fontSize,
-                          fontWeight: config.typeBodyLg.fontWeight,
-                          lineHeight: config.typeBodyLg.lineHeight,
-                          letterSpacing: config.typeBodyLg.letterSpacing
-                        }}
-                      >A modular design system built for the next generation of intelligent interfaces. Engineered with precision, refined through motion.</p>
-                   </div>
+        {/* Bottom Section: Interactive System & Dashboard */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: 48, flex: 1, minHeight: 0 }}>
+
+          {/* Interaction Lab */}
+          <div
+            style={{
+              background: 'var(--ds-surface-container-high)',
+              border: '1px solid var(--ds-outline-variant)',
+              borderRadius: 32,
+              boxShadow: 'var(--ds-shadow-lg)',
+              padding: 40,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 32,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <MousePointer2 size={24} style={{ color: 'var(--ds-primary)' }} />
+              <p style={{ fontSize: 14, color: 'var(--ds-on-surface)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', margin: 0 }}>
+                Interaction Lab
+              </p>
+            </div>
+
+            <button
+              style={{
+                width: '100%',
+                padding: '24px 0',
+                fontSize: 14,
+                fontWeight: 900,
+                textTransform: 'uppercase',
+                letterSpacing: '0.2em',
+                backgroundColor: 'var(--ds-primary)',
+                color: 'var(--ds-on-primary)',
+                borderRadius: 'var(--ds-radius-lg)',
+                border: 'none',
+                boxShadow: 'var(--ds-shadow-xl)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 12,
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+            >
+              <span>Execute Action</span>
+              <ChevronRight size={18} />
+            </button>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+               <button
+                 style={{
+                   padding: '18px 0',
+                   fontSize: 12,
+                   fontWeight: 900,
+                   textTransform: 'uppercase',
+                   letterSpacing: '0.15em',
+                   borderColor: 'var(--ds-outline)',
+                   color: 'var(--ds-on-surface)',
+                   borderRadius: 'var(--ds-radius-md)',
+                   border: '2px solid var(--ds-outline)',
+                   background: 'transparent',
+                   cursor: 'pointer',
+                 }}
+               >
+                 Outline
+               </button>
+               <button
+                 style={{
+                   padding: '18px 0',
+                   fontSize: 12,
+                   fontWeight: 900,
+                   textTransform: 'uppercase',
+                   letterSpacing: '0.15em',
+                   background: 'var(--ds-secondary-container)',
+                   color: 'var(--ds-on-secondary-container)',
+                   borderRadius: 'var(--ds-radius-md)',
+                   border: 'none',
+                   cursor: 'pointer',
+                 }}
+               >
+                 Secondary
+               </button>
+            </div>
+
+            <div style={{ paddingTop: 16 }}>
+              <p style={{ fontSize: 11, color: 'var(--ds-on-surface-variant)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 20 }}>
+                System Feedback
+              </p>
+              <div style={{ display: 'flex', gap: 20 }}>
+                <div
+                  style={{
+                    width: 64,
+                    height: 64,
+                    background: 'var(--ds-primary-container)',
+                    border: '3px solid var(--ds-primary)',
+                    borderRadius: 16,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: 'var(--ds-shadow-md)'
+                  }}
+                >
+                  <Check size={32} style={{ color: 'var(--ds-on-primary-container)' }} />
                 </div>
-                
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 border-t border-[var(--ds-outline-variant)] pt-10">
-                   {[
-                     { label: 'Headline LG', val: config.typeHeadlineLg },
-                     { label: 'Headline MD', val: config.typeHeadlineMd },
-                     { label: 'Body MD', val: config.typeBodyMd },
-                     { label: 'Label SM', val: config.typeLabelSm }
-                   ].map(item => (
-                     <div key={item.label} className="space-y-2">
-                        <p className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">{item.label}</p>
-                        <p 
-                          className="truncate"
-                          style={{ 
-                            fontFamily: item.val.fontFamily, 
-                            fontSize: item.val.fontSize, 
-                            fontWeight: item.val.fontWeight,
-                            color: 'var(--ds-on-surface)' 
-                          }}
-                        >The quick brown fox</p>
-                     </div>
-                   ))}
+                <div
+                  style={{
+                    flex: 1,
+                    background: 'var(--ds-surface-variant)',
+                    border: '1px solid var(--ds-outline-variant)',
+                    borderRadius: 16,
+                    boxShadow: 'var(--ds-focus-glow)',
+                    padding: 12,
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                >
+                  <div style={{ height: 24, width: '100%', background: 'var(--ds-primary)', opacity: 0.3, borderRadius: 6 }} />
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Interaction & State Testing */}
-            <div className="p-8 bg-[var(--ds-surface-container)] border border-[var(--ds-outline-variant)] shadow-[var(--ds-shadow-md)] space-y-8" style={{ borderRadius: 'var(--ds-radius-xl)' }}>
-               <div className="flex items-center gap-3">
-                  <MousePointer2 size={16} className="text-[var(--ds-primary)]" />
-                  <p className="text-[10px] text-[var(--ds-on-surface)] font-black uppercase tracking-widest">Interaction States</p>
+          {/* System Dashboard */}
+          <div
+            style={{
+              background: 'var(--ds-surface-container-highest)',
+              border: '1px solid var(--ds-outline-variant)',
+              borderRadius: 32,
+              boxShadow: 'var(--ds-shadow-xl)',
+              padding: 48,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 40,
+              backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0) 100%)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyBetween: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                <div
+                  style={{
+                    width: 72,
+                    height: 72,
+                    borderRadius: 24,
+                    background: 'var(--ds-secondary-container)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: 'var(--ds-shadow-md)'
+                  }}
+                >
+                  <User size={36} style={{ color: 'var(--ds-on-secondary-container)' }} />
+                </div>
+                <div>
+                   <div style={{ height: 20, width: 240, background: 'var(--ds-on-surface)', opacity: 0.15, borderRadius: 999, marginBottom: 12 }} />
+                   <div style={{ height: 16, width: 140, background: 'var(--ds-on-surface)', opacity: 0.08, borderRadius: 999 }} />
+                </div>
+              </div>
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+                {[1, 2, 3].map((i) => (
+                  <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--ds-outline-variant)' }} />
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 24 }}>
+               <div style={{ padding: 24, borderRadius: 20, background: 'var(--ds-surface-container-low)', border: '1px solid var(--ds-outline-variant)' }}>
+                  <div style={{ height: 12, width: 60, background: 'var(--ds-primary)', opacity: 0.4, borderRadius: 999, marginBottom: 16 }} />
+                  <div style={{ height: 32, width: '100%', background: 'var(--ds-on-surface)', opacity: 0.1, borderRadius: 8 }} />
                </div>
-               
-               <div className="space-y-4">
-                  <button 
-                    className="w-full py-4 text-xs font-black uppercase tracking-widest transition-all active:scale-[var(--ds-active-scale)] shadow-[var(--ds-shadow-md)] flex items-center justify-center gap-2 group" 
-                    style={{ 
-                      backgroundColor: 'var(--ds-primary)', 
-                      color: 'var(--ds-on-primary)',
-                      borderRadius: 'var(--ds-radius-md)',
-                      transitionDuration: 'var(--ds-transition-timing)',
-                      transitionTimingFunction: 'var(--ds-transition-easing)'
-                    }}
-                  >
-                    <span>Primary Action</span>
-                    <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                  </button>
-
-                  <button 
-                    className="w-full py-4 text-xs font-black uppercase tracking-widest transition-all active:scale-[var(--ds-active-scale)] flex items-center justify-center gap-2 group border-2" 
-                    style={{ 
-                      borderColor: 'var(--ds-outline)', 
-                      color: 'var(--ds-on-surface)',
-                      borderRadius: 'var(--ds-radius-md)',
-                      transitionDuration: 'var(--ds-transition-timing)',
-                      transitionTimingFunction: 'var(--ds-transition-easing)'
-                    }}
-                  >
-                    Ghost Variant
-                  </button>
-
-                  <div className="pt-4 space-y-4">
-                    <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Focus & Selection</p>
-                    <div className="flex gap-4">
-                       <div className="w-10 h-10 bg-[var(--ds-primary-container)] border-2 border-[var(--ds-primary)] flex items-center justify-center" style={{ borderRadius: 'var(--ds-radius-sm)' }}>
-                          <Check size={16} className="text-[var(--ds-on-primary-container)]" />
-                       </div>
-                       <div className="flex-1 bg-white/5 border-2 border-transparent p-2 transition-all" style={{ boxShadow: 'var(--ds-focus-glow)', borderRadius: 'var(--ds-radius-sm)' }}>
-                          <div className="h-4 w-full bg-[var(--ds-primary)]/20 rounded-sm" />
-                       </div>
-                    </div>
-                  </div>
+               <div style={{ padding: 24, borderRadius: 20, background: 'var(--ds-surface-container-low)', border: '1px solid var(--ds-outline-variant)' }}>
+                  <div style={{ height: 12, width: 60, background: 'var(--ds-tertiary)', opacity: 0.4, borderRadius: 999, marginBottom: 16 }} />
+                  <div style={{ height: 32, width: '100%', background: 'var(--ds-on-surface)', opacity: 0.1, borderRadius: 8 }} />
                </div>
             </div>
 
-            {/* Dashboard Mock Component */}
-            <div className="p-8 bg-[var(--ds-surface-container)] border border-[var(--ds-outline-variant)] shadow-[var(--ds-shadow-md)] flex flex-col gap-6" style={{ borderRadius: 'var(--ds-radius-xl)' }}>
-               <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-full bg-[var(--ds-secondary-container)] flex items-center justify-center">
-                     <User size={18} className="text-[var(--ds-on-secondary-container)]" />
-                  </div>
-                  <div className="flex gap-1">
-                     {[1, 2, 3].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-[var(--ds-outline-variant)]" />)}
-                  </div>
-               </div>
-               
-               <div className="space-y-2">
-                  <div className="h-4 w-3/4 bg-[var(--ds-on-surface)]/10 rounded-full" />
-                  <div className="h-4 w-1/2 bg-[var(--ds-on-surface)]/5 rounded-full" />
-               </div>
-
-               <div className="mt-auto pt-6 border-t border-[var(--ds-outline-variant)] flex items-center justify-between">
-                  <div className="flex gap-2">
-                     <div className="w-8 h-8 rounded-lg bg-[var(--ds-surface-variant)] flex items-center justify-center border border-[var(--ds-outline-variant)]">
-                        <Settings size={14} className="text-[var(--ds-on-surface-variant)]" />
-                     </div>
-                     <div className="w-8 h-8 rounded-lg bg-[var(--ds-surface-variant)] flex items-center justify-center border border-[var(--ds-outline-variant)]">
-                        <Bell size={14} className="text-[var(--ds-on-surface-variant)]" />
-                     </div>
-                  </div>
-                  <div className="px-4 py-2 bg-[var(--ds-tertiary-container)] text-[var(--ds-on-tertiary-container)] text-[10px] font-black uppercase rounded-full border border-[var(--ds-on-tertiary-container)]/10">
-                     Active Mode
-                  </div>
-               </div>
+            <div
+              style={{
+                marginTop: 'auto',
+                paddingTop: 32,
+                borderTop: '1px solid var(--ds-outline-variant)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 16,
+                    background: 'var(--ds-surface-variant)',
+                    border: '1px solid var(--ds-outline-variant)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Settings size={24} style={{ color: 'var(--ds-on-surface-variant)' }} />
+                </div>
+                <div
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 16,
+                    background: 'var(--ds-surface-variant)',
+                    border: '1px solid var(--ds-outline-variant)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Bell size={24} style={{ color: 'var(--ds-on-surface-variant)' }} />
+                </div>
+              </div>
+              <div
+                style={{
+                  padding: '12px 28px',
+                  background: 'var(--ds-tertiary-container)',
+                  color: 'var(--ds-on-tertiary-container)',
+                  fontSize: 12,
+                  fontWeight: 900,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  borderRadius: 999,
+                  border: '2px solid var(--ds-on-tertiary-container)',
+                  boxShadow: 'var(--ds-shadow-lg)'
+                }}
+              >
+                PRO MODE ACTIVE
+              </div>
             </div>
-
           </div>
         </div>
       </div>

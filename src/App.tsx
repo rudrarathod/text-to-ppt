@@ -30,7 +30,7 @@ export default function App() {
     <BrowserRouter>
       <div className="flex flex-col md:flex-row h-screen w-full overflow-hidden bg-[#111111] text-[#1c1b1b]">
         <Navigation />
-        <main className="flex-1 overflow-hidden h-full relative">
+        <main className="flex-1 overflow-hidden h-full relative pb-20 md:pb-0">
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<PresentationGallery />} />
