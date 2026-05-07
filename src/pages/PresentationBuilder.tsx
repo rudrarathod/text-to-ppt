@@ -508,7 +508,8 @@ export function PresentationBuilder() {
             <select 
               value={activeTemplateId}
               onChange={(e) => setPresentationTemplate(activePresentationId!, e.target.value)}
-              className="text-xs lg:text-sm border border-[#2d2d30] bg-[#1e1e1e] text-white rounded-lg px-2 lg:px-3 py-1 lg:py-1.5 outline-none focus:ring-2 focus:ring-[#D62828] w-[120px] sm:w-[150px] shrink-0"
+              disabled
+              className="text-xs lg:text-sm border border-[#2d2d30] bg-[#1e1e1e] text-white/50 rounded-lg px-2 lg:px-3 py-1 lg:py-1.5 outline-none w-[120px] sm:w-[150px] shrink-0 cursor-not-allowed opacity-50"
             >
               {templates.map(t => (
                 <option key={t.id} value={t.id}>{t.name}</option>
