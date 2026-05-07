@@ -3,7 +3,7 @@ import { useAppStore, SlideData } from "../store";
 import Editor from "../components/LazyEditor";
 import { SlidePreview, SlideStatic, SlidePreviewRef } from "../components/SlidePreview";
 import { Button, Textarea } from "../components/ui";
-import { Download, Plus, Trash2, LayoutTemplate, Sparkles, X, Mic, Copy, Check, Settings2, ChevronDown, ChevronUp, Save, Loader2, Palette, Code2, Presentation as PresentationIcon, Layout as LayoutIcon, ArrowLeft, Play, ChevronLeft, ChevronRight, Maximize, Minimize } from "lucide-react";
+import { Download, Plus, Trash2, LayoutTemplate, Sparkles, X, Mic, Copy, Check, Settings2, ChevronDown, ChevronUp, Save, Loader2, Palette, Code2, Presentation as PresentationIcon, Layout as LayoutIcon, ArrowLeft, Play, ChevronLeft, ChevronRight, Maximize, Minimize, Edit2 } from "lucide-react";
 import jsPDF from "jspdf";
 import { toJpeg } from "html-to-image";
 import { cn } from "../lib/utils";
@@ -419,12 +419,12 @@ export function PresentationBuilder() {
         <div 
           ref={sidebarRef}
           onScroll={handleSidebarScroll}
-          className="flex-1 overflow-x-auto lg:overflow-x-hidden overflow-y-hidden lg:overflow-y-auto p-3 lg:p-4 flex flex-row lg:flex-col gap-3 lg:gap-4"
+          className="flex-1 overflow-y-auto p-3 lg:p-4 grid grid-cols-2 lg:flex lg:flex-col gap-4 content-start"
         >
           {/* Top spacer for virtualization */}
           <div className="hidden lg:block shrink-0" style={{ height: paddingTop }} />
           
-          {slides.slice(startIndex, endIndex).map((s, sliceIdx) => {
+          {(window.innerWidth < 1024 ? slides : slides.slice(startIndex, endIndex)).map((s, sliceIdx) => {
             const idx = startIndex + sliceIdx;
             const l = layouts.find(x => x.id === s.layoutId);
             return (
@@ -432,7 +432,7 @@ export function PresentationBuilder() {
                 key={s.id}
                 onClick={() => setSelectedSlideId(s.id)}
                 className={cn(
-                  "relative group cursor-pointer border-2 rounded-xl aspect-video w-[140px] lg:w-full flex-shrink-0 flex flex-col bg-[#1e1e1e] transition-all overflow-hidden",
+                  "relative group cursor-pointer border-2 rounded-xl aspect-video w-full lg:w-full flex-shrink-0 flex flex-col bg-[#1e1e1e] transition-all overflow-hidden",
                   selectedSlideId === s.id ? "border-[#D62828] shadow-lg shadow-[#D62828]/20 ring-1 ring-[#D62828]/20" : "border-[#2d2d30] hover:border-[#3d3d40]"
                 )}
               >
@@ -461,7 +461,7 @@ export function PresentationBuilder() {
                    <span className="text-[8px] text-gray-500 uppercase tracking-tighter opacity-70 truncate max-w-[60px]">{l?.variant || "Slide"}</span>
                 </div>
 
-                {/* Delete button (only show if not the last slide for better UX, or just always on hover) */}
+                {/* Delete button */}
                 <button 
                   onClick={(e) => { 
                     e.stopPropagation(); 
@@ -469,10 +469,10 @@ export function PresentationBuilder() {
                       removeSlide(s.id); 
                     }
                   }}
-                  className="absolute top-1.5 right-1.5 h-6 w-6 flex items-center justify-center bg-black/60 hover:bg-[#b20112] text-white rounded-md opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm z-10"
+                  className="absolute top-1.5 right-1.5 h-7 w-7 flex items-center justify-center bg-black/60 hover:bg-[#b20112] text-white rounded-lg lg:opacity-0 lg:group-hover:opacity-100 transition-all backdrop-blur-md z-20 shadow-lg border border-white/10"
                   title="Delete Slide"
                 >
-                  <Trash2 size={12} />
+                  <Trash2 size={14} />
                 </button>
               </div>
             );
@@ -490,12 +490,21 @@ export function PresentationBuilder() {
         mobileTab === 'preview' ? "translate-x-0 opacity-100 pointer-events-auto" : "translate-x-[-100%] opacity-0 pointer-events-none lg:translate-x-0 lg:opacity-100"
       )}>
         <div className="h-14 lg:h-16 border-b border-[#2d2d30] bg-[#161618] flex items-center justify-between px-4 lg:px-6 shrink-0">
-          <div className="flex items-center gap-4 min-w-0 flex-1">
+          <div className="flex items-center gap-3 lg:gap-4 min-w-0 flex-1">
+            <button 
+              onClick={() => navigate('/')}
+              className="p-2 -ml-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+              title="Back to Gallery"
+            >
+              <ArrowLeft size={20} />
+            </button>
             <span className="font-bold text-white text-base lg:text-lg truncate block min-w-0">
-              <span className="text-gray-400 font-normal mr-2">{activePresentation?.name || "Presentation"}</span>
-              / <span className="ml-2">{selectedSlide?.content.title || "Untitled"}</span>
+              <span className="text-gray-400 font-normal mr-2 hidden sm:inline">{activePresentation?.name || "Presentation"}</span>
+              <span className="sm:hidden">{activePresentation?.name || "Presentation"}</span>
+              <span className="text-gray-600 mx-1 hidden sm:inline">/</span>
+              <span className="ml-1 hidden sm:inline">{selectedSlide?.content.title || "Untitled"}</span>
             </span>
-            <div className="h-6 w-px bg-[#333] hidden sm:block shrink-0"></div>
+            <div className="h-6 w-px bg-[#333] hidden md:block shrink-0"></div>
             <select 
               value={activeTemplateId}
               onChange={(e) => setPresentationTemplate(activePresentationId!, e.target.value)}
@@ -537,46 +546,85 @@ export function PresentationBuilder() {
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
           >
-            <SlidePreview 
-               ref={previewRef}
-               templateCode={isEditingLayoutCode ? layoutEditCode : (activeLayout?.code || "")} 
-               data={previewData} 
-               designConfig={designConfig}
-               interactive={true}
-               loading={isSwitchingSlide}
-               className="transition-all duration-300"
-               onImageUpload={(key, path) => {
-                 if (isEditingLayoutCode) {
-                   try {
-                     const current = tempJsonInput ? JSON.parse(tempJsonInput) : selectedSlide.content;
-                     const next = { ...current, [key]: path };
-                     setTempJsonInput(JSON.stringify(next, null, 2));
-                   } catch(e) {}
-                 } else {
-                   const newContent = { ...selectedSlide.content, [key]: path };
-                   updateSlideContent(selectedSlide.id, newContent);
-                   setJsonInput(JSON.stringify(newContent, null, 2));
-                 }
-               }}
-             />
+            {slides.length > 0 ? (
+              <>
+                <SlidePreview 
+                   ref={previewRef}
+                   templateCode={isEditingLayoutCode ? layoutEditCode : (activeLayout?.code || "")} 
+                   data={previewData} 
+                   designConfig={designConfig}
+                   interactive={true}
+                   loading={isSwitchingSlide}
+                   className="transition-all duration-300"
+                   onImageUpload={(key, path) => {
+                     if (isEditingLayoutCode) {
+                       try {
+                         const current = tempJsonInput ? JSON.parse(tempJsonInput) : selectedSlide.content;
+                         const next = { ...current, [key]: path };
+                         setTempJsonInput(JSON.stringify(next, null, 2));
+                       } catch(e) {}
+                     } else {
+                       const newContent = { ...selectedSlide.content, [key]: path };
+                       updateSlideContent(selectedSlide.id, newContent);
+                       setJsonInput(JSON.stringify(newContent, null, 2));
+                     }
+                   }}
+                 />
+                 <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full text-white text-[10px] font-black border border-white/10 z-10 uppercase tracking-widest shadow-xl pointer-events-none">
+                   Slide {(slides.findIndex(s => s.id === selectedSlideId) + 1)} / {slides.length}
+                 </div>
+              </>
+            ) : (
+              <div className="text-gray-500 flex flex-col items-center bg-[#1a1a1c] p-12 rounded-3xl border border-white/5 shadow-2xl">
+                <div className="w-20 h-20 bg-[#D62828]/10 rounded-full flex items-center justify-center mb-6 ring-8 ring-[#D62828]/5">
+                  <Plus size={40} className="text-[#D62828] animate-pulse" />
+                </div>
+                <h3 className="text-white font-black text-xl mb-2 tracking-tight">Empty Presentation</h3>
+                <p className="text-gray-400 text-sm mb-8 max-w-xs text-center leading-relaxed">No slides found in this deck. Start by adding your first slide or using the AI generator.</p>
+                <div className="flex flex-col sm:flex-row gap-4 w-full">
+                  <Button 
+                    onClick={() => {
+                      const firstLayout = layouts[0];
+                      addSlide({
+                        id: `s-${Date.now()}`,
+                        layoutId: firstLayout.id,
+                        content: extractDefaultContent(firstLayout.code, { title: "New Slide" })
+                      });
+                    }}
+                    className="flex-1 bg-[#D62828] hover:bg-[#b20112] text-white border-none py-6 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-[#D62828]/20"
+                  >
+                    <Plus size={16} className="mr-2" /> Add Blank Slide
+                  </Button>
+                  <Button 
+                    onClick={() => setMobileTab('editor')}
+                    variant="outline"
+                    className="flex-1 border-white/10 hover:bg-white/5 text-white py-6 rounded-2xl font-black uppercase tracking-widest text-xs"
+                  >
+                    <Sparkles size={16} className="mr-2" /> Use AI Generator
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* Mobile Navigation Buttons */}
-            <div className="md:hidden absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2 pointer-events-none">
-               <button 
-                 onClick={handlePrevSlide}
-                 disabled={slides.findIndex(s => s.id === selectedSlideId) === 0}
-                 className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white pointer-events-auto active:scale-90 transition-all disabled:opacity-0"
-               >
-                 <ChevronLeft size={24} />
-               </button>
-               <button 
-                 onClick={handleNextSlide}
-                 disabled={slides.findIndex(s => s.id === selectedSlideId) === slides.length - 1}
-                 className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white pointer-events-auto active:scale-90 transition-all disabled:opacity-0"
-               >
-                 <ChevronRight size={24} />
-               </button>
-            </div>
+            {slides.length > 0 && (
+              <div className="md:hidden absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2 pointer-events-none">
+                 <button 
+                   onClick={handlePrevSlide}
+                   disabled={slides.findIndex(s => s.id === selectedSlideId) === 0}
+                   className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white pointer-events-auto active:scale-90 transition-all disabled:opacity-0"
+                 >
+                   <ChevronLeft size={24} />
+                 </button>
+                 <button 
+                   onClick={handleNextSlide}
+                   disabled={slides.findIndex(s => s.id === selectedSlideId) === slides.length - 1}
+                   className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white pointer-events-auto active:scale-90 transition-all disabled:opacity-0"
+                 >
+                   <ChevronRight size={24} />
+                 </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
