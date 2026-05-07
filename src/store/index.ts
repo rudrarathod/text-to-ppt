@@ -30,16 +30,115 @@ export interface Presentation {
 }
 
 export interface DesignConfig {
-  // Visual Identity
-  primary: string;
-  primaryHover: string;
-  secondary: string;
-  accent: string;
-  bg: string;
+  // --- COLOR SYSTEM ---
+  // Surface
   surface: string;
+  surfaceDim: string;
+  surfaceBright: string;
+  surfaceContainerLowest: string;
+  surfaceContainerLow: string;
+  surfaceContainer: string;
+  surfaceContainerHigh: string;
+  surfaceContainerHighest: string;
+  surfaceVariant: string;
+
+  // Text/On-Surface
+  onSurface: string;
+  onSurfaceVariant: string;
+  onBackground: string;
+  inverseSurface: string;
+  inverseOnSurface: string;
+
+  // Primary
+  primary: string;
+  onPrimary: string;
+  primaryContainer: string;
+  onPrimaryContainer: string;
+  primaryFixed: string;
+  primaryFixedDim: string;
+  onPrimaryFixed: string;
+  onPrimaryFixedVariant: string;
+  inversePrimary: string;
+  surfaceTint: string;
+
+  // Secondary
+  secondary: string;
+  onSecondary: string;
+  secondaryContainer: string;
+  onSecondaryContainer: string;
+  secondaryFixed: string;
+  secondaryFixedDim: string;
+  onSecondaryFixed: string;
+  onSecondaryFixedVariant: string;
+
+  // Tertiary
+  tertiary: string;
+  onTertiary: string;
+  tertiaryContainer: string;
+  onTertiaryContainer: string;
+  tertiaryFixed: string;
+  tertiaryFixedDim: string;
+  onTertiaryFixed: string;
+  onTertiaryFixedVariant: string;
+
+  // Error
+  error: string;
+  onError: string;
+  errorContainer: string;
+  onErrorContainer: string;
+
+  // Outline/Background
+  outline: string;
+  outlineVariant: string;
+  background: string;
+
+  // --- TYPOGRAPHY SYSTEM ---
+  // Tokens: display-xl, headline-lg, headline-md, body-lg, body-md, label-sm, caption
+  // Properties: fontFamily, fontSize, fontWeight, lineHeight, letterSpacing
+  typeDisplayXl: { fontFamily: string; fontSize: string; fontWeight: string; lineHeight: string; letterSpacing: string };
+  typeHeadlineLg: { fontFamily: string; fontSize: string; fontWeight: string; lineHeight: string; letterSpacing: string };
+  typeHeadlineMd: { fontFamily: string; fontSize: string; fontWeight: string; lineHeight: string; letterSpacing: string };
+  typeBodyLg: { fontFamily: string; fontSize: string; fontWeight: string; lineHeight: string; letterSpacing: string };
+  typeBodyMd: { fontFamily: string; fontSize: string; fontWeight: string; lineHeight: string; letterSpacing: string };
+  typeLabelSm: { fontFamily: string; fontSize: string; fontWeight: string; lineHeight: string; letterSpacing: string };
+  typeCaption: { fontFamily: string; fontSize: string; fontWeight: string; lineHeight: string; letterSpacing: string };
+
+  // --- BORDER RADIUS SYSTEM ---
+  radiusSm: string;
+  radiusDefault: string;
+  radiusMd: string;
+  radiusLg: string;
+  radiusXl: string;
+  radiusFull: string;
+
+  // --- SPACING SYSTEM ---
+  spacingBase: string;
+  spacingXs: string;
+  spacingSm: string;
+  spacingMd: string;
+  spacingLg: string;
+  spacingXl: string;
+  spacingGutter: string;
+  spacingContainerMax: string;
+
+  // --- SHADOW & ELEVATION ---
+  shadowSm: string;
+  shadowMd: string;
+  shadowLg: string;
+  shadowXl: string;
+
+  // --- INTERACTION SYSTEM ---
+  interactionHoverOpacity: number;
+  interactionFocusGlow: string;
+  interactionActiveScale: number;
+  interactionTransitionTiming: string;
+  interactionTransitionEasing: string;
+
+  // Legacy/Compatibility
+  primaryHover: string;
+  accent: string;
+  bg: string; // Legacy, aliased to background
   surfaceContrast: string;
-  
-  // Typography
   textPrimary: string;
   textSecondary: string;
   fontFamily: string;
@@ -48,16 +147,12 @@ export interface DesignConfig {
   headingSize: string;
   bodySize: string;
   letterSpacing: string;
-  
-  // Layout & Style
   borderRadius: string;
   buttonRadius: string;
   cardRadius: string;
   border: string;
   sectionPadding: string;
   contentAlignment: 'left' | 'center';
-  
-  // Depth & Effects
   shadowSoft: string;
   shadowStrong: string;
   transitionSpeed: string;
@@ -220,31 +315,124 @@ const DEFAULT_SLIDES: SlideData[] = [
   }
 ];
 
-const DEFAULT_DESIGN: DesignConfig = {
-  primary: '#b20112',
-  primaryHover: '#d62828',
-  secondary: '#fe6247',
-  accent: '#f4f1f1',
-  bg: '#fcf9f8',
+export const DEFAULT_DESIGN: DesignConfig = {
+  // --- COLOR SYSTEM ---
   surface: '#ffffff',
-  surfaceContrast: '#f3efee',
-  textPrimary: '#1c1b1b',
-  textSecondary: '#5c403d',
+  surfaceDim: '#ded8e1',
+  surfaceBright: '#fef7ff',
+  surfaceContainerLowest: '#ffffff',
+  surfaceContainerLow: '#f7f2fa',
+  surfaceContainer: '#f3edf7',
+  surfaceContainerHigh: '#ece6f0',
+  surfaceContainerHighest: '#e6e0e9',
+  surfaceVariant: '#e7e0eb',
+
+  onSurface: '#1d1b20',
+  onSurfaceVariant: '#49454f',
+  onBackground: '#1d1b20',
+  inverseSurface: '#322f35',
+  inverseOnSurface: '#f5eff7',
+
+  primary: '#6750a4',
+  onPrimary: '#ffffff',
+  primaryContainer: '#eaddff',
+  onPrimaryContainer: '#21005d',
+  primaryFixed: '#eaddff',
+  primaryFixedDim: '#d0bcff',
+  onPrimaryFixed: '#21005d',
+  onPrimaryFixedVariant: '#4f378b',
+  inversePrimary: '#d0bcff',
+  surfaceTint: '#6750a4',
+
+  secondary: '#625b71',
+  onSecondary: '#ffffff',
+  secondaryContainer: '#e8def8',
+  onSecondaryContainer: '#1d192b',
+  secondaryFixed: '#e8def8',
+  secondaryFixedDim: '#ccc2dc',
+  onSecondaryFixed: '#1d192b',
+  onSecondaryFixedVariant: '#4a4458',
+
+  tertiary: '#7d5260',
+  onTertiary: '#ffffff',
+  tertiaryContainer: '#ffd8e4',
+  onTertiaryContainer: '#31111d',
+  tertiaryFixed: '#ffd8e4',
+  tertiaryFixedDim: '#efb8c8',
+  onTertiaryFixed: '#31111d',
+  onTertiaryFixedVariant: '#633b48',
+
+  error: '#b3261e',
+  onError: '#ffffff',
+  errorContainer: '#f9dedc',
+  onErrorContainer: '#410e0b',
+
+  outline: '#79747e',
+  outlineVariant: '#c4c0c9',
+  background: '#fef7ff',
+
+  // --- TYPOGRAPHY SYSTEM ---
+  typeDisplayXl: { fontFamily: 'Inter', fontSize: '57px', fontWeight: '400', lineHeight: '64px', letterSpacing: '-0.25px' },
+  typeHeadlineLg: { fontFamily: 'Inter', fontSize: '32px', fontWeight: '400', lineHeight: '40px', letterSpacing: '0px' },
+  typeHeadlineMd: { fontFamily: 'Inter', fontSize: '28px', fontWeight: '400', lineHeight: '36px', letterSpacing: '0px' },
+  typeBodyLg: { fontFamily: 'Inter', fontSize: '16px', fontWeight: '400', lineHeight: '24px', letterSpacing: '0.5px' },
+  typeBodyMd: { fontFamily: 'Inter', fontSize: '14px', fontWeight: '400', lineHeight: '20px', letterSpacing: '0.25px' },
+  typeLabelSm: { fontFamily: 'Inter', fontSize: '11px', fontWeight: '500', lineHeight: '16px', letterSpacing: '0.5px' },
+  typeCaption: { fontFamily: 'Inter', fontSize: '12px', fontWeight: '400', lineHeight: '16px', letterSpacing: '0.4px' },
+
+  // --- BORDER RADIUS SYSTEM ---
+  radiusSm: '4px',
+  radiusDefault: '8px',
+  radiusMd: '12px',
+  radiusLg: '16px',
+  radiusXl: '28px',
+  radiusFull: '9999px',
+
+  // --- SPACING SYSTEM ---
+  spacingBase: '4px',
+  spacingXs: '4px',
+  spacingSm: '8px',
+  spacingMd: '16px',
+  spacingLg: '24px',
+  spacingXl: '32px',
+  spacingGutter: '16px',
+  spacingContainerMax: '1200px',
+
+  // --- SHADOW & ELEVATION ---
+  shadowSm: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+  shadowMd: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+  shadowLg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+  shadowXl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+
+  // --- INTERACTION SYSTEM ---
+  interactionHoverOpacity: 0.08,
+  interactionFocusGlow: '0 0 0 3px rgba(103, 80, 164, 0.5)',
+  interactionActiveScale: 0.98,
+  interactionTransitionTiming: '200ms',
+  interactionTransitionEasing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+
+  // Legacy/Compatibility
+  primaryHover: '#4f378b',
+  accent: '#7d5260',
+  bg: '#fef7ff',
+  surfaceContrast: '#e6e0e9',
+  textPrimary: '#1d1b20',
+  textSecondary: '#49454f',
   fontFamily: 'Inter',
   headingFont: 'Inter',
-  headingWeight: '900',
-  headingSize: '4rem',
-  bodySize: '1.25rem',
-  letterSpacing: '-0.02em',
-  borderRadius: '0.75rem',
-  buttonRadius: '0.5rem',
-  cardRadius: '1rem',
-  border: '#eae7e7',
-  sectionPadding: '5rem',
-  contentAlignment: 'center',
-  shadowSoft: '0 4px 20px rgba(0,0,0,0.05)',
-  shadowStrong: '0 10px 40px rgba(0,0,0,0.1)',
-  transitionSpeed: '300ms',
+  headingWeight: '400',
+  headingSize: '32px',
+  bodySize: '16px',
+  letterSpacing: '0px',
+  borderRadius: '8px',
+  buttonRadius: '8px',
+  cardRadius: '12px',
+  border: '#79747e',
+  sectionPadding: '24px',
+  contentAlignment: 'left',
+  shadowSoft: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+  shadowStrong: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+  transitionSpeed: '200ms',
 };
 
 const storage = {

@@ -241,52 +241,107 @@ export async function askAiForFullPresentation(prompt: string, layouts: {id: str
 
 export function buildDesignConfigPrompt(prompt: string, options?: PromptSettings): string {
   return `You are an expert Brand Designer and UI/UX Architect.
-Your task is to create a professional design system configuration based on a user's brand description or mood.
+You need to create a professional design system configuration based on a user's brand description or mood.
+You must follow the Material 3 design specification for naming and tokens.
 
 User Request: "${prompt}"
 ${buildOptionsString(options)}
 
-Return ONLY a FLAT JSON object (no nested objects) inside a <json>...</json> wrapper with these specific keys:
+Return ONLY a JSON object inside a <json>...</json> wrapper that matches this schema:
 
-- "primary": A brand primary color hex (e.g., "#D62828").
-- "primaryHover": A slightly darker or more vibrant version of primary.
-- "secondary": A matching accent or secondary color hex.
-- "accent": A high-contrast accent color (e.g. for CTAs).
-- "bg": Main background color hex.
-- "surface": Card/Surface color hex.
-- "surfaceContrast": A slightly darker version of surface for depth.
-- "fontFamily": A valid Google Font name for Body text (e.g., "Inter").
-- "bodySize": Default body text size (e.g., "1.125rem").
-- "headingFont": A valid Google Font name for Headings (e.g., "Outfit").
-- "headingWeight": CSS font weight for headers (e.g., "800").
-- "headingSize": Scale for main headings (e.g., "4rem").
-- "letterSpacing": CSS letter spacing (e.g., "-0.04em").
-- "textPrimary": Main text color hex.
-- "textSecondary": Subdued text color hex.
-- "borderRadius": Global border radius (e.g., "0.5rem").
-- "buttonRadius": radius for buttons (e.g., "9999px").
-- "cardRadius": radius for cards (e.g., "1.5rem").
-- "border": Border color for dividers (subtle).
-- "sectionPadding": Internal spacing (e.g., "4rem").
-- "contentAlignment": Either "left" or "center".
-- "shadowSoft": A soft elevation shadow.
-- "shadowStrong": A defined depth shadow.
-- "transitionSpeed": Global transition time (e.g., "300ms").
+{
+  "surface": "hex",
+  "surfaceDim": "hex",
+  "surfaceBright": "hex",
+  "surfaceContainerLowest": "hex",
+  "surfaceContainerLow": "hex",
+  "surfaceContainer": "hex",
+  "surfaceContainerHigh": "hex",
+  "surfaceContainerHighest": "hex",
+  "surfaceVariant": "hex",
+  "onSurface": "hex",
+  "onSurfaceVariant": "hex",
+  "onBackground": "hex",
+  "inverseSurface": "hex",
+  "inverseOnSurface": "hex",
+  "primary": "hex",
+  "onPrimary": "hex",
+  "primaryContainer": "hex",
+  "onPrimaryContainer": "hex",
+  "primaryFixed": "hex",
+  "primaryFixedDim": "hex",
+  "onPrimaryFixed": "hex",
+  "onPrimaryFixedVariant": "hex",
+  "inversePrimary": "hex",
+  "surfaceTint": "hex",
+  "secondary": "hex",
+  "onSecondary": "hex",
+  "secondaryContainer": "hex",
+  "onSecondaryContainer": "hex",
+  "secondaryFixed": "hex",
+  "secondaryFixedDim": "hex",
+  "onSecondaryFixed": "hex",
+  "onSecondaryFixedVariant": "hex",
+  "tertiary": "hex",
+  "onTertiary": "hex",
+  "tertiaryContainer": "hex",
+  "onTertiaryContainer": "hex",
+  "tertiaryFixed": "hex",
+  "tertiaryFixedDim": "hex",
+  "onTertiaryFixed": "hex",
+  "onTertiaryFixedVariant": "hex",
+  "error": "hex",
+  "onError": "hex",
+  "errorContainer": "hex",
+  "onErrorContainer": "hex",
+  "outline": "hex",
+  "outlineVariant": "hex",
+  "background": "hex",
 
-GOOGLE FONT ARCHETYPES:
-- Professional/Corporate: Inter, Montserrat, Roboto, Open Sans.
-- Luxury/Elegant: Playfair Display, Lora, Cormorant Garamond, Prata.
-- Playful/Handwriting: Fredoka, Pacifico, Caveat, Patrick Hand, Indie Flower.
-- Modern/Futuristic: Space Grotesk, Syne, Urbanist, Clash Display, Lexend.
-- Technical/Code: JetBrains Mono, Space Mono, Fira Code.
+  "typeDisplayXl": { "fontFamily": "string", "fontSize": "string", "fontWeight": "string", "lineHeight": "string", "letterSpacing": "string" },
+  "typeHeadlineLg": { "fontFamily": "string", "fontSize": "string", "fontWeight": "string", "lineHeight": "string", "letterSpacing": "string" },
+  "typeHeadlineMd": { "fontFamily": "string", "fontSize": "string", "fontWeight": "string", "lineHeight": "string", "letterSpacing": "string" },
+  "typeBodyLg": { "fontFamily": "string", "fontSize": "string", "fontWeight": "string", "lineHeight": "string", "letterSpacing": "string" },
+  "typeBodyMd": { "fontFamily": "string", "fontSize": "string", "fontWeight": "string", "lineHeight": "string", "letterSpacing": "string" },
+  "typeLabelSm": { "fontFamily": "string", "fontSize": "string", "fontWeight": "string", "lineHeight": "string", "letterSpacing": "string" },
+  "typeCaption": { "fontFamily": "string", "fontSize": "string", "fontWeight": "string", "lineHeight": "string", "letterSpacing": "string" },
 
-DESIGN GUIDELINES:
-1. Ensure High Contrast: Background and text colors must be readable.
-2. Harmony: Colors must belong to a cohesive brand palette.
-3. Specificity: Use real Google Font names.
-4. Flat Structure: DO NOT nest any objects. All keys must be at the root.
+  "radiusSm": "px",
+  "radiusDefault": "px",
+  "radiusMd": "px",
+  "radiusLg": "px",
+  "radiusXl": "px",
+  "radiusFull": "9999px",
 
-Return ONLY the FLAT JSON object inside <json>...</json> tags.`;
+  "spacingBase": "px",
+  "spacingXs": "px",
+  "spacingSm": "px",
+  "spacingMd": "px",
+  "spacingLg": "px",
+  "spacingXl": "px",
+  "spacingGutter": "px",
+  "spacingContainerMax": "px",
+
+  "shadowSm": "string",
+  "shadowMd": "string",
+  "shadowLg": "string",
+  "shadowXl": "string",
+
+  "interactionHoverOpacity": number,
+  "interactionFocusGlow": "string",
+  "interactionActiveScale": number,
+  "interactionTransitionTiming": "ms",
+  "interactionTransitionEasing": "cubic-bezier"
+}
+
+DESIGN RULES:
+1. Colors must be perfectly harmonious.
+2. Tonal variations (dim, bright, containers) must be derived correctly from their base colors.
+3. Typography must use valid Google Fonts.
+4. Shadows must be elegant and subtle.
+5. All values must be professional and high-fidelity.
+
+Return ONLY the JSON object inside <json>...</json> tags.`;
 }
 
 export async function askAiForDesignConfig(prompt: string, options?: PromptSettings): Promise<any | null> {
@@ -313,30 +368,16 @@ ${JSON.stringify(currentConfig, null, 2)}
 User Request: "${prompt}"
 ${buildOptionsString(options)}
 
-Return ONLY the updated FLAT JSON object inside a <json>...</json> wrapper. 
-
-THE DESIGN SYSTEM SCHEMA:
-- primary, secondary, accent: Core brand colors (Hex).
-- bg: Main slide background color.
-- surface: Card/container background color.
-- surfaceContrast: A slightly different shade for subtle sections.
-- textPrimary, textSecondary: Contrast colors for text.
-- fontFamily, headingFont: Google Font names (e.g., "Inter", "Playfair Display").
-- borderRadius, buttonRadius, cardRadius: Sizing in rem/px (e.g., "0.5rem", "9999px").
-- contentAlignment: Either "left" or "center".
-- shadowSoft, shadowStrong: CSS shadow values.
-- border: Hex color for subtle borders.
-
-Maintain the same keys as the current design system. Ensure the colors and fonts are professional and harmonious.
+Return ONLY the updated JSON object inside a <json>...</json> wrapper. 
+Maintain the same schema as the current design system, which follows Material 3 tokens.
 
 DESIGN RULES FOR UPDATES:
-1. Keep it Flat: Do not introduce nested objects.
-2. Be Precise: If the user says "make it darker", update the 'bg', 'surface', and potentially 'primary' colors while maintaining harmony.
-3. Typography: If the user asks for a specific vibe, use the Font Archetype Library (e.g., "Playful" -> "Fredoka", "Handwriting" -> "Indie Flower"). If the current font already matches the vibe, pick a DIFFERENT one from the same category to provide a fresh look.
-4. Style Logic: For "wavy" or "organic" requests, use very large or irregular borderRadius values (e.g., "3rem"). For "sharp" or "brutalist", use "0px".
-5. Contrast: Always ensure text remains readable against its background.
+1. Preserve the structure.
+2. Ensure color harmony and accessibility (contrast).
+3. Update only relevant tokens while keeping the system cohesive.
+4. If the user asks for a stylistic change (e.g., "more rounded"), update all relevant radius tokens (radiusSm, radiusDefault, radiusMd, etc.).
 
-Important: Return ONLY valid JSON inside <json> tags.`;
+Return ONLY valid JSON inside <json> tags.`;
 }
 
 export async function askAiForDesignUpdate(prompt: string, currentConfig: any, options?: PromptSettings): Promise<any | null> {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppStore } from "../store";
+import { useAppStore, DEFAULT_DESIGN } from "../store";
 import { Button, Textarea } from "../components/ui";
 import { Plus, LayoutTemplate, Trash2, Edit2, X, Download, Upload, Copy, Palette, ChevronRight, Sparkles, Wand2, Loader2, Check, Settings2, ChevronUp, ChevronDown, Search } from "lucide-react";
 import { cn } from "../lib/utils";
@@ -30,32 +30,7 @@ export function TemplateGallery() {
   const [copySuccess, setCopySuccess] = useState(false);
   const [isGeneratingDesign, setIsGeneratingDesign] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
-  const [designConfig, setDesignConfig] = useState({
-    primary: '#1c1c1e',
-    primaryHover: '#2c2c2e',
-    secondary: '#D62828',
-    accent: '#007AFF',
-    bg: '#F2F2F7',
-    surface: '#FFFFFF',
-    surfaceContrast: '#E5E5EA',
-    textPrimary: '#000000',
-    textSecondary: '#8E8E93',
-    fontFamily: 'Inter',
-    headingFont: 'Inter',
-    headingWeight: '900',
-    headingSize: '4rem',
-    bodySize: '1.25rem',
-    letterSpacing: '-0.02em',
-    borderRadius: '1.5rem',
-    buttonRadius: '0.75rem',
-    cardRadius: '2rem',
-    border: '#D1D1D6',
-    sectionPadding: '5rem',
-    contentAlignment: 'center' as 'left' | 'center',
-    shadowSoft: '0 4px 20px rgba(0,0,0,0.05)',
-    shadowStrong: '0 10px 40px rgba(0,0,0,0.08)',
-    transitionSpeed: '300ms',
-  });
+  const [designConfig, setDesignConfig] = useState(DEFAULT_DESIGN);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -346,8 +321,11 @@ export function TemplateGallery() {
                         defaultMode={aiMode}
                         onModeChange={(mode) => setAiMode(mode as 'ai' | 'prompt')}
                         systemPromptBuilder={buildDesignConfigPrompt}
+                        responseValue={aiResponseText}
+                        onResponseChange={setAiResponseText}
+                        onApplyResponse={handleApplyAiResponse}
                       />
-                      
+
                       <div className="space-y-3">
                         <p className="text-[9px] font-bold text-gray-600 uppercase tracking-widest">Design Presets</p>
                         <div className="flex flex-wrap gap-2">

@@ -1,245 +1,285 @@
 import React from 'react';
-import { Search, Plus, Play, Download, Settings, Heart, Bell, Share2, Info, ChevronRight, User, Palette } from 'lucide-react';
+import { Search, Plus, Play, Download, Settings, Heart, Bell, Share2, Info, ChevronRight, User, Palette, MousePointer2, Check } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { GoogleFontLoader } from '../../lib/typography';
+import { DesignConfig } from '../../store';
 
 interface ThemeShowcaseProps {
-  config: {
-    primary: string;
-    secondary: string;
-    accent: string;
-    bg: string;
-    surface: string;
-    surfaceContrast: string;
-    textPrimary: string;
-    textSecondary: string;
-    fontFamily: string;
-    headingFont: string;
-    headingWeight: string;
-    headingSize: string;
-    bodySize: string;
-    letterSpacing: string;
-    borderRadius: string;
-    buttonRadius: string;
-    cardRadius: string;
-    border: string;
-    shadowSoft: string;
-    shadowStrong: string;
-    contentAlignment: 'left' | 'center';
-  };
+  config: DesignConfig;
 }
 
-// Helper to generate tonal palette (simulated)
-const getTonalPalette = (hex: string) => {
-  // Simple simulation of tones by adjusting opacity/brightness
-  // In a real app we might use chroma-js or similar
-  return [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 100].map(tone => {
-    // Just a placeholder calculation for visual representation
-    const opacity = tone / 100;
-    return { tone, color: hex, opacity };
-  });
-};
-
 export const ThemeShowcase: React.FC<ThemeShowcaseProps> = ({ config }) => {
+  // Map design config to CSS variables for live preview
   const cssVars = {
+    // Colors
     '--ds-primary': config.primary,
+    '--ds-on-primary': config.onPrimary,
+    '--ds-primary-container': config.primaryContainer,
+    '--ds-on-primary-container': config.onPrimaryContainer,
     '--ds-secondary': config.secondary,
-    '--ds-tertiary': config.accent,
-    '--ds-surface': config.bg,
-    '--ds-surface-container': config.surface,
-    '--ds-on-surface': config.textPrimary,
-    '--ds-on-surface-variant': config.textSecondary,
-    '--ds-outline': config.border,
-    '--ds-error': '#D62828',
-    '--ds-font-heading': config.headingFont,
-    '--ds-font-body': config.fontFamily,
-    '--ds-radius-card': config.cardRadius,
-    '--ds-radius-btn': config.buttonRadius,
-    '--ds-shadow-soft': config.shadowSoft,
-    '--ds-shadow-strong': config.shadowStrong,
+    '--ds-on-secondary': config.onSecondary,
+    '--ds-secondary-container': config.secondaryContainer,
+    '--ds-on-secondary-container': config.onSecondaryContainer,
+    '--ds-tertiary': config.tertiary,
+    '--ds-on-tertiary': config.onTertiary,
+    '--ds-tertiary-container': config.tertiaryContainer,
+    '--ds-on-tertiary-container': config.onTertiaryContainer,
+    '--ds-surface': config.surface,
+    '--ds-surface-variant': config.surfaceVariant,
+    '--ds-on-surface': config.onSurface,
+    '--ds-on-surface-variant': config.onSurfaceVariant,
+    '--ds-outline': config.outline,
+    '--ds-outline-variant': config.outlineVariant,
+    '--ds-background': config.background,
+    '--ds-on-background': config.onBackground,
+    '--ds-error': config.error,
+    '--ds-surface-container': config.surfaceContainer,
+    
+    // Radius
+    '--ds-radius-sm': config.radiusSm,
+    '--ds-radius-default': config.radiusDefault,
+    '--ds-radius-md': config.radiusMd,
+    '--ds-radius-lg': config.radiusLg,
+    '--ds-radius-xl': config.radiusXl,
+    
+    // Shadows
+    '--ds-shadow-sm': config.shadowSm,
+    '--ds-shadow-md': config.shadowMd,
+    '--ds-shadow-lg': config.shadowLg,
+    '--ds-shadow-xl': config.shadowXl,
+
+    // Interaction
+    '--ds-hover-opacity': config.interactionHoverOpacity,
+    '--ds-active-scale': config.interactionActiveScale,
+    '--ds-transition-timing': config.interactionTransitionTiming,
+    '--ds-transition-easing': config.interactionTransitionEasing,
+    '--ds-focus-glow': config.interactionFocusGlow,
   } as React.CSSProperties;
 
+  const fontFamilies = Array.from(new Set([
+    config.typeDisplayXl.fontFamily,
+    config.typeHeadlineLg.fontFamily,
+    config.typeBodyLg.fontFamily,
+    config.typeLabelSm.fontFamily
+  ]));
+
   return (
-    <div style={cssVars} className="w-full max-w-[1400px] mx-auto p-4 lg:p-8 animate-in fade-in duration-700">
-      <GoogleFontLoader fonts={[config.fontFamily, config.headingFont]} />
+    <div style={cssVars} className="w-full max-w-[1400px] mx-auto p-4 lg:p-8 animate-in fade-in duration-700 select-none">
+      <GoogleFontLoader fonts={fontFamilies} />
       
-      <div className="grid grid-cols-12 gap-6 lg:gap-10">
+      <div className="grid grid-cols-12 gap-8 lg:gap-12">
         
-        {/* Left Section: Color Token Cards */}
-        <div className="col-span-12 lg:col-span-4 space-y-4">
-          <div className="mb-6">
-            <h3 className="text-white text-xl font-black tracking-tight mb-1">Design Tokens</h3>
-            <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">Visual DNA Foundations</p>
+        {/* Left Section: Color Token Architecture */}
+        <div className="col-span-12 lg:col-span-4 space-y-6">
+          <div className="mb-8">
+            <h3 className="text-white text-2xl font-black tracking-tighter mb-2">Token Architecture</h3>
+            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em]">Material 3 Design Specification</p>
           </div>
 
           {[
-            { label: 'Primary', token: 'primary', value: config.primary },
-            { label: 'Secondary', token: 'secondary', value: config.secondary },
-            { label: 'Tertiary', token: 'tertiary', value: config.accent },
-            { label: 'Neutral', token: 'neutral', value: config.textSecondary },
+            { label: 'Primary', token: 'primary', hex: config.primary, on: config.onPrimary, container: config.primaryContainer },
+            { label: 'Secondary', token: 'secondary', hex: config.secondary, on: config.onSecondary, container: config.secondaryContainer },
+            { label: 'Tertiary', token: 'tertiary', hex: config.tertiary, on: config.onTertiary, container: config.tertiaryContainer },
+            { label: 'Neutral', token: 'surface', hex: config.surface, on: config.onSurface, container: config.surfaceVariant },
           ].map((item) => (
             <div 
               key={item.label}
-              className="bg-[var(--ds-surface-container)] border border-[var(--ds-outline)] overflow-hidden shadow-lg transition-all hover:scale-[1.02]"
-              style={{ borderRadius: 'var(--ds-radius-card)' }}
+              className="bg-[var(--ds-surface-container)] border border-[var(--ds-outline-variant)] overflow-hidden shadow-md transition-all hover:scale-[1.01]"
+              style={{ borderRadius: 'var(--ds-radius-md)' }}
             >
-              <div className="p-5 flex items-center justify-between">
+              <div className="p-4 flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] text-[var(--ds-on-surface-variant)] font-bold uppercase tracking-widest mb-0.5">{item.label}</p>
-                  <p className="text-[var(--ds-on-surface)] font-black text-lg tracking-tight">{item.value.toUpperCase()}</p>
+                  <p className="text-[9px] text-[var(--ds-on-surface-variant)] font-bold uppercase tracking-widest mb-1">{item.label}</p>
+                  <p className="text-[var(--ds-on-surface)] font-black text-sm tracking-tight">{item.hex.toUpperCase()}</p>
                 </div>
-                <div 
-                  className="w-12 h-12 rounded-2xl shadow-inner border border-white/5" 
-                  style={{ backgroundColor: item.value }}
-                />
+                <div className="flex gap-1">
+                   <div className="w-8 h-8 rounded-lg shadow-inner" style={{ backgroundColor: item.hex }} />
+                   <div className="w-8 h-8 rounded-lg shadow-inner border border-[var(--ds-outline-variant)]" style={{ backgroundColor: item.container }} />
+                </div>
               </div>
               
-              {/* Tonal Palette Strip */}
-              <div className="flex h-10 w-full mt-2">
+              <div className="flex h-6 w-full opacity-60">
                 {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 100].map((tone) => (
                   <div 
                     key={tone}
-                    className="flex-1 cursor-pointer hover:opacity-70 transition-opacity relative group"
+                    className="flex-1"
                     style={{ 
-                      backgroundColor: item.value,
-                      filter: `brightness(${tone / 60 + 0.4}) saturate(${tone > 50 ? 1 : 1.5})`
+                      backgroundColor: item.hex,
+                      filter: `brightness(${tone / 60 + 0.4}) saturate(${tone > 50 ? 0.8 : 1.2})`
                     }}
-                    title={`Tone ${tone}`}
-                  >
-                    <span className="absolute inset-0 flex items-center justify-center text-[6px] font-bold text-white opacity-0 group-hover:opacity-100">{tone}</span>
-                  </div>
+                  />
                 ))}
               </div>
             </div>
           ))}
+
+          {/* Elevation Preview */}
+          <div className="pt-4 space-y-4">
+             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Elevation System</p>
+             <div className="grid grid-cols-2 gap-4">
+                <div className="aspect-square bg-[var(--ds-surface-container)] flex items-center justify-center border border-[var(--ds-outline-variant)] shadow-[var(--ds-shadow-sm)]" style={{ borderRadius: 'var(--ds-radius-sm)' }}>
+                   <span className="text-[8px] font-black text-[var(--ds-on-surface-variant)]">SM</span>
+                </div>
+                <div className="aspect-square bg-[var(--ds-surface-container)] flex items-center justify-center border border-[var(--ds-outline-variant)] shadow-[var(--ds-shadow-md)]" style={{ borderRadius: 'var(--ds-radius-md)' }}>
+                   <span className="text-[8px] font-black text-[var(--ds-on-surface-variant)]">MD</span>
+                </div>
+             </div>
+          </div>
         </div>
 
-        {/* Right Section: Component Showcase Grid */}
+        {/* Right Section: Deep Component Testing */}
         <div className="col-span-12 lg:col-span-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
             
-            {/* Typography Preview */}
-            <div className="col-span-1 md:col-span-2 p-6 bg-[var(--ds-surface-container)] border border-[var(--ds-outline)] shadow-md overflow-hidden" style={{ borderRadius: 'var(--ds-radius-card)' }}>
-              <div className="flex items-center justify-between mb-8">
-                 <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Typography System</p>
-                 <span className="text-[10px] font-mono opacity-50">{config.headingFont} / {config.fontFamily}</span>
+            {/* Typography Master Spec */}
+            <div className="col-span-1 md:col-span-2 p-8 bg-[var(--ds-surface-container)] border border-[var(--ds-outline-variant)] shadow-[var(--ds-shadow-md)] overflow-hidden" style={{ borderRadius: 'var(--ds-radius-xl)' }}>
+              <div className="flex items-center justify-between mb-10">
+                 <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-6 bg-[var(--ds-primary)] rounded-full" />
+                    <p className="text-[10px] text-[var(--ds-on-surface)] font-black uppercase tracking-widest">Type System Engine</p>
+                 </div>
+                 <div className="flex gap-4">
+                    <span className="text-[9px] font-mono text-[var(--ds-on-surface-variant)]">{config.typeDisplayXl.fontFamily}</span>
+                    <span className="text-[9px] font-mono text-[var(--ds-on-surface-variant)]">{config.typeBodyLg.fontFamily}</span>
+                 </div>
               </div>
               
-              <div className="flex items-end gap-8">
-                <div className="text-8xl font-black leading-none tracking-tighter" style={{ fontFamily: 'var(--ds-font-heading)', color: 'var(--ds-primary)' }}>Aa</div>
-                <div className="space-y-4 flex-1">
-                  <div className="space-y-1">
-                    <p className="text-[8px] text-gray-500 font-bold uppercase tracking-[0.2em]">Headline Large</p>
-                    <h1 className="text-2xl font-black tracking-tight" style={{ fontFamily: 'var(--ds-font-heading)', color: 'var(--ds-on-surface)' }}>Design is Intelligence.</h1>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[8px] text-gray-500 font-bold uppercase tracking-[0.2em]">Body Medium</p>
-                    <p className="text-sm opacity-70 leading-relaxed" style={{ fontFamily: 'var(--ds-font-body)', color: 'var(--ds-on-surface)' }}>The goal of a designer is to listen, observe, and understand the visual language of the future.</p>
-                  </div>
+              <div className="space-y-12">
+                <div className="flex items-start gap-10">
+                   <div 
+                     className="text-9xl font-black leading-none tracking-tighter select-none" 
+                     style={{ 
+                       fontFamily: config.typeDisplayXl.fontFamily, 
+                       color: 'var(--ds-primary)',
+                       fontWeight: config.typeDisplayXl.fontWeight,
+                       letterSpacing: config.typeDisplayXl.letterSpacing
+                     }}
+                   >Aa</div>
+                   <div className="space-y-6 flex-1 pt-4">
+                      <h1 
+                        className="tracking-tight" 
+                        style={{ 
+                          fontFamily: config.typeDisplayXl.fontFamily, 
+                          color: 'var(--ds-on-surface)',
+                          fontSize: config.typeDisplayXl.fontSize,
+                          fontWeight: config.typeDisplayXl.fontWeight,
+                          lineHeight: config.typeDisplayXl.lineHeight
+                        }}
+                      >Future Foundry</h1>
+                      <p 
+                        style={{ 
+                          fontFamily: config.typeBodyLg.fontFamily, 
+                          color: 'var(--ds-on-surface-variant)',
+                          fontSize: config.typeBodyLg.fontSize,
+                          fontWeight: config.typeBodyLg.fontWeight,
+                          lineHeight: config.typeBodyLg.lineHeight,
+                          letterSpacing: config.typeBodyLg.letterSpacing
+                        }}
+                      >A modular design system built for the next generation of intelligent interfaces. Engineered with precision, refined through motion.</p>
+                   </div>
+                </div>
+                
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 border-t border-[var(--ds-outline-variant)] pt-10">
+                   {[
+                     { label: 'Headline LG', val: config.typeHeadlineLg },
+                     { label: 'Headline MD', val: config.typeHeadlineMd },
+                     { label: 'Body MD', val: config.typeBodyMd },
+                     { label: 'Label SM', val: config.typeLabelSm }
+                   ].map(item => (
+                     <div key={item.label} className="space-y-2">
+                        <p className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">{item.label}</p>
+                        <p 
+                          className="truncate"
+                          style={{ 
+                            fontFamily: item.val.fontFamily, 
+                            fontSize: item.val.fontSize, 
+                            fontWeight: item.val.fontWeight,
+                            color: 'var(--ds-on-surface)' 
+                          }}
+                        >The quick brown fox</p>
+                     </div>
+                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Buttons Preview */}
-            <div className="p-6 bg-[var(--ds-surface-container)] border border-[var(--ds-outline)] shadow-md space-y-4" style={{ borderRadius: 'var(--ds-radius-card)' }}>
-               <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-4">Button Tokens</p>
-               <button 
-                  className="w-full py-3 text-white text-xs font-black uppercase tracking-widest shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98]" 
-                  style={{ backgroundColor: 'var(--ds-primary)', borderRadius: 'var(--ds-radius-btn)' }}
-               >Primary</button>
-               <button 
-                  className="w-full py-3 text-white text-xs font-black uppercase tracking-widest transition-all hover:bg-white/5" 
-                  style={{ backgroundColor: 'var(--ds-secondary)', borderRadius: 'var(--ds-radius-btn)' }}
-               >Secondary</button>
-               <button 
-                  className="w-full py-3 bg-transparent border-2 text-xs font-black uppercase tracking-widest transition-all hover:bg-white/5" 
-                  style={{ borderColor: 'var(--ds-outline)', color: 'var(--ds-on-surface)', borderRadius: 'var(--ds-radius-btn)' }}
-               >Outlined</button>
-            </div>
-
-            {/* Form & Navigation */}
-            <div className="p-6 bg-[var(--ds-surface-container)] border border-[var(--ds-outline)] shadow-md space-y-6" style={{ borderRadius: 'var(--ds-radius-card)' }}>
-               <div>
-                 <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3">Form Elements</p>
-                 <div className="relative group">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40 group-focus-within:text-[var(--ds-primary)] group-focus-within:opacity-100 transition-all" size={16} />
-                    <input 
-                      type="text" 
-                      placeholder="Search design..." 
-                      className="w-full bg-black/10 border border-transparent focus:border-[var(--ds-primary)] focus:bg-transparent rounded-xl py-2.5 pl-10 pr-4 text-xs text-[var(--ds-on-surface)] outline-none transition-all"
-                    />
-                 </div>
+            {/* Interaction & State Testing */}
+            <div className="p-8 bg-[var(--ds-surface-container)] border border-[var(--ds-outline-variant)] shadow-[var(--ds-shadow-md)] space-y-8" style={{ borderRadius: 'var(--ds-radius-xl)' }}>
+               <div className="flex items-center gap-3">
+                  <MousePointer2 size={16} className="text-[var(--ds-primary)]" />
+                  <p className="text-[10px] text-[var(--ds-on-surface)] font-black uppercase tracking-widest">Interaction States</p>
                </div>
                
-               <div>
-                 <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3">Navigation Pills</p>
-                 <div className="flex gap-2">
-                    <div className="px-4 py-1.5 bg-[var(--ds-primary)] text-white text-[10px] font-black rounded-full">Active</div>
-                    <div className="px-4 py-1.5 bg-black/10 text-[var(--ds-on-surface-variant)] text-[10px] font-bold rounded-full hover:bg-black/20 cursor-pointer">Default</div>
-                 </div>
-               </div>
-            </div>
-
-            {/* Progress & Indicators */}
-            <div className="p-6 bg-[var(--ds-surface-container)] border border-[var(--ds-outline)] shadow-md space-y-6" style={{ borderRadius: 'var(--ds-radius-card)' }}>
-               <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2">Progress Bars</p>
                <div className="space-y-4">
-                  <div className="h-2 w-full bg-black/10 rounded-full overflow-hidden">
-                    <div className="h-full w-[70%] rounded-full" style={{ backgroundColor: 'var(--ds-primary)' }} />
+                  <button 
+                    className="w-full py-4 text-xs font-black uppercase tracking-widest transition-all active:scale-[var(--ds-active-scale)] shadow-[var(--ds-shadow-md)] flex items-center justify-center gap-2 group" 
+                    style={{ 
+                      backgroundColor: 'var(--ds-primary)', 
+                      color: 'var(--ds-on-primary)',
+                      borderRadius: 'var(--ds-radius-md)',
+                      transitionDuration: 'var(--ds-transition-timing)',
+                      transitionTimingFunction: 'var(--ds-transition-easing)'
+                    }}
+                  >
+                    <span>Primary Action</span>
+                    <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                  </button>
+
+                  <button 
+                    className="w-full py-4 text-xs font-black uppercase tracking-widest transition-all active:scale-[var(--ds-active-scale)] flex items-center justify-center gap-2 group border-2" 
+                    style={{ 
+                      borderColor: 'var(--ds-outline)', 
+                      color: 'var(--ds-on-surface)',
+                      borderRadius: 'var(--ds-radius-md)',
+                      transitionDuration: 'var(--ds-transition-timing)',
+                      transitionTimingFunction: 'var(--ds-transition-easing)'
+                    }}
+                  >
+                    Ghost Variant
+                  </button>
+
+                  <div className="pt-4 space-y-4">
+                    <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Focus & Selection</p>
+                    <div className="flex gap-4">
+                       <div className="w-10 h-10 bg-[var(--ds-primary-container)] border-2 border-[var(--ds-primary)] flex items-center justify-center" style={{ borderRadius: 'var(--ds-radius-sm)' }}>
+                          <Check size={16} className="text-[var(--ds-on-primary-container)]" />
+                       </div>
+                       <div className="flex-1 bg-white/5 border-2 border-transparent p-2 transition-all" style={{ boxShadow: 'var(--ds-focus-glow)', borderRadius: 'var(--ds-radius-sm)' }}>
+                          <div className="h-4 w-full bg-[var(--ds-primary)]/20 rounded-sm" />
+                       </div>
+                    </div>
                   </div>
-                  <div className="h-2 w-full bg-black/10 rounded-full overflow-hidden">
-                    <div className="h-full w-[45%] rounded-full" style={{ backgroundColor: 'var(--ds-secondary)' }} />
+               </div>
+            </div>
+
+            {/* Dashboard Mock Component */}
+            <div className="p-8 bg-[var(--ds-surface-container)] border border-[var(--ds-outline-variant)] shadow-[var(--ds-shadow-md)] flex flex-col gap-6" style={{ borderRadius: 'var(--ds-radius-xl)' }}>
+               <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-full bg-[var(--ds-secondary-container)] flex items-center justify-center">
+                     <User size={18} className="text-[var(--ds-on-secondary-container)]" />
                   </div>
-                  <div className="h-2 w-full bg-black/10 rounded-full overflow-hidden">
-                    <div className="h-full w-[90%] rounded-full" style={{ backgroundColor: 'var(--ds-tertiary)' }} />
+                  <div className="flex gap-1">
+                     {[1, 2, 3].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-[var(--ds-outline-variant)]" />)}
                   </div>
                </div>
                
-               <div className="pt-2">
-                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3">Chips</p>
-                  <div className="flex flex-wrap gap-2">
-                     <div className="flex items-center gap-1.5 px-3 py-1 bg-[var(--ds-primary)]/10 text-[var(--ds-primary)] border border-[var(--ds-primary)]/20 rounded-lg text-[10px] font-bold">
-                        <Palette size={10} /> Brand DNA
+               <div className="space-y-2">
+                  <div className="h-4 w-3/4 bg-[var(--ds-on-surface)]/10 rounded-full" />
+                  <div className="h-4 w-1/2 bg-[var(--ds-on-surface)]/5 rounded-full" />
+               </div>
+
+               <div className="mt-auto pt-6 border-t border-[var(--ds-outline-variant)] flex items-center justify-between">
+                  <div className="flex gap-2">
+                     <div className="w-8 h-8 rounded-lg bg-[var(--ds-surface-variant)] flex items-center justify-center border border-[var(--ds-outline-variant)]">
+                        <Settings size={14} className="text-[var(--ds-on-surface-variant)]" />
                      </div>
-                     <div className="px-3 py-1 bg-black/10 text-[var(--ds-on-surface-variant)] rounded-lg text-[10px] font-bold">Material 3</div>
+                     <div className="w-8 h-8 rounded-lg bg-[var(--ds-surface-variant)] flex items-center justify-center border border-[var(--ds-outline-variant)]">
+                        <Bell size={14} className="text-[var(--ds-on-surface-variant)]" />
+                     </div>
                   </div>
-               </div>
-            </div>
-
-            {/* Icons & Controls */}
-            <div className="p-6 bg-[var(--ds-surface-container)] border border-[var(--ds-outline)] shadow-md" style={{ borderRadius: 'var(--ds-radius-card)' }}>
-               <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-5">Icon Sets</p>
-               <div className="grid grid-cols-4 gap-4">
-                  {[Play, Bell, Heart, Share2, Info, User, Settings, Download].map((Icon, i) => (
-                    <div 
-                      key={i} 
-                      className="aspect-square flex items-center justify-center rounded-2xl border transition-all hover:bg-white/5 cursor-pointer"
-                      style={{ 
-                        borderColor: i === 0 ? 'var(--ds-primary)' : 'var(--ds-outline)',
-                        backgroundColor: i === 0 ? 'var(--ds-primary)' : 'transparent',
-                        color: i === 0 ? 'white' : 'var(--ds-on-surface)'
-                      }}
-                    >
-                      <Icon size={18} />
-                    </div>
-                  ))}
-               </div>
-            </div>
-
-            {/* Status Card */}
-            <div className="p-6 bg-[var(--ds-primary)] text-white shadow-xl flex flex-col justify-between overflow-hidden relative" style={{ borderRadius: 'var(--ds-radius-card)' }}>
-               <div className="absolute top-0 right-0 p-4 opacity-10">
-                 <Palette size={80} />
-               </div>
-               <div className="relative z-10">
-                 <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1">System Health</p>
-                 <h4 className="text-2xl font-black tracking-tight leading-none">Operational</h4>
-               </div>
-               <div className="relative z-10 flex items-center justify-between mt-8">
-                 <span className="text-[10px] font-mono opacity-60">VER 2.4.0</span>
-                 <div className="flex -space-x-2">
-                    {[1, 2, 3].map(n => <div key={n} className="w-6 h-6 rounded-full border-2 border-[var(--ds-primary)] bg-white/20 backdrop-blur-sm" />)}
-                 </div>
+                  <div className="px-4 py-2 bg-[var(--ds-tertiary-container)] text-[var(--ds-on-tertiary-container)] text-[10px] font-black uppercase rounded-full border border-[var(--ds-on-tertiary-container)]/10">
+                     Active Mode
+                  </div>
                </div>
             </div>
 
