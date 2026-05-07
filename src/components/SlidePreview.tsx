@@ -346,9 +346,14 @@ export const SlideStatic = forwardRef<any, {
     }
   }));
 
+  const html = useMemo(
+    () => generateSlideHtml(templateCode, resolvedData, designConfig, false),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [templateCode, JSON.stringify(resolvedData), JSON.stringify(designConfig)]
+  );
+
   useEffect(() => {
     if (iframeRef.current) {
-      const html = generateSlideHtml(templateCode, resolvedData, designConfig, false);
       const doc = iframeRef.current.contentWindow?.document;
       if (doc) {
         doc.open();
@@ -356,7 +361,7 @@ export const SlideStatic = forwardRef<any, {
         doc.close();
       }
     }
-  }, [templateCode, resolvedData, designConfig]);
+  }, [html]);
 
   return (
     <div className="w-[1280px] h-[720px] bg-white overflow-hidden relative">
@@ -400,9 +405,14 @@ export const SlidePreview: React.FC<{
     return () => window.removeEventListener('message', handleMessage);
   }, [onImageUpload]);
 
+  const html = useMemo(
+    () => generateSlideHtml(templateCode, resolvedData, designConfig, interactive),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [templateCode, JSON.stringify(resolvedData), interactive, JSON.stringify(designConfig)]
+  );
+
   useEffect(() => {
     if (iframeRef.current) {
-      const html = generateSlideHtml(templateCode, resolvedData, designConfig, interactive);
       const doc = iframeRef.current.contentWindow?.document;
       if (doc) {
         doc.open();
@@ -410,24 +420,25 @@ export const SlidePreview: React.FC<{
         doc.close();
       }
     }
-  }, [templateCode, resolvedData, interactive, designConfig]);
+  }, [html]);
 
   useEffect(() => {
     if (!containerRef.current) return;
-    let animationFrameId: number;
+    let timerId: ReturnType<typeof setTimeout> | null = null;
     const observer = new ResizeObserver((entries) => {
-      if (animationFrameId) window.cancelAnimationFrame(animationFrameId);
-      animationFrameId = window.requestAnimationFrame(() => {
+      if (timerId) clearTimeout(timerId);
+      timerId = setTimeout(() => {
         if (!entries.length) return;
         const { width, height } = entries[0].contentRect;
+        if (!width || !height) return;
         const scaleX = width / 1280;
         const scaleY = height / 720;
         const newZoom = Math.max(0.1, Math.min(scaleX, scaleY));
-        setZoom(newZoom);
-      });
+        setZoom(prev => (Math.abs(prev - newZoom) > 0.001 ? newZoom : prev));
+      }, 100);
     });
     observer.observe(containerRef.current);
-    return () => observer.disconnect();
+    return () => { observer.disconnect(); if (timerId) clearTimeout(timerId); };
   }, []);
 
   return (

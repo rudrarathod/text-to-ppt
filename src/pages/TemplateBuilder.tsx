@@ -774,31 +774,46 @@ export function TemplateBuilder() {
                    </Button>
                  </div>
                  
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {layouts.map(l => {
-                      let sampleData = l.mockData || SAMPLE_DATA[l.variant] || { title: "Sample" };
-                      return (
-                        <div key={l.id} className="border border-[#2d2d30] rounded-xl overflow-hidden bg-[#161618] group flex flex-col shadow-md">
-                           <div className="aspect-[16/9] w-full relative bg-[#111111] pointer-events-none">
-                             <SlidePreview 
-                               templateCode={l.code}
-                               data={sampleData}
-                               designConfig={designConfig}
-                               interactive={false}
-                             />
-                           </div>
-                           <div className="p-3 border-t border-[#2d2d30] flex items-center justify-between bg-[#1e1e1e]">
-                             <span className="text-sm font-medium text-gray-200 truncate pr-2" title={l.name}>{l.name}</span>
-                             <div className="flex gap-2 shrink-0">
-                                <button onClick={() => { setSelectedLayoutId(l.id); setBuilderMode('individual'); }} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Edit Layout"><Edit2 size={14} /></button>
-                                {layouts.length > 1 && (
-                                  <button onClick={() => { if (window.confirm("Delete layout?")) removeLayoutFromActiveTemplate(l.id); }} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Delete Layout"><Trash2 size={14} /></button>
-                                )}
-                             </div>
-                           </div>
-                        </div>
-                      )
-                    })}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                     {layouts.map(l => (
+                       <div key={l.id} className="border border-[#2d2d30] rounded-xl overflow-hidden bg-[#161618] group flex flex-col shadow-md hover:border-[#444] transition-colors">
+                          {/* Lightweight CSS thumbnail — no iframe */}
+                          <div
+                            className="aspect-[16/9] w-full relative flex flex-col overflow-hidden"
+                            style={{ backgroundColor: designConfig.bg || '#1a1a1a' }}
+                          >
+                            {/* Brand color accent bar */}
+                            <div className="h-1.5 w-full shrink-0" style={{ backgroundColor: designConfig.primary || '#6750a4' }} />
+                            {/* Mock content blocks */}
+                            <div className="flex-1 flex flex-col p-4 gap-2">
+                              <div className="h-3 rounded w-2/3" style={{ backgroundColor: designConfig.primary || '#6750a4', opacity: 0.9 }} />
+                              <div className="h-2 rounded w-full" style={{ backgroundColor: designConfig.onSurface || '#ffffff', opacity: 0.15 }} />
+                              <div className="h-2 rounded w-4/5" style={{ backgroundColor: designConfig.onSurface || '#ffffff', opacity: 0.1 }} />
+                              <div className="h-2 rounded w-3/5" style={{ backgroundColor: designConfig.onSurface || '#ffffff', opacity: 0.1 }} />
+                              {(l.variant === 'image-text' || l.variant === 'comparison') && (
+                                <div className="flex gap-2 mt-1 flex-1">
+                                  <div className="flex-1 rounded" style={{ backgroundColor: designConfig.surfaceVariant || '#333', opacity: 0.4 }} />
+                                  <div className="flex-1 rounded" style={{ backgroundColor: designConfig.surfaceVariant || '#333', opacity: 0.4 }} />
+                                </div>
+                              )}
+                            </div>
+                            {/* Variant label overlay */}
+                            <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider"
+                              style={{ backgroundColor: designConfig.primary || '#6750a4', color: designConfig.onPrimary || '#fff' }}>
+                              {l.variant || 'layout'}
+                            </div>
+                          </div>
+                          <div className="p-3 border-t border-[#2d2d30] flex items-center justify-between bg-[#1e1e1e]">
+                            <span className="text-sm font-medium text-gray-200 truncate pr-2" title={l.name}>{l.name}</span>
+                            <div className="flex gap-2 shrink-0">
+                               <button onClick={() => { setSelectedLayoutId(l.id); setBuilderMode('individual'); }} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Edit Layout"><Edit2 size={14} /></button>
+                               {layouts.length > 1 && (
+                                 <button onClick={() => { if (window.confirm("Delete layout?")) removeLayoutFromActiveTemplate(l.id); }} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Delete Layout"><Trash2 size={14} /></button>
+                               )}
+                            </div>
+                          </div>
+                       </div>
+                     ))}
                  </div>
               </div>
 

@@ -1001,33 +1001,6 @@ export function PresentationBuilder() {
            </div>
         )}
       </div>
-      
-      {/* Hidden Export Container - Positioned off-screen but NOT display:none or opacity-0 */}
-      <div 
-        className="fixed pointer-events-none z-[-1000]" 
-        style={{ left: '-10000px', top: 0, width: 1280, height: 720, overflow: 'hidden' }} 
-        aria-hidden="true"
-      >
-        {slides.map(slide => {
-          const layout = layouts.find(l => l.id === slide.layoutId) || layouts[0];
-          return (
-            <div 
-              key={`export-${slide.id}`} 
-              id={`export-slide-${slide.id}`} 
-              className="w-[1280px] h-[720px] bg-white relative overflow-hidden" 
-              style={{ 
-                fontFamily: designConfig?.fontFamily ? `"${designConfig.fontFamily}", sans-serif` : 'sans-serif' 
-              }}
-            >
-              <SlideStatic 
-                templateCode={layout?.code || ""}
-                data={slide.content}
-                designConfig={designConfig}
-              />
-            </div>
-          );
-        })}
-      </div>
     </div>
   );
 }
