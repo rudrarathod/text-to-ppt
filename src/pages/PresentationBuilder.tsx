@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useAppStore, SlideData } from "../store";
-import Editor from "@monaco-editor/react";
+import Editor from "../components/LazyEditor";
 import { SlidePreview, SlideStatic } from "../components/SlidePreview";
 import { Button, Textarea } from "../components/ui";
 import { Download, Plus, Trash2, LayoutTemplate, Sparkles, X, Mic, Copy, Check, Settings2, ChevronDown, ChevronUp, Save, Loader2, Palette, Code2, Presentation as PresentationIcon, Layout as LayoutIcon, ArrowLeft, Play, ChevronLeft, ChevronRight, Maximize, Minimize } from "lucide-react";
@@ -692,7 +692,7 @@ export function PresentationBuilder() {
                        {layoutEditorSubTab === 'code' ? (
                          <Editor
                            height="100%"
-                           defaultLanguage="handlebars"
+                           language="handlebars"
                            theme="vs-dark"
                            value={layoutEditCode}
                            onChange={(val) => setLayoutEditCode(val || "")}
@@ -709,7 +709,7 @@ export function PresentationBuilder() {
                        ) : (
                          <Editor
                            height="100%"
-                           defaultLanguage="json"
+                           language="json"
                            theme="vs-dark"
                            value={tempJsonInput || ""}
                            onChange={(val) => setTempJsonInput(val || "")}

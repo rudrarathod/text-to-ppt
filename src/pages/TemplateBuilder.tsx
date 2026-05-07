@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import Editor from "@monaco-editor/react";
+import Editor from "../components/LazyEditor";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAppStore, LayoutDef, LayoutVariant, SlideTemplate } from "../store";
 import { SlidePreview } from "../components/SlidePreview";

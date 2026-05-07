@@ -114,109 +114,6 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
       <head>
         <meta charset="utf-8">
         ${fontLink ? `<link rel="stylesheet" href="${fontLink}">` : ''}
-        <script src="https://cdn.tailwindcss.com"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.js"></script>
-        <script>
-          tailwind.config = {
-             theme: {
-              extend: {
-                colors: {
-                  lumina: {
-                    // Surfaces
-                    surface: '${designConfig?.surface || '#ffffff'}',
-                    'surface-dim': '${designConfig?.surfaceDim || '#ded8e1'}',
-                    'surface-bright': '${designConfig?.surfaceBright || '#fef7ff'}',
-                    'surface-lowest': '${designConfig?.surfaceContainerLowest || '#ffffff'}',
-                    'surface-low': '${designConfig?.surfaceContainerLow || '#f7f2fa'}',
-                    'surface-container': '${designConfig?.surfaceContainer || '#f3edf7'}',
-                    'surface-high': '${designConfig?.surfaceContainerHigh || '#ece6f0'}',
-                    'surface-highest': '${designConfig?.surfaceContainerHighest || '#e6e0e9'}',
-                    'surface-variant': '${designConfig?.surfaceVariant || '#e7e0eb'}',
-                    'on-surface': '${designConfig?.onSurface || '#1d1b20'}',
-                    'on-surface-variant': '${designConfig?.onSurfaceVariant || '#49454f'}',
-                    'on-background': '${designConfig?.onBackground || '#1d1b20'}',
-                    'inverse-surface': '${designConfig?.inverseSurface || '#322f35'}',
-                    'inverse-on-surface': '${designConfig?.inverseOnSurface || '#f5eff7'}',
-
-                    // Primary
-                    primary: '${designConfig?.primary || '#6750a4'}',
-                    'on-primary': '${designConfig?.onPrimary || '#ffffff'}',
-                    'primary-container': '${designConfig?.primaryContainer || '#eaddff'}',
-                    'on-primary-container': '${designConfig?.onPrimaryContainer || '#21005d'}',
-                    'primary-fixed': '${designConfig?.primaryFixed || '#eaddff'}',
-                    'primary-fixed-dim': '${designConfig?.primaryFixedDim || '#d0bcff'}',
-                    'on-primary-fixed': '${designConfig?.onPrimaryFixed || '#21005d'}',
-                    'on-primary-fixed-variant': '${designConfig?.onPrimaryFixedVariant || '#4f378b'}',
-                    'inverse-primary': '${designConfig?.inversePrimary || '#d0bcff'}',
-                    
-                    // Secondary
-                    secondary: '${designConfig?.secondary || '#625b71'}',
-                    'on-secondary': '${designConfig?.onSecondary || '#ffffff'}',
-                    'secondary-container': '${designConfig?.secondaryContainer || '#e8def8'}',
-                    'on-secondary-container': '${designConfig?.onSecondaryContainer || '#1d192b'}',
-                    'secondary-fixed': '${designConfig?.secondaryFixed || '#e8def8'}',
-                    'secondary-fixed-dim': '${designConfig?.secondaryFixedDim || '#ccc2dc'}',
-                    
-                    // Tertiary
-                    tertiary: '${designConfig?.tertiary || '#7d5260'}',
-                    'on-tertiary': '${designConfig?.onTertiary || '#ffffff'}',
-                    'tertiary-container': '${designConfig?.tertiaryContainer || '#ffd8e4'}',
-                    'on-tertiary-container': '${designConfig?.onTertiaryContainer || '#31111d'}',
-
-                    // Error
-                    error: '${designConfig?.error || '#b3261e'}',
-                    'on-error': '${designConfig?.onError || '#ffffff'}',
-                    'error-container': '${designConfig?.errorContainer || '#f9dedc'}',
-                    'on-error-container': '${designConfig?.onErrorContainer || '#410e0b'}',
-
-                    // Utils
-                    outline: '${designConfig?.outline || '#79747e'}',
-                    'outline-variant': '${designConfig?.outlineVariant || '#c4c0c9'}',
-                    background: '${designConfig?.background || '#fef7ff'}',
-                  }
-                },
-                borderRadius: {
-                  'lumina-sm': '${designConfig?.radiusSm || '4px'}',
-                  'lumina': '${designConfig?.radiusDefault || '8px'}',
-                  'lumina-md': '${designConfig?.radiusMd || '12px'}',
-                  'lumina-lg': '${designConfig?.radiusLg || '16px'}',
-                  'lumina-xl': '${designConfig?.radiusXl || '28px'}',
-                  'lumina-full': '${designConfig?.radiusFull || '9999px'}',
-                },
-                spacing: {
-                  'lumina-xs': '${designConfig?.spacingXs || '4px'}',
-                  'lumina-sm': '${designConfig?.spacingSm || '8px'}',
-                  'lumina-md': '${designConfig?.spacingMd || '16px'}',
-                  'lumina-lg': '${designConfig?.spacingLg || '24px'}',
-                  'lumina-xl': '${designConfig?.spacingXl || '32px'}',
-                  'lumina-gutter': '${designConfig?.spacingGutter || '16px'}',
-                },
-                fontFamily: {
-                  sans: ['"${sanitizeFontName(designConfig?.typeBodyLg?.fontFamily || designConfig?.fontFamily)}"', 'sans-serif'],
-                  display: ['"${sanitizeFontName(designConfig?.typeDisplayXl?.fontFamily || designConfig?.headingFont)}"', 'sans-serif'],
-                },
-                boxShadow: {
-                  'lumina-sm': '${designConfig?.shadowSm || '0 1px 3px rgba(0,0,0,0.1)'}',
-                  'lumina-md': '${designConfig?.shadowMd || '0 4px 6px rgba(0,0,0,0.1)'}',
-                  'lumina-lg': '${designConfig?.shadowLg || '0 10px 15px rgba(0,0,0,0.1)'}',
-                  'lumina-xl': '${designConfig?.shadowXl || '0 20px 25px rgba(0,0,0,0.1)'}',
-                }
-              }
-            }
-          };
-        </script>
-        <script>
-          window.captureSlide = async () => {
-             // Wait for fonts to be ready
-             if (document.fonts) await document.fonts.ready;
-             // Capture
-             return await htmlToImage.toJpeg(document.body, { 
-                quality: 0.98, 
-                pixelRatio: 2,
-                backgroundColor: '${designConfig?.background || designConfig?.bg || '#ffffff'}'
-             });
-          };
-        </script>
         <style>
           /* Font CSS custom properties */
           :root {
@@ -300,30 +197,161 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
         <div id="slide-root" style="width: 100%; height: 100%; box-sizing: border-box;">
           ${renderedHtml}
         </div>
-        ${interactive ? `
+
+        <!-- Scripts at the end for document.body safety -->
+        <script src="https://cdn.tailwindcss.com" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.js" defer></script>
+        
         <script>
-          document.addEventListener('click', (e) => {
-             const target = e.target.closest('[data-image-key]');
-             if(target) {
-                const key = target.getAttribute('data-image-key');
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'image/*';
-                input.onchange = (ie) => {
-                  const file = ie.target.files[0];
-                  if(file) {
-                    const reader = new FileReader();
-                    reader.onload = (re) => {
-                      window.parent.postMessage({ type: 'IMAGE_UPLOAD', key, data: re.target.result }, '*');
-                    };
-                    reader.readAsDataURL(file);
+          (function() {
+            window.tailwindConfig = {
+               theme: {
+                extend: {
+                  colors: {
+                    lumina: {
+                      // Surfaces
+                      surface: '${designConfig?.surface || '#ffffff'}',
+                      'surface-dim': '${designConfig?.surfaceDim || '#ded8e1'}',
+                      'surface-bright': '${designConfig?.surfaceBright || '#fef7ff'}',
+                      'surface-lowest': '${designConfig?.surfaceContainerLowest || '#ffffff'}',
+                      'surface-low': '${designConfig?.surfaceContainerLow || '#f7f2fa'}',
+                      'surface-container': '${designConfig?.surfaceContainer || '#f3edf7'}',
+                      'surface-high': '${designConfig?.surfaceContainerHigh || '#ece6f0'}',
+                      'surface-highest': '${designConfig?.surfaceContainerHighest || '#e6e0e9'}',
+                      'surface-variant': '${designConfig?.surfaceVariant || '#e7e0eb'}',
+                      'on-surface': '${designConfig?.onSurface || '#1d1b20'}',
+                      'on-surface-variant': '${designConfig?.onSurfaceVariant || '#49454f'}',
+                      'on-background': '${designConfig?.onBackground || '#1d1b20'}',
+                      'inverse-surface': '${designConfig?.inverseSurface || '#322f35'}',
+                      'inverse-on-surface': '${designConfig?.inverseOnSurface || '#f5eff7'}',
+
+                      // Primary
+                      primary: '${designConfig?.primary || '#6750a4'}',
+                      'on-primary': '${designConfig?.onPrimary || '#ffffff'}',
+                      'primary-container': '${designConfig?.primaryContainer || '#eaddff'}',
+                      'on-primary-container': '${designConfig?.onPrimaryContainer || '#21005d'}',
+                      'primary-fixed': '${designConfig?.primaryFixed || '#eaddff'}',
+                      'primary-fixed-dim': '${designConfig?.primaryFixedDim || '#d0bcff'}',
+                      'on-primary-fixed': '${designConfig?.onPrimaryFixed || '#21005d'}',
+                      'on-primary-fixed-variant': '${designConfig?.onPrimaryFixedVariant || '#4f378b'}',
+                      'inverse-primary': '${designConfig?.inversePrimary || '#d0bcff'}',
+                      
+                      // Secondary
+                      secondary: '${designConfig?.secondary || '#625b71'}',
+                      'on-secondary': '${designConfig?.onSecondary || '#ffffff'}',
+                      'secondary-container': '${designConfig?.secondaryContainer || '#e8def8'}',
+                      'on-secondary-container': '${designConfig?.onSecondaryContainer || '#1d192b'}',
+                      'secondary-fixed': '${designConfig?.secondaryFixed || '#e8def8'}',
+                      'secondary-fixed-dim': '${designConfig?.secondaryFixedDim || '#ccc2dc'}',
+                      
+                      // Tertiary
+                      tertiary: '${designConfig?.tertiary || '#7d5260'}',
+                      'on-tertiary': '${designConfig?.onTertiary || '#ffffff'}',
+                      'tertiary-container': '${designConfig?.tertiaryContainer || '#ffd8e4'}',
+                      'on-tertiary-container': '${designConfig?.onTertiaryContainer || '#31111d'}',
+
+                      // Error
+                      error: '${designConfig?.error || '#b3261e'}',
+                      'on-error': '${designConfig?.onError || '#ffffff'}',
+                      'error-container': '${designConfig?.errorContainer || '#f9dedc'}',
+                      'on-error-container': '${designConfig?.onErrorContainer || '#410e0b'}',
+
+                      // Utils
+                      outline: '${designConfig?.outline || '#79747e'}',
+                      'outline-variant': '${designConfig?.outlineVariant || '#c4c0c9'}',
+                      background: '${designConfig?.background || '#fef7ff'}',
+                    }
+                  },
+                  borderRadius: {
+                    'lumina-sm': '${designConfig?.radiusSm || '4px'}',
+                    'lumina': '${designConfig?.radiusDefault || '8px'}',
+                    'lumina-md': '${designConfig?.radiusMd || '12px'}',
+                    'lumina-lg': '${designConfig?.radiusLg || '16px'}',
+                    'lumina-xl': '${designConfig?.radiusXl || '28px'}',
+                    'lumina-full': '${designConfig?.radiusFull || '9999px'}',
+                  },
+                  spacing: {
+                    'lumina-xs': '${designConfig?.spacingXs || '4px'}',
+                    'lumina-sm': '${designConfig?.spacingSm || '8px'}',
+                    'lumina-md': '${designConfig?.spacingMd || '16px'}',
+                    'lumina-lg': '${designConfig?.spacingLg || '24px'}',
+                    'lumina-xl': '${designConfig?.spacingXl || '32px'}',
+                    'lumina-gutter': '${designConfig?.spacingGutter || '16px'}',
+                  },
+                  fontFamily: {
+                    sans: ['"${sanitizeFontName(designConfig?.typeBodyLg?.fontFamily || designConfig?.fontFamily)}"', 'sans-serif'],
+                    display: ['"${sanitizeFontName(designConfig?.typeDisplayXl?.fontFamily || designConfig?.headingFont)}"', 'sans-serif'],
+                  },
+                  boxShadow: {
+                    'lumina-sm': '${designConfig?.shadowSm || '0 1px 3px rgba(0,0,0,0.1)'}',
+                    'lumina-md': '${designConfig?.shadowMd || '0 4px 6px rgba(0,0,0,0.1)'}',
+                    'lumina-lg': '${designConfig?.shadowLg || '0 10px 15px rgba(0,0,0,0.1)'}',
+                    'lumina-xl': '${designConfig?.shadowXl || '0 20px 25px rgba(0,0,0,0.1)'}',
                   }
-                };
-                input.click();
-             }
-          });
+                }
+              }
+            };
+
+            // Apply config once tailwind is ready
+            function applyConfig() {
+              if (window.tailwind) {
+                tailwind.config = window.tailwindConfig;
+              } else {
+                setTimeout(applyConfig, 50);
+              }
+            };
+            applyConfig();
+
+            window.captureSlide = async () => {
+               // Wait for DOM and fonts
+               if (document.readyState === 'loading') {
+                 await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
+               }
+               if (document.fonts) await document.fonts.ready;
+               
+               if (!document.body) {
+                 console.error("SlidePreview: document.body is null during capture");
+                 return null;
+               }
+
+               return await htmlToImage.toJpeg(document.body, { 
+                  quality: 0.98, 
+                  pixelRatio: 2,
+                  backgroundColor: '${designConfig?.background || designConfig?.bg || '#ffffff'}'
+               });
+            };
+
+            const init = () => {
+              if (!document.body) return;
+              document.body.addEventListener('click', (e) => {
+                 const target = e.target.closest('[data-image-key]');
+                 if(target) {
+                    const key = target.getAttribute('data-image-key');
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = (ie) => {
+                      const file = ie.target.files[0];
+                      if(file) {
+                        const reader = new FileReader();
+                        reader.onload = (re) => {
+                          window.parent.postMessage({ type: 'IMAGE_UPLOAD', key, data: re.target.result }, '*');
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    };
+                    input.click();
+                 }
+              });
+            };
+
+            if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', init);
+            } else {
+              init();
+            }
+          })();
         </script>
-        ` : ''}
       </body>
     </html>
   `;
