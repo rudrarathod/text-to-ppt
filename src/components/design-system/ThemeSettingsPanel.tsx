@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Palette, Type, Square, Zap, ChevronDown, Copy, Check, MousePointer2, Layers, Move } from "lucide-react";
+import { Palette, Type, Square, Zap, ChevronDown, Copy, Check, MousePointer2, Layers, Move, Settings, CircleAlert } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { FontSelector } from "./FontSelector";
 
@@ -195,12 +195,22 @@ export function ThemeSettingsPanel({ config, onChange, layout = 'sidebar', width
                    <div className="w-2 h-2 rounded-full bg-[#D62828] animate-pulse" />
                    <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Primary Brand</h4>
                 </div>
-                <div className={cn("grid", gridGap, cols2)}>
-                   <ColorInput label="Base" token="primary" value={config.primary} />
-                   <ColorInput label="On" token="onPrimary" value={config.onPrimary} />
-                   <ColorInput label="Container" token="primaryContainer" value={config.primaryContainer} />
-                   <ColorInput label="On Cont." token="onPrimaryContainer" value={config.onPrimaryContainer} />
-                </div>
+                 <div className={cn("grid", gridGap, cols2)}>
+                    <ColorInput label="Base" token="primary" value={config.primary} />
+                    <ColorInput label="On" token="onPrimary" value={config.onPrimary} />
+                    <ColorInput label="Container" token="primaryContainer" value={config.primaryContainer} />
+                    <ColorInput label="On Cont." token="onPrimaryContainer" value={config.onPrimaryContainer} />
+                 </div>
+                 
+                 <div className="pt-4 space-y-4 border-t border-white/5">
+                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Fixed Variants</p>
+                    <div className={cn("grid", gridGap, cols2)}>
+                       <ColorInput label="Fixed" token="primaryFixed" value={config.primaryFixed} />
+                       <ColorInput label="Fixed Dim" token="primaryFixedDim" value={config.primaryFixedDim} />
+                       <ColorInput label="On Fixed" token="onPrimaryFixed" value={config.onPrimaryFixed} />
+                       <ColorInput label="On Fixed V." token="onPrimaryFixedVariant" value={config.onPrimaryFixedVariant} />
+                    </div>
+                 </div>
               </div>
 
               {/* Secondary & Tertiary Grid */}
@@ -228,12 +238,29 @@ export function ThemeSettingsPanel({ config, onChange, layout = 'sidebar', width
 
             {/* Utility Tokens */}
             <section className="space-y-6">
-               <div className="h-px bg-white/5" />
+               <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                 <Settings size={14} className="text-gray-500" />
+                 <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Utility & Inverse</h4>
+               </div>
                <div className={cn("grid", gridGap, cols2)}>
                   <ColorInput label="Background" token="background" value={config.background} />
                   <ColorInput label="Outline" token="outline" value={config.outline} />
-                  <ColorInput label="Error" token="error" value={config.error} />
-                  <ColorInput label="On Error" token="onError" value={config.onError} />
+                  <ColorInput label="Inverse Surf." token="inverseSurface" value={config.inverseSurface} />
+                  <ColorInput label="Inverse On" token="inverseOnSurface" value={config.inverseOnSurface} />
+               </div>
+            </section>
+
+            {/* Error System */}
+            <section className="space-y-6">
+               <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                 <CircleAlert size={14} className="text-red-500" />
+                 <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Error System</h4>
+               </div>
+               <div className={cn("grid", gridGap, cols2)}>
+                  <ColorInput label="Base" token="error" value={config.error} />
+                  <ColorInput label="On" token="onError" value={config.onError} />
+                  <ColorInput label="Container" token="errorContainer" value={config.errorContainer} />
+                  <ColorInput label="On Cont." token="onErrorContainer" value={config.onErrorContainer} />
                </div>
             </section>
           </div>
@@ -290,16 +317,18 @@ export function ThemeSettingsPanel({ config, onChange, layout = 'sidebar', width
                 <Move size={14} className="text-[#D62828]" />
                 <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Spacing & Density</h4>
               </div>
-              <div className={cn("grid gap-6", isWide ? "grid-cols-3" : "grid-cols-2")}>
-                 {['spacingBase', 'spacingXs', 'spacingSm', 'spacingMd', 'spacingLg', 'spacingXl'].map(s => (
+              <div className={cn("grid gap-4", isWide ? "grid-cols-4" : "grid-cols-2")}>
+                 {['spacingBase', 'spacingXs', 'spacingSm', 'spacingMd', 'spacingLg', 'spacingXl', 'spacingGutter'].map(s => (
                    <div key={s} className="space-y-2">
                      <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest px-1">{s.replace('spacing', '')}</span>
-                     <input 
-                        type="text" 
-                        value={config[s]}
-                        onChange={(e) => onChange({ [s]: e.target.value })}
-                        className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-3 py-2 text-[10px] text-white outline-none focus:border-[#D62828] transition-all"
-                     />
+                     <div className="bg-white/[0.03] p-2 rounded-xl border border-white/5">
+                        <input 
+                           type="text" 
+                           value={config[s]}
+                           onChange={(e) => onChange({ [s]: e.target.value })}
+                           className="w-full bg-transparent text-white font-mono text-[10px] outline-none"
+                        />
+                     </div>
                    </div>
                  ))}
               </div>
@@ -308,21 +337,24 @@ export function ThemeSettingsPanel({ config, onChange, layout = 'sidebar', width
             {/* Shadows */}
             <section className="space-y-8">
                <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-                <Layers size={14} className="text-[#D62828]" />
-                <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Elevation & Shadows</h4>
-              </div>
-              <div className={cn("grid gap-6", isWide ? "grid-cols-2" : "grid-cols-1")}>
+                 <Layers size={14} className="text-[#D62828]" />
+                 <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Elevation & Shadows</h4>
+               </div>
+               <div className="grid grid-cols-1 gap-6">
                  {['shadowSm', 'shadowMd', 'shadowLg', 'shadowXl'].map(s => (
                    <div key={s} className="space-y-3">
-                      <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest px-1">{s}</span>
-                      <textarea 
-                        value={config[s]}
-                        onChange={(e) => onChange({ [s]: e.target.value })}
-                        className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-[10px] text-gray-400 font-mono outline-none focus:border-[#D62828] resize-none h-24 shadow-inner"
-                      />
+                      <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest px-1">{s.replace('shadow', 'Shadow ')}</span>
+                      <div className="bg-white/[0.03] p-3 rounded-xl border border-white/5">
+                        <input 
+                           type="text" 
+                           value={config[s]}
+                           onChange={(e) => onChange({ [s]: e.target.value })}
+                           className="w-full bg-transparent text-white font-mono text-[10px] outline-none"
+                        />
+                      </div>
                    </div>
                  ))}
-              </div>
+               </div>
             </section>
           </div>
         )}

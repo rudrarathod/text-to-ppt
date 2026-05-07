@@ -216,9 +216,9 @@ const DEFAULT_LAYOUTS: LayoutDef[] = [
     name: "Standard Title",
     variant: "title",
     code: `<div class="flex flex-col items-center justify-center h-full w-full bg-lumina-bg p-12 text-center rounded-lumina">
-  <h1 class="text-6xl font-black font-display text-lumina-primary mb-6 drop-shadow-sm">{{title}}</h1>
+  <h1 class="text-lumina-primary mb-6 drop-shadow-sm">{{title}}</h1>
   {{#if subtitle}}
-    <h2 class="text-3xl font-medium text-lumina-text-secondary">{{subtitle}}</h2>
+    <h2 class="text-lumina-text-secondary">{{subtitle}}</h2>
   {{/if}}
 </div>`
   },
@@ -227,8 +227,8 @@ const DEFAULT_LAYOUTS: LayoutDef[] = [
     name: "Bullet Content",
     variant: "content",
     code: `<div class="flex flex-col h-full w-full bg-lumina-surface p-16 rounded-lumina">
-  <h2 class="text-5xl font-bold font-display text-lumina-text-primary mb-10 border-b-4 border-lumina-secondary pb-4 inline-block font-display">{{title}}</h2>
-  <ul class="list-disc list-inside text-3xl text-lumina-text-secondary space-y-6 font-medium font-sans">
+  <h2 class="text-lumina-text-primary mb-10 border-b-4 border-lumina-secondary pb-4 inline-block">{{title}}</h2>
+  <ul class="list-disc list-inside text-lumina-text-secondary space-y-6 font-medium">
     {{#each points}}
       <li>{{this}}</li>
     {{/each}}
@@ -241,11 +241,11 @@ const DEFAULT_LAYOUTS: LayoutDef[] = [
     variant: "image-text",
     code: `<div class="flex h-full w-full bg-lumina-surface rounded-lumina overflow-hidden">
   <div class="w-1/2 p-16 flex flex-col justify-center">
-    <h2 class="text-5xl font-bold font-display text-lumina-primary mb-8">{{title}}</h2>
-    <p class="text-2xl text-lumina-text-secondary leading-relaxed font-medium">{{description}}</p>
+    <h2 class="text-lumina-primary mb-8">{{title}}</h2>
+    <p class="text-lumina-text-secondary leading-relaxed font-medium">{{description}}</p>
   </div>
   <div class="w-1/2 flex items-center justify-center p-8 bg-lumina-bg">
-    <div class="relative w-full h-full flex flex-col justify-center overflow-hidden rounded-lumina shadow-[0_8px_20px_rgba(28,27,27,0.1)] group" data-image-key="image">
+    <div class="relative w-full h-full flex flex-col justify-center overflow-hidden rounded-lumina shadow-lumina-md group" data-image-key="image">
       {{#if image}}
         <img src="{{image}}" alt="Slide image" class="w-full h-full object-cover" />
       {{else}}
@@ -263,17 +263,17 @@ const DEFAULT_LAYOUTS: LayoutDef[] = [
     name: "2-Column Comparison",
     variant: "comparison",
     code: `<div class="flex flex-col h-full w-full bg-lumina-surface p-12 rounded-lumina">
-  <h2 class="text-4xl font-bold font-display text-center text-lumina-text-primary mb-12">{{title}}</h2>
+  <h2 class="text-center text-lumina-text-primary mb-12">{{title}}</h2>
   <div class="flex flex-1 gap-12">
-    <div class="flex-1 bg-lumina-bg p-8 rounded-lumina shadow-sm border border-lumina-border">
-      <h3 class="text-3xl font-bold font-display text-lumina-primary mb-6">{{leftTitle}}</h3>
-      <ul class="list-disc list-inside space-y-4 text-2xl text-lumina-text-secondary font-medium">
+    <div class="flex-1 bg-lumina-bg p-8 rounded-lumina shadow-lumina-sm border border-lumina-border">
+      <h3 class="text-lumina-primary mb-6">{{leftTitle}}</h3>
+      <ul class="list-disc list-inside space-y-4 text-lumina-text-secondary font-medium">
         {{#each leftPoints}}<li>{{this}}</li>{{/each}}
       </ul>
     </div>
-    <div class="flex-1 bg-lumina-bg p-8 rounded-lumina shadow-sm border border-lumina-border">
-      <h3 class="text-3xl font-bold font-display text-lumina-secondary mb-6">{{rightTitle}}</h3>
-      <ul class="list-disc list-inside space-y-4 text-2xl text-lumina-text-secondary font-medium">
+    <div class="flex-1 bg-lumina-bg p-8 rounded-lumina shadow-lumina-sm border border-lumina-border">
+      <h3 class="text-lumina-secondary mb-6">{{rightTitle}}</h3>
+      <ul class="list-disc list-inside space-y-4 text-lumina-text-secondary font-medium">
         {{#each rightPoints}}<li>{{this}}</li>{{/each}}
       </ul>
     </div>
@@ -286,7 +286,7 @@ const DEFAULT_LAYOUTS: LayoutDef[] = [
     variant: "divider",
     code: `<div class="flex items-center justify-center h-full w-full bg-lumina-primary text-white p-16 rounded-lumina">
   <div class="border-t-8 border-lumina-secondary pt-8">
-    <h2 class="text-6xl font-black font-display uppercase tracking-wider drop-shadow-md">{{section}}</h2>
+    <h2 class="uppercase tracking-wider drop-shadow-md">{{section}}</h2>
   </div>
 </div>`
   }

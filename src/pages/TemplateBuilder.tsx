@@ -16,6 +16,8 @@ import { ThemeShowcase } from "../components/design-system/ThemeShowcase";
 import { AIAssistantPanel } from "../components/ai/AIAssistantPanel";
 import { PageHeader } from "../components/layout/PageHeader";
 
+import { SlideShowcase } from "../components/SlideShowcase";
+
 
 
 const SAMPLE_DATA: Record<LayoutVariant, any> = {
@@ -581,6 +583,7 @@ export function TemplateBuilder() {
                 templateCode={workingCode}
                 data={currentSampleData}
                 designConfig={designConfig}
+                config={designConfig}
                 interactive={true}
                 onImageUpload={(key, path) => {
                   try {
@@ -590,6 +593,11 @@ export function TemplateBuilder() {
                   } catch(e) {}
                 }}
               />
+              {/* <SlideShowcase config={designConfig} data={workingJson} templateCode={workingCode} /> */}
+
+
+
+              
               {/* Syntax Error overlay */}
               {parseError && (
                 <div className="absolute inset-0 bg-[#b20112]/20 backdrop-blur-sm flex flex-col items-center justify-center p-8 text-center border-[8px] border-[#b20112] z-10 pointer-events-none">
