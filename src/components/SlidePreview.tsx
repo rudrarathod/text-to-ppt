@@ -346,6 +346,8 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
                   const doc = parser.parseFromString(e.data.html, 'text/html');
                   const newContent = doc.getElementById('slide-root')?.innerHTML || doc.body.innerHTML;
                   root.innerHTML = newContent;
+                  // Send ready signal after update
+                  window.parent.postMessage({ type: 'SLIDE_READY' }, '*');
                 }
               }
             });
@@ -524,9 +526,15 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
 
   // Reset shell ready if critical dependencies change or if we are loading (iframe is unmounted)
   useEffect(() => {
+    if (loading) {
+      setIsInternalLoading(true);
+    }
+  }, [loading]);
+
+  useEffect(() => {
     isShellReady.current = false;
     setIsInternalLoading(true);
-  }, [templateCode, JSON.stringify(designConfig), loading]);
+  }, [templateCode, JSON.stringify(designConfig)]);
 
   useEffect(() => {
     if (!containerRef.current) return;
