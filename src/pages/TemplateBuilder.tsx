@@ -5,7 +5,7 @@ import { useAppStore, LayoutDef, LayoutVariant, SlideTemplate } from "../store";
 import { SlidePreview } from "../components/SlidePreview";
 import { Button, Input, Textarea } from "../components/ui";
 import { Plus, Sparkles, Trash2, Code2, Play, CircleAlert, ArrowLeft, X, Mic, Palette, Copy, Check, Edit2, Settings2, ChevronDown, ChevronUp, LayoutTemplate, Download, Search } from "lucide-react";
-import { askAiForLayoutCode, buildLayoutPrompt, askAiForFullTemplate, buildFullTemplatePrompt, PromptSettings } from "../lib/gemini";
+import { askAiForLayoutCode, buildLayoutPrompt, askAiForFullTemplate, buildFullTemplatePrompt, PromptSettings, askAiForDesignConfig, buildDesignConfigPrompt } from "../lib/gemini";
 import { cn } from "../lib/utils";
 import Handlebars from "handlebars";
 import { PromptSettingsForm, PRESET_PROMPTS } from "../components/PromptSettingsUI";
@@ -76,6 +76,41 @@ export function TemplateBuilder() {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
   
+  // Theme Engine AI state
+  const [themeEntryMode, setThemeEntryMode] = useState<'ai' | 'manual'>('manual');
+  const [themeAiPrompt, setThemeAiPrompt] = useState("");
+  const [themeAiResponse, setThemeAiResponse] = useState("");
+  const [isGeneratingTheme, setIsGeneratingTheme] = useState(false);
+
+  const handleThemeAiGenerate = async () => {
+    if (!themeAiPrompt.trim()) return;
+    setIsGeneratingTheme(true);
+    try {
+      const config = await askAiForDesignConfig(themeAiPrompt);
+      if (config) {
+        updateActiveTemplateDesign(config);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsGeneratingTheme(false);
+    }
+  };
+
+  const handleApplyThemeAiResponse = () => {
+    try {
+      const jsonMatch = themeAiResponse.match(/<json>([\s\S]*?)<\/json>/i) || themeAiResponse.match(/```json\n([\s\S]*?)```/i);
+      const jsonStr = jsonMatch ? jsonMatch[1].trim() : themeAiResponse.trim();
+      const config = JSON.parse(jsonStr);
+      if (config) {
+        updateActiveTemplateDesign(config);
+        setThemeAiResponse("");
+      }
+    } catch (err) {
+      alert("Invalid JSON response.");
+    }
+  };
+  
   const [showPromptSettings, setShowPromptSettings] = useState(false);
   const [promptSettings, setPromptSettings] = useState<PromptSettings>({
     mood: "",
@@ -86,29 +121,34 @@ export function TemplateBuilder() {
   });
   
   const [parseError, setParseError] = useState<string | null>(null);
-  const [themeSidebarWidth, setThemeSidebarWidth] = useState(320);
-  const isResizingThemeSidebar = useRef(false);
+  const [themeSidebarWidth, setThemeSidebarWidth] = useState(400);
 
-  const startResizingTheme = (e: React.MouseEvent) => {
-    e.preventDefault();
-    isResizingThemeSidebar.current = true;
-    document.addEventListener('mousemove', handleThemeResize);
-    document.addEventListener('mouseup', stopThemeResize);
-    document.body.style.cursor = 'col-resize';
+  const handleThemeAiGenerate = async () => {
+    if (!themeAiPrompt.trim()) return;
+    setIsGeneratingTheme(true);
+    try {
+      const config = await askAiForDesignConfig(themeAiPrompt);
+      if (config) {
+        updateActiveTemplateDesign(config);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsGeneratingTheme(false);
+    }
   };
 
-  const stopThemeResize = () => {
-    isResizingThemeSidebar.current = false;
-    document.removeEventListener('mousemove', handleThemeResize);
-    document.removeEventListener('mouseup', stopThemeResize);
-    document.body.style.cursor = '';
-  };
-
-  const handleThemeResize = (e: MouseEvent) => {
-    if (!isResizingThemeSidebar.current) return;
-    const newWidth = e.clientX;
-    if (newWidth >= 280 && newWidth <= 800) {
-      setThemeSidebarWidth(newWidth);
+  const handleApplyThemeAiResponse = () => {
+    try {
+      const jsonMatch = themeAiResponse.match(/<json>([\s\S]*?)<\/json>/i) || themeAiResponse.match(/```json\n([\s\S]*?)```/i);
+      const jsonStr = jsonMatch ? jsonMatch[1].trim() : themeAiResponse.trim();
+      const config = JSON.parse(jsonStr);
+      if (config) {
+        updateActiveTemplateDesign(config);
+        setThemeAiResponse("");
+      }
+    } catch (err) {
+      alert("Invalid JSON response.");
     }
   };
 
@@ -773,29 +813,76 @@ export function TemplateBuilder() {
              <Palette size={20} className="text-[#D62828]" />
              <span className="font-black uppercase tracking-widest text-sm">Theme Engine</span>
           </div>
-        }
+}
       >
         <div className="flex h-full overflow-hidden bg-[#0f0f10]">
            {/* Left Sidebar - Settings */}
            <div 
-             style={{ width: themeSidebarWidth }}
-             className="border-r border-white/5 bg-[#121214] flex flex-col overflow-hidden relative group/sidebar shrink-0"
-           >
-             {/* Resize Handle */}
-             <div 
-               onMouseDown={startResizingTheme}
-               className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#D62828]/50 transition-colors z-30"
-             />
-             
-             <div className="flex-1 overflow-y-auto">
-               <ThemeSettingsPanel 
-                 config={designConfig} 
-                 onChange={(updates) => updateActiveTemplateDesign(updates)} 
-                 layout="sidebar" 
-                 width={themeSidebarWidth}
-               />
-             </div>
-           </div>
+              style={{ width: themeSidebarWidth }}
+              className="border-r border-white/5 bg-[#0c0c0e] flex flex-col overflow-hidden relative group/sidebar shrink-0"
+            >
+              {/* Resize Handle */}
+              <div 
+                onMouseDown={startResizingTheme}
+                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#D62828]/50 transition-colors z-30"
+              />
+              
+              {/* Sidebar Header with Toggle */}
+              <div className="p-6 border-b border-white/5 bg-[#0c0c0e]">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">Visual DNA Engine</p>
+                  <div className="flex p-1 bg-white/[0.03] rounded-xl border border-white/5">
+                    <button 
+                      onClick={() => setThemeEntryMode('ai')}
+                      className={cn(
+                        "px-4 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-2",
+                        themeEntryMode === 'ai' ? "bg-[#D62828] text-white shadow-lg shadow-[#D62828]/20" : "text-gray-500 hover:text-gray-300"
+                      )}
+                    >
+                      <Sparkles size={12} /> AI
+                    </button>
+                    <button 
+                      onClick={() => setThemeEntryMode('manual')}
+                      className={cn(
+                        "px-4 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-2",
+                        themeEntryMode === 'manual' ? "bg-[#D62828] text-white shadow-lg shadow-[#D62828]/20" : "text-gray-500 hover:text-gray-300"
+                      )}
+                    >
+                      <Settings2 size={12} /> MANUAL
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar">
+                {themeEntryMode === 'ai' ? (
+                   <div className="p-6 animate-in fade-in slide-in-from-left-4 duration-300">
+                      <AIAssistantPanel 
+                        promptValue={themeAiPrompt}
+                        onPromptChange={setThemeAiPrompt}
+                        onGenerate={handleThemeAiGenerate}
+                        isGenerating={isGeneratingTheme}
+                        placeholder="Describe your brand's personality, colors, or mood..."
+                        defaultMode="ai"
+                        onModeChange={() => {}}
+                        systemPromptBuilder={buildDesignConfigPrompt}
+                        responseValue={themeAiResponse}
+                        onResponseChange={setThemeAiResponse}
+                        onApplyResponse={handleApplyThemeAiResponse}
+                      />
+                   </div>
+                ) : (
+                   <div className="animate-in fade-in slide-in-from-left-4 duration-300 h-full">
+                     <ThemeSettingsPanel 
+                       config={designConfig} 
+                       onChange={(updates) => updateActiveTemplateDesign(updates)} 
+                       layout="sidebar" 
+                       width={themeSidebarWidth}
+                     />
+                   </div>
+                )}
+              </div>
+            </div>
 
            {/* Main Area - Live Preview */}
            <div className="flex-1 bg-[#0f0f10] relative flex items-center justify-center p-12 overflow-y-auto">
