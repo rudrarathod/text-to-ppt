@@ -113,10 +113,6 @@ export function TemplateGallery() {
 
   const handleDelete = (e: React.MouseEvent, id: string, name: string) => {
     e.stopPropagation();
-    if (templates.length <= 1) {
-      alert("Cannot delete the last template.");
-      return;
-    }
     if (window.confirm(`Are you sure you want to delete the template "${name}"?`)) {
       deleteTemplate(id);
     }
