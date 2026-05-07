@@ -48,7 +48,7 @@ export function PresentationGallery() {
     <>
     <GalleryLayout 
       title="Presentations"
-      icon={<PresentationIcon size={16} className="text-[#D62828]" />}
+      icon={<PresentationIcon size={18} className="text-gray-400" />}
       headerActions={
         <Button 
           onClick={() => setShowCreateModal(true)}

@@ -175,7 +175,7 @@ export function TemplateGallery() {
       />
       <GalleryLayout 
         title="Design Library"
-        icon={<LayoutTemplate size={16} className="text-[#D62828]" />}
+        icon={<LayoutTemplate size={18} className="text-gray-400" />}
         headerActions={
           <Button 
             onClick={() => {

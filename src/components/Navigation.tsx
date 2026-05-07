@@ -29,13 +29,13 @@ export function Navigation() {
 
   const navItems: NavItem[] = [
     { 
-      label: "Presentations", 
+      label: "Gallery", 
       icon: Presentation, 
       path: "/", 
       match: (p: string) => p === "/"
     },
     { 
-      label: "Design Library", 
+      label: "Templates", 
       icon: LayoutTemplate, 
       path: "/templates", 
       match: (p: string) => p.startsWith("/templates") 
@@ -45,7 +45,7 @@ export function Navigation() {
   return (
     <>
       {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0f0f10]/80 backdrop-blur-xl border-t border-white/5 z-50 px-6 py-3 flex items-center justify-around">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0a0a0b] border-t border-white/5 z-50 px-8 py-4 flex items-center justify-around">
         {navItems.map((item) => {
           const isActive = item.match(location.pathname);
           const Icon = item.icon;
@@ -55,53 +55,49 @@ export function Navigation() {
               key={item.path}
               to={item.path}
               className={cn(
-                "flex flex-col items-center gap-1 transition-all duration-300 relative py-1",
-                isActive ? "text-[#D62828]" : "text-[#85858b]"
+                "flex flex-col items-center gap-1.5 transition-all duration-200",
+                isActive ? "text-white" : "text-gray-500 hover:text-gray-300"
               )}
             >
               <Icon 
-                size={22} 
+                size={20} 
                 strokeWidth={isActive ? 2.5 : 2} 
               />
-              <span className="text-[10px] font-black uppercase tracking-widest">{item.label.split(' ')[0]}</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
               {isActive && (
-                <div className="absolute -bottom-3 w-10 h-1 bg-[#D62828] rounded-t-full shadow-[0_0_12px_#D62828]" />
+                <div className="absolute -bottom-4 w-8 h-0.5 bg-white rounded-full" />
               )}
             </Link>
           );
         })}
-        <div className="w-8 h-8 rounded-full bg-[#1e1e1e] border border-white/10 flex items-center justify-center text-white font-black text-[10px]">
-          U
-        </div>
       </div>
 
       {/* Desktop Sidebar */}
       <div 
         className={cn(
-          "hidden md:flex bg-[#0f0f10] border-white/5 transition-all duration-500 ease-in-out relative z-50 flex-col shrink-0",
-          "border-r",
-          isExpanded ? "w-64" : "w-20",
-          "h-full py-6 px-4"
+          "hidden md:flex bg-[#0a0a0b] border-r border-white/5 transition-all duration-300 ease-in-out relative z-50 flex-col shrink-0",
+          isExpanded ? "w-60" : "w-16",
+          "h-full py-8 px-3"
         )}
       >
         {/* Brand Logo */}
         <div className={cn(
-          "flex items-center gap-3 px-2 mb-10 transition-all duration-500",
+          "flex items-center gap-3 px-2 mb-12 transition-all",
           !isExpanded && "justify-center"
         )}>
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6347] to-[#D62828] flex items-center justify-center shadow-lg shadow-[#D62828]/20 shrink-0">
-            <span className="text-white font-black text-xl select-none">P</span>
+          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shrink-0">
+            <span className="text-black font-black text-lg select-none">P</span>
           </div>
           {isExpanded && (
-            <div className="flex flex-col animate-in fade-in slide-in-from-left-2 duration-500">
-              <span className="font-black text-white text-lg tracking-tighter leading-none">PitchGen</span>
-              <span className="text-[10px] text-[#85858b] font-bold uppercase tracking-widest mt-0.5">Enterprise</span>
+            <div className="flex flex-col animate-in fade-in duration-300">
+              <span className="font-bold text-white text-base tracking-tight leading-none">PitchGen</span>
+              <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider mt-1">Creator Suite</span>
             </div>
           )}
         </div>
 
         {/* Nav Section */}
-        <nav className="flex-1 flex flex-col gap-2">
+        <nav className="flex-1 flex flex-col gap-1.5">
           {navItems.map((item) => {
             const isActive = item.match(location.pathname);
             const Icon = item.icon;
@@ -111,41 +107,33 @@ export function Navigation() {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "flex items-center gap-3 rounded-xl transition-all duration-300 relative group py-3",
-                  isExpanded ? "px-4" : "justify-center px-0",
+                  "flex items-center gap-3 rounded-lg transition-all duration-200 group py-2.5",
+                  isExpanded ? "px-3" : "justify-center px-0",
                   isActive 
                     ? "bg-white/5 text-white" 
-                    : "text-[#85858b] hover:bg-white/[0.02] hover:text-white"
+                    : "text-gray-500 hover:text-white"
                 )}
               >
                 <Icon 
-                  size={22} 
-                  className={cn(
-                    "transition-all duration-300",
-                    isActive ? "text-[#D62828]" : "group-hover:scale-110"
-                  )} 
+                  size={18} 
+                  className="transition-transform duration-200 group-hover:scale-105" 
                   strokeWidth={isActive ? 2.5 : 2} 
                 />
                 
                 {isExpanded && (
-                  <span className="text-sm font-bold animate-in fade-in slide-in-from-left-2 duration-500">
+                  <span className="text-sm font-medium">
                     {item.label}
                   </span>
                 )}
 
-                {/* Active Indicator Dot */}
-                {!isExpanded && isActive && (
-                  <div className="absolute right-2 w-1 h-1 bg-[#D62828] rounded-full shadow-[0_0_8px_#D62828]" />
-                )}
-                
                 {/* Active Indicator Bar */}
                 {isExpanded && isActive && (
-                  <div className="absolute left-0 w-1 h-6 bg-[#D62828] rounded-r-full shadow-[0_0_12px_rgba(214,40,40,0.4)]" />
+                  <div className="absolute left-0 w-1 h-5 bg-white rounded-r-full" />
                 )}
 
                 {/* Tooltip for collapsed state */}
                 {!isExpanded && (
-                  <div className="absolute left-full ml-4 px-3 py-2 bg-[#1e1e1e] border border-white/10 text-white text-xs font-bold rounded-lg opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all pointer-events-none whitespace-nowrap z-[100] shadow-2xl">
+                  <div className="absolute left-full ml-4 px-2.5 py-1.5 bg-[#1a1a1b] border border-white/10 text-white text-[10px] font-bold rounded-md opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap z-[100]">
                     {item.label}
                   </div>
                 )}

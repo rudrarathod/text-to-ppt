@@ -20,26 +20,26 @@ export function PageHeader({
   rightPanel
 }: PageHeaderProps) {
   return (
-    <div className="bg-[#0f0f10] border-b border-white/5 px-6 py-4 flex items-center justify-between shrink-0">
-      <div className="flex items-center gap-4">
+    <div className="bg-[#0a0a0b]/80 backdrop-blur-xl border-b border-white/5 px-6 py-5 flex items-center justify-between shrink-0 sticky top-0 z-40">
+      <div className="flex items-center gap-6">
         {backTo && (
-          <Link to={backTo} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
-            <ArrowLeft size={16} />
+          <Link to={backTo} className="text-gray-500 hover:text-white transition-colors">
+            <ArrowLeft size={18} />
           </Link>
         )}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {icon && (
-            <div className="w-8 h-8 rounded-lg bg-[#D62828]/10 flex items-center justify-center">
+            <div className="text-gray-400">
               {icon}
             </div>
           )}
           <div>
-            <h1 className="text-white font-bold text-lg tracking-tight flex items-center gap-2">{title}</h1>
-            {subtitle && <p className="text-[#85858b] text-xs">{subtitle}</p>}
+            <h1 className="text-white font-bold text-base tracking-tight">{title}</h1>
+            {subtitle && <p className="text-gray-500 text-[10px] uppercase tracking-widest mt-0.5 font-bold">{subtitle}</p>}
           </div>
         </div>
       </div>
-      <div className="flex flex-col items-end gap-2">
+      <div className="flex items-center gap-4">
          {actions && <div className="flex items-center gap-3">{actions}</div>}
          {rightPanel}
       </div>
