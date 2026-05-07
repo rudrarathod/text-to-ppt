@@ -198,6 +198,7 @@ interface AppState {
   setPresentationTemplate: (id: string, templateId: string) => void;
 
   importTemplate: (template: SlideTemplate) => void;
+  importPresentation: (presentation: Presentation) => void;
 
   setSlides: (slides: SlideData[]) => void;
   updateSlideContent: (id: string, content: any) => void;
@@ -624,6 +625,14 @@ export const useAppStore = create<AppState>()(
           ? { ...template, id: `t-${Date.now()}`, name: `${template.name} (Imported)` }
           : template;
         return { templates: [...state.templates, newTemplate], activeTemplateId: newTemplate.id };
+      }),
+
+      importPresentation: (presentation) => set((state) => {
+        const exists = state.presentations.find(p => p.id === presentation.id);
+        const newPresentation = exists
+          ? { ...presentation, id: `p-${Date.now()}`, name: `${presentation.name} (Imported)`, updatedAt: Date.now() }
+          : presentation;
+        return { presentations: [...state.presentations, newPresentation], activePresentationId: newPresentation.id };
       }),
 
       setSlides: (slides) => set((state) => ({ 

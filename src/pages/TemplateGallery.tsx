@@ -177,17 +177,26 @@ export function TemplateGallery() {
         title="Design Library"
         icon={<LayoutTemplate size={18} className="text-gray-400" />}
         headerActions={
-          <Button 
-            onClick={() => {
-              setDesignConfig(DEFAULT_DESIGN);
-              setNewTemplateName("My New Template");
-              setShowCreateModal(true);
-            }}
-            className="bg-[#D62828] hover:bg-[#b20112] text-white border-none font-bold px-4 md:px-6 h-9 md:h-10 text-xs md:text-sm"
-          >
-            <Plus size={16} className="md:mr-2" />
-            <span className="hidden md:inline">New Template</span>
-          </Button>
+          <div className="flex items-center gap-2 md:gap-3">
+            <Button 
+              onClick={() => fileInputRef.current?.click()}
+              className="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-3 md:px-4 h-9 md:h-10 text-xs transition-all flex items-center"
+            >
+              <Upload size={16} className="md:mr-2" />
+              <span className="hidden md:inline">Import</span>
+            </Button>
+            <Button 
+              onClick={() => {
+                setDesignConfig(DEFAULT_DESIGN);
+                setNewTemplateName("My New Template");
+                setShowCreateModal(true);
+              }}
+              className="bg-[#D62828] hover:bg-[#b20112] text-white border-none font-bold px-4 md:px-6 h-9 md:h-10 text-xs md:text-sm transition-all"
+            >
+              <Plus size={16} className="md:mr-2" />
+              <span className="hidden md:inline">New Template</span>
+            </Button>
+          </div>
         }
       >
       {templates.map(template => (

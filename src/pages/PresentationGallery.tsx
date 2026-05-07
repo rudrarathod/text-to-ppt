@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { useAppStore, DesignConfig } from "../store";
+import { useState, useRef, ChangeEvent } from "react";
+import { useAppStore, DesignConfig, Presentation } from "../store";
 import { Button } from "../components/ui";
-import { Plus, Presentation as PresentationIcon, Trash2, Edit2, Layout as LayoutIcon, ChevronRight, ChevronLeft, X, Search, ArrowUpDown, Play } from "lucide-react";
+import { Plus, Presentation as PresentationIcon, Trash2, Edit2, Layout as LayoutIcon, ChevronRight, ChevronLeft, X, Search, ArrowUpDown, Play, Upload } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "../lib/utils";
@@ -13,7 +13,7 @@ import { GalleryLayout } from "../components/layout/GalleryLayout";
 import { FullScreenModal } from "../components/layout/FullScreenModal";
 
 export function PresentationGallery() {
-  const { presentations, activePresentationId, createPresentation, deletePresentation, setActivePresentation, templates, createTemplate, updateActiveTemplateDesign, setSlides } = useAppStore();
+  const { presentations, activePresentationId, createPresentation, deletePresentation, setActivePresentation, templates, createTemplate, updateActiveTemplateDesign, setSlides, importPresentation } = useAppStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const [newTitle, setNewTitle] = useState("");
@@ -44,19 +44,58 @@ export function PresentationGallery() {
       return 0;
     });
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImport = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const presentation = JSON.parse(event.target?.result as string);
+          if (presentation.name && Array.isArray(presentation.slides)) {
+            importPresentation(presentation);
+          } else {
+            alert("Invalid presentation file.");
+          }
+        } catch (err) {
+          alert("Failed to parse presentation file.");
+        }
+        e.target.value = '';
+      };
+      reader.readAsText(file);
+    }
+  };
+
   return (
     <>
+    <input 
+      type="file" 
+      ref={fileInputRef} 
+      onChange={handleImport} 
+      accept=".json" 
+      className="hidden" 
+    />
     <GalleryLayout 
       title="Presentations"
       icon={<PresentationIcon size={18} className="text-gray-400" />}
       headerActions={
-        <Button 
-          onClick={() => setShowCreateModal(true)}
-          className="bg-[#D62828] hover:bg-[#b20112] text-white border-none font-bold px-4 md:px-6 h-9 md:h-10 text-xs md:text-sm"
-        >
-          <Plus size={16} className="md:mr-2" />
-          <span className="hidden md:inline">New Presentation</span>
-        </Button>
+        <div className="flex items-center gap-2 md:gap-3">
+          <Button 
+            onClick={() => fileInputRef.current?.click()}
+            className="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-3 md:px-4 h-9 md:h-10 text-xs transition-all flex items-center"
+          >
+            <Upload size={16} className="md:mr-2" />
+            <span className="hidden md:inline">Import</span>
+          </Button>
+          <Button 
+            onClick={() => setShowCreateModal(true)}
+            className="bg-[#D62828] hover:bg-[#b20112] text-white border-none font-bold px-4 md:px-6 h-9 md:h-10 text-xs md:text-sm transition-all"
+          >
+            <Plus size={16} className="md:mr-2" />
+            <span className="hidden md:inline">New Presentation</span>
+          </Button>
+        </div>
       }
     >
       {presentations.map(presentation => {
