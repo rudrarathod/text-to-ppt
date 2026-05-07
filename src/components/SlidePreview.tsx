@@ -129,7 +129,7 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
     <html>
       <head>
         <meta charset="utf-8">
-        ${fontLink ? `<link rel="stylesheet" href="${fontLink}">` : ''}
+        ${fontLink ? `<link rel="stylesheet" href="${fontLink}" crossorigin="anonymous">` : ''}
         <style>
           /* Font CSS custom properties */
           :root {
@@ -333,7 +333,8 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
                return await htmlToImage.toJpeg(document.body, { 
                   quality: 0.98, 
                   pixelRatio: 2,
-                  backgroundColor: '${designConfig?.background || designConfig?.bg || '#ffffff'}'
+                  backgroundColor: '${designConfig?.background || designConfig?.bg || '#ffffff'}',
+                  skipFonts: true
                });
             };
 
