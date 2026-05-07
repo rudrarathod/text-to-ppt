@@ -31,7 +31,7 @@ export function TemplateGallery() {
   const [isGeneratingDesign, setIsGeneratingDesign] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [designConfig, setDesignConfig] = useState(DEFAULT_DESIGN);
-  const [sidebarWidth, setSidebarWidth] = useState(450);
+  const [sidebarWidth, setSidebarWidth] = useState(400);
   const isResizingSidebar = React.useRef(false);
 
   const startResizing = (e: React.MouseEvent) => {

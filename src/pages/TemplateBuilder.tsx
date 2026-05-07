@@ -122,33 +122,28 @@ export function TemplateBuilder() {
   
   const [parseError, setParseError] = useState<string | null>(null);
   const [themeSidebarWidth, setThemeSidebarWidth] = useState(400);
+  const isResizingThemeSidebar = useRef(false);
 
-  const handleThemeAiGenerate = async () => {
-    if (!themeAiPrompt.trim()) return;
-    setIsGeneratingTheme(true);
-    try {
-      const config = await askAiForDesignConfig(themeAiPrompt);
-      if (config) {
-        updateActiveTemplateDesign(config);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsGeneratingTheme(false);
-    }
+  const startResizingTheme = (e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizingThemeSidebar.current = true;
+    document.addEventListener('mousemove', handleThemeResize);
+    document.addEventListener('mouseup', stopThemeResize);
+    document.body.style.cursor = 'col-resize';
   };
 
-  const handleApplyThemeAiResponse = () => {
-    try {
-      const jsonMatch = themeAiResponse.match(/<json>([\s\S]*?)<\/json>/i) || themeAiResponse.match(/```json\n([\s\S]*?)```/i);
-      const jsonStr = jsonMatch ? jsonMatch[1].trim() : themeAiResponse.trim();
-      const config = JSON.parse(jsonStr);
-      if (config) {
-        updateActiveTemplateDesign(config);
-        setThemeAiResponse("");
-      }
-    } catch (err) {
-      alert("Invalid JSON response.");
+  const stopThemeResize = () => {
+    isResizingThemeSidebar.current = false;
+    document.removeEventListener('mousemove', handleThemeResize);
+    document.removeEventListener('mouseup', stopThemeResize);
+    document.body.style.cursor = '';
+  };
+
+  const handleThemeResize = (e: MouseEvent) => {
+    if (!isResizingThemeSidebar.current) return;
+    const newWidth = e.clientX;
+    if (newWidth >= 300 && newWidth <= 800) {
+      setThemeSidebarWidth(newWidth);
     }
   };
 
