@@ -337,6 +337,18 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
                });
             };
 
+            window.addEventListener('message', (e) => {
+              if (e.data?.type === 'UPDATE_HTML') {
+                const root = document.getElementById('slide-root');
+                if (root) {
+                  const parser = new DOMParser();
+                  const doc = parser.parseFromString(e.data.html, 'text/html');
+                  const newContent = doc.getElementById('slide-root')?.innerHTML || doc.body.innerHTML;
+                  root.innerHTML = newContent;
+                }
+              }
+            });
+
             const init = () => {
               if (!document.body) return;
               document.body.addEventListener('click', (e) => {
@@ -368,6 +380,9 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
             }
           })();
         </script>
+        <div id="slide-root" class="h-full w-full">
+          ${renderedHtml}
+        </div>
       </body>
     </html>
   `;
@@ -473,16 +488,33 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
     [templateCode, JSON.stringify(resolvedData), interactive, JSON.stringify(designConfig)]
   );
 
+  // Tracks if the iframe "shell" (scripts/styles) is ready
+  const isShellReady = useRef(false);
+
   useEffect(() => {
-    if (iframeRef.current) {
-      const doc = iframeRef.current.contentWindow?.document;
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    // If shell isn't ready or it's a completely new template, do a full write
+    if (!isShellReady.current) {
+      const doc = iframe.contentWindow?.document;
       if (doc) {
         doc.open();
         doc.write(html);
         doc.close();
+        isShellReady.current = true;
       }
+    } else {
+      // If shell is ready, just send the update via postMessage
+      // This is MUCH faster than doc.write
+      iframe.contentWindow?.postMessage({ type: 'UPDATE_HTML', html }, '*');
     }
   }, [html]);
+
+  // Reset shell ready if critical dependencies change (e.g. templateCode which might have new script needs)
+  useEffect(() => {
+    isShellReady.current = false;
+  }, [templateCode, JSON.stringify(designConfig)]);
 
   useEffect(() => {
     if (!containerRef.current) return;

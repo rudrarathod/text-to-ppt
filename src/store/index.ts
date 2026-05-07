@@ -518,9 +518,10 @@ export const useAppStore = create<AppState>()(
       },
       
       deleteTemplate: (id) => set((state) => {
-        if (state.templates.length === 1) return state;
         const newTemplates = state.templates.filter(t => t.id !== id);
-        const newActiveId = state.activeTemplateId === id ? newTemplates[0].id : state.activeTemplateId;
+        const newActiveId = state.activeTemplateId === id 
+          ? (newTemplates.length > 0 ? newTemplates[0].id : "") 
+          : state.activeTemplateId;
         return { templates: newTemplates, activeTemplateId: newActiveId };
       }),
       
