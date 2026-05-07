@@ -84,6 +84,31 @@ export function TemplateBuilder() {
   });
   
   const [parseError, setParseError] = useState<string | null>(null);
+  const [themeSidebarWidth, setThemeSidebarWidth] = useState(320);
+  const isResizingThemeSidebar = useRef(false);
+
+  const startResizingTheme = (e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizingThemeSidebar.current = true;
+    document.addEventListener('mousemove', handleThemeResize);
+    document.addEventListener('mouseup', stopThemeResize);
+    document.body.style.cursor = 'col-resize';
+  };
+
+  const stopThemeResize = () => {
+    isResizingThemeSidebar.current = false;
+    document.removeEventListener('mousemove', handleThemeResize);
+    document.removeEventListener('mouseup', stopThemeResize);
+    document.body.style.cursor = '';
+  };
+
+  const handleThemeResize = (e: MouseEvent) => {
+    if (!isResizingThemeSidebar.current) return;
+    const newWidth = window.innerWidth - e.clientX;
+    if (newWidth >= 280 && newWidth <= 800) {
+      setThemeSidebarWidth(newWidth);
+    }
+  };
 
   React.useEffect(() => {
     if (layouts.length > 0 && !layouts.find(l => l.id === selectedLayoutId)) {
@@ -539,7 +564,16 @@ export function TemplateBuilder() {
               
               {/* Theme Settings Sidebar Overlay */}
               {showThemeEditor && (
-                 <div className="absolute right-0 top-0 bottom-0 w-80 bg-[#161618] border-l border-[#2d2d30] shadow-2xl flex flex-col z-20">
+                 <div 
+                   style={{ width: themeSidebarWidth }}
+                   className="absolute right-0 top-0 bottom-0 bg-[#161618] border-l border-[#2d2d30] shadow-2xl flex flex-col z-20 group/sidebar"
+                 >
+                   {/* Resize Handle */}
+                   <div 
+                     onMouseDown={startResizingTheme}
+                     className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#D62828]/50 transition-colors z-30"
+                   />
+                   
                    <div className="p-5 border-b border-[#2d2d30] flex items-center justify-between">
                      <h3 className="font-bold text-white text-sm flex items-center gap-2"><Palette size={16}/> Theme Settings</h3>
                      <button onClick={() => setShowThemeEditor(false)} className="text-gray-400 hover:text-white"><X size={16}/></button>
@@ -549,6 +583,7 @@ export function TemplateBuilder() {
                         config={designConfig} 
                         onChange={(updates) => updateActiveTemplateDesign(updates)} 
                         layout="sidebar" 
+                        width={themeSidebarWidth}
                       />
                    </div>
                  </div>
@@ -752,7 +787,16 @@ export function TemplateBuilder() {
            
            {/* Theme Settings Overlay */}
            {showThemeEditor && (
-              <div className="fixed right-0 top-16 bottom-0 w-80 bg-[#161618] border-l border-[#2d2d30] shadow-2xl flex flex-col z-50">
+              <div 
+                style={{ width: themeSidebarWidth }}
+                className="fixed right-0 top-16 bottom-0 bg-[#161618] border-l border-[#2d2d30] shadow-2xl flex flex-col z-50 group/sidebar"
+              >
+                {/* Resize Handle */}
+                <div 
+                  onMouseDown={startResizingTheme}
+                  className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#D62828]/50 transition-colors z-[60]"
+                />
+                
                 <div className="p-5 border-b border-[#2d2d30] flex items-center justify-between">
                   <h3 className="font-bold text-white text-sm flex items-center gap-2"><Palette size={16}/> Theme Settings</h3>
                   <button onClick={() => setShowThemeEditor(false)} className="text-gray-400 hover:text-white"><X size={16}/></button>
@@ -761,7 +805,7 @@ export function TemplateBuilder() {
                    {/* Colors Section */}
                    <section className="space-y-4">
                       <label className="block text-[10px] font-black text-[#D62828] uppercase tracking-widest mb-4">Core Palette</label>
-                      <div className="space-y-3">
+                      <div className={cn("space-y-3", themeSidebarWidth > 500 && "grid grid-cols-2 gap-x-8 gap-y-0 space-y-0")}>
                          {[
                            { label: 'Primary', key: 'primary' },
                            { label: 'Secondary', key: 'secondary' },
@@ -790,7 +834,7 @@ export function TemplateBuilder() {
                    {/* Typography Section */}
                    <section className="space-y-4">
                       <label className="block text-[10px] font-black text-[#D62828] uppercase tracking-widest mb-4">System Type</label>
-                      <div className="space-y-4">
+                      <div className={cn("space-y-4", themeSidebarWidth > 500 && "grid grid-cols-2 gap-x-8 gap-y-0 space-y-0 items-end")}>
                          <div className="space-y-2">
                             <span className="text-[10px] text-gray-500 uppercase">Heading Font</span>
                             <select 
@@ -829,7 +873,7 @@ export function TemplateBuilder() {
                    {/* Geometry Section */}
                    <section className="space-y-4">
                       <label className="block text-[10px] font-black text-[#D62828] uppercase tracking-widest mb-4">Geometry</label>
-                      <div className="space-y-4">
+                      <div className={cn("space-y-4", themeSidebarWidth > 500 && "grid grid-cols-2 gap-x-8 gap-y-0 space-y-0 items-end")}>
                          <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
                                <span className="text-[10px] text-gray-500 uppercase">Radius</span>

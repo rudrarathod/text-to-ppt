@@ -7,6 +7,7 @@ interface ThemeSettingsPanelProps {
   config: any;
   onChange: (updates: Partial<any>) => void;
   layout?: 'sidebar' | 'grid';
+  width?: number;
 }
 
 const TABS = [
@@ -16,9 +17,13 @@ const TABS = [
   { id: 'interaction', label: 'Interaction', icon: Zap },
 ];
 
-export function ThemeSettingsPanel({ config, onChange, layout = 'sidebar' }: ThemeSettingsPanelProps) {
+export function ThemeSettingsPanel({ config, onChange, layout = 'sidebar', width }: ThemeSettingsPanelProps) {
   const [activeTab, setActiveTab] = useState('colors');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const isWide = width && width > 500;
+  const cols2 = isWide ? "grid-cols-4" : "grid-cols-2";
+  const cols3 = isWide ? "grid-cols-5" : "grid-cols-3";
 
   const handleCopy = (key: string, value: string) => {
     navigator.clipboard.writeText(value);
@@ -62,7 +67,7 @@ export function ThemeSettingsPanel({ config, onChange, layout = 'sidebar' }: The
         <span className="text-[9px] font-mono text-gray-600">{value.fontSize} / {value.fontWeight}</span>
       </div>
       
-      <div className="space-y-4">
+      <div className={cn("space-y-4", isWide && "grid grid-cols-2 gap-6 space-y-0 items-end")}>
         <FontSelector 
           label="Font Family"
           value={value.fontFamily}
@@ -120,20 +125,27 @@ export function ThemeSettingsPanel({ config, onChange, layout = 'sidebar' }: The
   return (
     <div className="flex flex-col h-full bg-[#121214] border-r border-white/5 overflow-hidden">
       {/* Tab Navigation */}
-      <div className="flex p-2 bg-[#0f0f10] border-b border-white/5 gap-1 overflow-x-auto no-scrollbar">
-        {TABS.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
-              activeTab === tab.id ? "bg-[#D62828] text-white shadow-lg shadow-[#D62828]/20" : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
-            )}
-          >
-            <tab.icon size={14} />
-            {tab.label}
-          </button>
-        ))}
+      <div className="p-4 bg-[#0f0f10] border-b border-white/5">
+        <div className="flex flex-wrap gap-2">
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "group flex items-center gap-2 px-5 py-2.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-300",
+                activeTab === tab.id 
+                  ? "bg-[#D62828] text-white shadow-[0_8px_20px_-6px_rgba(214,40,40,0.5)] border border-white/10" 
+                  : "bg-white/[0.03] text-gray-400 hover:text-white hover:bg-white/[0.08] border border-white/5"
+              )}
+            >
+              <tab.icon size={12} className={cn(
+                "transition-transform duration-300",
+                activeTab === tab.id ? "scale-110" : "group-hover:scale-110"
+              )} />
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-10">
@@ -145,13 +157,13 @@ export function ThemeSettingsPanel({ config, onChange, layout = 'sidebar' }: The
                 <Layers size={14} className="text-[#D62828]" />
                 <h4 className="text-xs font-black text-white uppercase tracking-tighter">Surface Architecture</h4>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className={cn("grid gap-4", cols2)}>
                 <ColorInput label="Surface" token="surface" value={config.surface} />
                 <ColorInput label="Surface Dim" token="surfaceDim" value={config.surfaceDim} />
                 <ColorInput label="Surface Bright" token="surfaceBright" value={config.surfaceBright} />
                 <ColorInput label="Variant" token="surfaceVariant" value={config.surfaceVariant} />
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className={cn("grid gap-3", cols3)}>
                 <ColorInput label="Cont. Lowest" token="surfaceContainerLowest" value={config.surfaceContainerLowest} />
                 <ColorInput label="Cont. Low" token="surfaceContainerLow" value={config.surfaceContainerLow} />
                 <ColorInput label="Container" token="surfaceContainer" value={config.surfaceContainer} />
@@ -168,7 +180,7 @@ export function ThemeSettingsPanel({ config, onChange, layout = 'sidebar' }: The
                    <h4 className="text-[10px] font-black text-[#D62828] uppercase tracking-widest">Primary Brand</h4>
                    <div className="h-px flex-1 bg-white/5 mx-4" />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className={cn("grid gap-4", cols2)}>
                    <ColorInput label="Primary" token="primary" value={config.primary} />
                    <ColorInput label="On Primary" token="onPrimary" value={config.onPrimary} />
                    <ColorInput label="Container" token="primaryContainer" value={config.primaryContainer} />
@@ -182,7 +194,7 @@ export function ThemeSettingsPanel({ config, onChange, layout = 'sidebar' }: The
                    <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Secondary System</h4>
                    <div className="h-px flex-1 bg-white/5 mx-4" />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className={cn("grid gap-4", cols2)}>
                    <ColorInput label="Secondary" token="secondary" value={config.secondary} />
                    <ColorInput label="On Secondary" token="onSecondary" value={config.onSecondary} />
                    <ColorInput label="Container" token="secondaryContainer" value={config.secondaryContainer} />
@@ -196,7 +208,7 @@ export function ThemeSettingsPanel({ config, onChange, layout = 'sidebar' }: The
                    <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Tertiary Accent</h4>
                    <div className="h-px flex-1 bg-white/5 mx-4" />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className={cn("grid gap-4", cols2)}>
                    <ColorInput label="Tertiary" token="tertiary" value={config.tertiary} />
                    <ColorInput label="On Tertiary" token="onTertiary" value={config.onTertiary} />
                    <ColorInput label="Container" token="tertiaryContainer" value={config.tertiaryContainer} />
@@ -207,7 +219,7 @@ export function ThemeSettingsPanel({ config, onChange, layout = 'sidebar' }: The
 
             {/* Utility Tokens */}
             <section className="space-y-6">
-               <div className="grid grid-cols-2 gap-4">
+               <div className={cn("grid gap-4", cols2)}>
                   <ColorInput label="Background" token="background" value={config.background} />
                   <ColorInput label="Outline" token="outline" value={config.outline} />
                   <ColorInput label="Error" token="error" value={config.error} />
@@ -237,7 +249,7 @@ export function ThemeSettingsPanel({ config, onChange, layout = 'sidebar' }: The
                 <Square size={14} className="text-[#D62828]" />
                 <h4 className="text-xs font-black text-white uppercase tracking-tighter">Radius System</h4>
               </div>
-              <div className="space-y-6 bg-white/5 p-5 rounded-2xl border border-white/5">
+              <div className={cn("bg-white/5 p-5 rounded-2xl border border-white/5", isWide ? "grid grid-cols-2 gap-x-12 gap-y-6" : "space-y-6")}>
                 {[
                   { label: 'Small', token: 'radiusSm' },
                   { label: 'Default', token: 'radiusDefault' },
@@ -268,7 +280,7 @@ export function ThemeSettingsPanel({ config, onChange, layout = 'sidebar' }: The
                 <Move size={14} className="text-[#D62828]" />
                 <h4 className="text-xs font-black text-white uppercase tracking-tighter">Spacing & Density</h4>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className={cn("grid gap-4", isWide ? "grid-cols-3" : "grid-cols-2")}>
                  {['spacingBase', 'spacingXs', 'spacingSm', 'spacingMd', 'spacingLg', 'spacingXl'].map(s => (
                    <div key={s} className="space-y-1.5">
                      <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">{s.replace('spacing', '')}</span>
@@ -289,7 +301,7 @@ export function ThemeSettingsPanel({ config, onChange, layout = 'sidebar' }: The
                 <Layers size={14} className="text-[#D62828]" />
                 <h4 className="text-xs font-black text-white uppercase tracking-tighter">Elevation & Shadows</h4>
               </div>
-              <div className="space-y-4">
+              <div className={cn("grid gap-4", isWide ? "grid-cols-2" : "grid-cols-1")}>
                  {['shadowSm', 'shadowMd', 'shadowLg', 'shadowXl'].map(s => (
                    <div key={s} className="space-y-2">
                       <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{s}</span>
@@ -313,34 +325,36 @@ export function ThemeSettingsPanel({ config, onChange, layout = 'sidebar' }: The
                 <h4 className="text-xs font-black text-white uppercase tracking-tighter">State Behaviors</h4>
               </div>
               
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                    <span>Hover Opacity</span>
-                    <span className="text-[#D62828]">{config.interactionHoverOpacity}</span>
+              <div className={cn("space-y-6", isWide && "grid grid-cols-2 gap-x-12 gap-y-0 items-start")}>
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                      <span>Hover Opacity</span>
+                      <span className="text-[#D62828]">{config.interactionHoverOpacity}</span>
+                    </div>
+                    <input 
+                      type="range" min="0" max="1" step="0.01"
+                      value={config.interactionHoverOpacity}
+                      onChange={(e) => onChange({ interactionHoverOpacity: parseFloat(e.target.value) })}
+                      className="w-full accent-[#D62828]"
+                    />
                   </div>
-                  <input 
-                    type="range" min="0" max="1" step="0.01"
-                    value={config.interactionHoverOpacity}
-                    onChange={(e) => onChange({ interactionHoverOpacity: parseFloat(e.target.value) })}
-                    className="w-full accent-[#D62828]"
-                  />
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                      <span>Active Scale</span>
+                      <span className="text-[#D62828]">{config.interactionActiveScale}</span>
+                    </div>
+                    <input 
+                      type="range" min="0.8" max="1.1" step="0.01"
+                      value={config.interactionActiveScale}
+                      onChange={(e) => onChange({ interactionActiveScale: parseFloat(e.target.value) })}
+                      className="w-full accent-[#D62828]"
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                    <span>Active Scale</span>
-                    <span className="text-[#D62828]">{config.interactionActiveScale}</span>
-                  </div>
-                  <input 
-                    type="range" min="0.8" max="1.1" step="0.01"
-                    value={config.interactionActiveScale}
-                    onChange={(e) => onChange({ interactionActiveScale: parseFloat(e.target.value) })}
-                    className="w-full accent-[#D62828]"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 gap-4">
+                <div className={cn("grid gap-4", isWide ? "grid-cols-1" : "grid-cols-1")}>
                   <div className="space-y-2">
                     <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Focus Glow</span>
                     <input 

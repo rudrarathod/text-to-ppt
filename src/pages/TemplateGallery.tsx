@@ -31,6 +31,31 @@ export function TemplateGallery() {
   const [isGeneratingDesign, setIsGeneratingDesign] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [designConfig, setDesignConfig] = useState(DEFAULT_DESIGN);
+  const [sidebarWidth, setSidebarWidth] = useState(450);
+  const isResizingSidebar = React.useRef(false);
+
+  const startResizing = (e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizingSidebar.current = true;
+    document.addEventListener('mousemove', handleResize);
+    document.addEventListener('mouseup', stopResizing);
+    document.body.style.cursor = 'col-resize';
+  };
+
+  const stopResizing = () => {
+    isResizingSidebar.current = false;
+    document.removeEventListener('mousemove', handleResize);
+    document.removeEventListener('mouseup', stopResizing);
+    document.body.style.cursor = '';
+  };
+
+  const handleResize = (e: MouseEvent) => {
+    if (!isResizingSidebar.current) return;
+    const newWidth = e.clientX;
+    if (newWidth >= 300 && newWidth <= 800) {
+      setSidebarWidth(newWidth);
+    }
+  };
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -264,7 +289,16 @@ export function TemplateGallery() {
 
           <div className="flex-1 flex overflow-hidden">
             {/* Left Sidebar - Settings */}
-            <div className="w-[450px] border-right border-white/5 bg-[#121214] flex flex-col overflow-hidden">
+            <div 
+              style={{ width: sidebarWidth }}
+              className="border-r border-white/5 bg-[#121214] flex flex-col overflow-hidden relative group/sidebar shrink-0"
+            >
+              {/* Resize Handle */}
+              <div 
+                onMouseDown={startResizing}
+                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#D62828]/50 transition-colors z-30"
+              />
+              
               <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
                 {/* Template Name Section */}
                 <div className="space-y-4">
@@ -347,6 +381,7 @@ export function TemplateGallery() {
                         config={designConfig}
                         onChange={(updates) => setDesignConfig(prev => ({ ...prev, ...updates }))}
                         layout="grid"
+                        width={sidebarWidth}
                       />
                     </div>
                   )}
