@@ -120,6 +120,57 @@ export function PresentationBuilder() {
     language: "",
     style: ""
   });
+  const [mobileTab, setMobileTab] = useState<'slides' | 'preview' | 'editor'>('preview');
+  const [isSwitchingSlide, setIsSwitchingSlide] = useState(false);
+  const touchStart = useRef<number | null>(null);
+  const touchEnd = useRef<number | null>(null);
+
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchEnd.current = null;
+    touchStart.current = e.targetTouches[0].clientX;
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    touchEnd.current = e.targetTouches[0].clientX;
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart.current || !touchEnd.current) return;
+    const distance = touchStart.current - touchEnd.current;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      handleNextSlide();
+    } else if (isRightSwipe) {
+      handlePrevSlide();
+    }
+  };
+
+  const handleNextSlide = () => {
+    const currentIndex = slides.findIndex(s => s.id === selectedSlideId);
+    if (currentIndex < slides.length - 1) {
+      triggerSwitch(slides[currentIndex + 1].id);
+    }
+  };
+
+  const handlePrevSlide = () => {
+    const currentIndex = slides.findIndex(s => s.id === selectedSlideId);
+    if (currentIndex > 0) {
+      triggerSwitch(slides[currentIndex - 1].id);
+    }
+  };
+
+  const triggerSwitch = (id: string) => {
+    setIsSwitchingSlide(true);
+    setSelectedSlideId(id);
+    // Micro-delay to ensure SlidePreview gets the loading state before we release it
+    // SlidePreview will then hold isInternalLoading until SLIDE_READY
+    setTimeout(() => setIsSwitchingSlide(false), 50);
+  };
+
   const [scrollTop, setScrollTop] = useState(0);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
@@ -324,7 +375,7 @@ export function PresentationBuilder() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-full w-full bg-[#111111] text-gray-200 overflow-y-auto lg:overflow-hidden relative">
+    <div className="flex flex-col lg:flex-row h-full w-full bg-[#111111] text-gray-200 overflow-hidden relative">
       {/* Export Progress Overlay */}
       {isExporting && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex flex-col items-center justify-center p-6 animate-in fade-in duration-300">
@@ -356,8 +407,10 @@ export function PresentationBuilder() {
 
       {/* Left Panel: Thumbnails */}
       <div className={cn(
-        "h-32 lg:h-full bg-[#161618] border-b lg:border-b-0 lg:border-r border-[#2d2d30] flex flex-col shrink-0 transition-all duration-500 overflow-hidden",
-        isEditingLayoutCode ? "w-0 opacity-0 border-r-0 pointer-events-none" : "w-full lg:w-64 opacity-100"
+        "bg-[#161618] border-b lg:border-b-0 lg:border-r border-[#2d2d30] flex flex-col shrink-0 transition-all duration-500",
+        "absolute inset-0 z-20 lg:relative lg:translate-x-0 lg:w-64 lg:h-full lg:opacity-100 lg:pointer-events-auto",
+        isEditingLayoutCode ? "w-0 opacity-0 border-r-0 pointer-events-none" : "",
+        mobileTab === 'slides' ? "translate-x-0 opacity-100 pointer-events-auto h-full" : "translate-x-[-100%] opacity-0 pointer-events-none lg:translate-x-0 lg:opacity-100"
       )}>
         <div className="p-3 lg:p-4 border-b border-[#2d2d30] flex items-center justify-between shrink-0">
           <h2 className="font-bold text-sm text-white flex items-center gap-2">Slides <span className="bg-[#2d2d30] text-xs px-2 py-0.5 rounded-full">{slides.length}</span></h2>
@@ -431,7 +484,11 @@ export function PresentationBuilder() {
       </div>
 
       {/* Center: Canvas */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden relative">
+      <div className={cn(
+        "flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden relative pb-16 lg:pb-0",
+        "absolute inset-0 z-10 lg:relative lg:translate-x-0",
+        mobileTab === 'preview' ? "translate-x-0 opacity-100 pointer-events-auto" : "translate-x-[-100%] opacity-0 pointer-events-none lg:translate-x-0 lg:opacity-100"
+      )}>
         <div className="h-14 lg:h-16 border-b border-[#2d2d30] bg-[#161618] flex items-center justify-between px-4 lg:px-6 shrink-0">
           <div className="flex items-center gap-4 min-w-0 flex-1">
             <span className="font-bold text-white text-base lg:text-lg truncate block min-w-0">
@@ -474,13 +531,20 @@ export function PresentationBuilder() {
         </div>
         
         <div className="flex-1 overflow-hidden flex items-center justify-center p-2 sm:p-4 lg:p-12 bg-[#111111] relative min-h-[50vh] lg:min-h-0">
-          {selectedSlide && activeLayout ? (
-             <SlidePreview 
+          <div 
+            className="w-full h-full flex items-center justify-center relative"
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+          >
+            <SlidePreview 
                ref={previewRef}
                templateCode={isEditingLayoutCode ? layoutEditCode : (activeLayout?.code || "")} 
                data={previewData} 
                designConfig={designConfig}
                interactive={true}
+               loading={isSwitchingSlide}
+               className="transition-all duration-300"
                onImageUpload={(key, path) => {
                  if (isEditingLayoutCode) {
                    try {
@@ -495,19 +559,34 @@ export function PresentationBuilder() {
                  }
                }}
              />
-          ) : (
-            <div className="text-gray-500 flex flex-col items-center">
-              <LayoutTemplate size={48} className="mb-4 opacity-50" />
-              <p>Select a slide to preview</p>
+
+            {/* Mobile Navigation Buttons */}
+            <div className="md:hidden absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2 pointer-events-none">
+               <button 
+                 onClick={handlePrevSlide}
+                 disabled={slides.findIndex(s => s.id === selectedSlideId) === 0}
+                 className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white pointer-events-auto active:scale-90 transition-all disabled:opacity-0"
+               >
+                 <ChevronLeft size={24} />
+               </button>
+               <button 
+                 onClick={handleNextSlide}
+                 disabled={slides.findIndex(s => s.id === selectedSlideId) === slides.length - 1}
+                 className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white pointer-events-auto active:scale-90 transition-all disabled:opacity-0"
+               >
+                 <ChevronRight size={24} />
+               </button>
             </div>
-          )}
+          </div>
         </div>
       </div>
 
       {/* Right Panel: JSON Editor & Layout Selector */}
       <div className={cn(
-        "h-[50vh] lg:h-full bg-[#161618] border-t lg:border-t-0 lg:border-l border-[#2d2d30] flex flex-col shrink-0 relative lg:min-h-0 transition-all duration-500 ease-in-out",
-        isEditingLayoutCode ? "lg:w-[500px]" : "lg:w-80 w-full"
+        "bg-[#161618] border-t lg:border-t-0 lg:border-l border-[#2d2d30] flex flex-col shrink-0 relative transition-all duration-500 ease-in-out pb-16 lg:pb-0",
+        "absolute inset-0 z-20 lg:relative lg:translate-x-0 lg:w-80 lg:h-full lg:opacity-100 lg:pointer-events-auto",
+        isEditingLayoutCode ? "lg:w-[500px]" : "w-full",
+        mobileTab === 'editor' ? "translate-x-0 opacity-100 pointer-events-auto" : "translate-x-[100%] opacity-0 pointer-events-none lg:translate-x-0 lg:opacity-100"
       )}>
         <div className="p-4 lg:p-6 pb-4 shrink-0 border-b border-[#2d2d30] bg-[#161618]">
           <div className="flex items-center justify-between mb-4">
@@ -1048,6 +1127,13 @@ export function PresentationBuilder() {
              No slide selected.
            </div>
         )}
+      </div>
+
+      {/* Mobile Sticky Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#0f0f10]/80 backdrop-blur-xl border-t border-white/5 flex items-center justify-around px-4 z-50">
+         <button onClick={() => setMobileTab('slides')} className={cn("flex flex-col items-center gap-1", mobileTab === 'slides' ? "text-[#D62828]" : "text-gray-500")}><LayoutTemplate size={20} /><span className="text-[9px] font-bold uppercase tracking-widest">Slides</span></button>
+         <button onClick={() => setMobileTab('preview')} className={cn("flex flex-col items-center gap-1", mobileTab === 'preview' ? "text-[#D62828]" : "text-gray-500")}><Play size={20} /><span className="text-[9px] font-bold uppercase tracking-widest">Preview</span></button>
+         <button onClick={() => setMobileTab('editor')} className={cn("flex flex-col items-center gap-1", mobileTab === 'editor' ? "text-[#D62828]" : "text-gray-500")}><Edit2 size={20} /><span className="text-[9px] font-bold uppercase tracking-widest">Editor</span></button>
       </div>
     </div>
   );

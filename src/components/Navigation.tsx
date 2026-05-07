@@ -5,6 +5,11 @@ import { useState, useEffect } from "react";
 
 export function Navigation() {
   const location = useLocation();
+  
+  // Immersive mode: Hide navbar in builder and template editor
+  const isBuilderPage = location.pathname.startsWith('/builder/') || 
+                       (location.pathname.startsWith('/templates/') && location.pathname !== '/templates');
+
   const [isExpanded, setIsExpanded] = useState(() => {
     return localStorage.getItem("sidebar-pinned") === "true";
   });
@@ -12,6 +17,8 @@ export function Navigation() {
   useEffect(() => {
     localStorage.setItem("sidebar-pinned", String(isExpanded));
   }, [isExpanded]);
+
+  if (isBuilderPage) return null;
 
   interface NavItem {
     label: string;

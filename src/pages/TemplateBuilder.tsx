@@ -4,9 +4,32 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAppStore, LayoutDef, LayoutVariant, SlideTemplate, DEFAULT_DESIGN } from "../store";
 import { SlidePreview } from "../components/SlidePreview";
 import { Button, Input, Textarea } from "../components/ui";
-import { Plus, Sparkles, Trash2, Code2, Play, CircleAlert, ArrowLeft, X, Mic, Palette, Copy, Check, Edit2, Settings2, ChevronDown, ChevronUp, LayoutTemplate, Download, Search } from "lucide-react";
+import { 
+  Plus, 
+  Trash2, 
+  Download, 
+  Palette, 
+  Sparkles, 
+  Settings2, 
+  Play, 
+  Code2, 
+  LayoutTemplate, 
+  Edit2, 
+  Check, 
+  Copy, 
+  CircleAlert,
+  X,
+  Loader2,
+  Mic,
+  ChevronDown,
+  ChevronUp,
+  ArrowLeft,
+  Search,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react';
 import { askAiForLayoutCode, buildLayoutPrompt, askAiForFullTemplate, buildFullTemplatePrompt, PromptSettings, askAiForDesignConfig, buildDesignConfigPrompt } from "../lib/gemini";
-import { cn } from "../lib/utils";
+import { cn, copyToClipboard } from "../lib/utils";
 import Handlebars from "handlebars";
 import { PromptSettingsForm, PRESET_PROMPTS } from "../components/PromptSettingsUI";
 import { GoogleFontLoader, POPULAR_FONTS } from "../lib/typography";
@@ -126,6 +149,60 @@ export function TemplateBuilder() {
   const [parseError, setParseError] = useState<string | null>(null);
   const [themeSidebarWidth, setThemeSidebarWidth] = useState(400);
   const isResizingThemeSidebar = useRef(false);
+  const [showAiOnMobile, setShowAiOnMobile] = useState(false);
+  const [isSwitchingLayout, setIsSwitchingLayout] = useState(false);
+  const touchStart = useRef<number | null>(null);
+  const touchEnd = useRef<number | null>(null);
+
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchEnd.current = null;
+    touchStart.current = e.targetTouches[0].clientX;
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    touchEnd.current = e.targetTouches[0].clientX;
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart.current || !touchEnd.current) return;
+    const distance = touchStart.current - touchEnd.current;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      handleNextLayout();
+    } else if (isRightSwipe) {
+      handlePrevLayout();
+    }
+  };
+
+  const handleNextLayout = () => {
+    const currentIndex = layouts.findIndex(l => l.id === selectedLayoutId);
+    if (currentIndex < layouts.length - 1) {
+      triggerSwitch(layouts[currentIndex + 1].id);
+    } else {
+      triggerSwitch(layouts[0].id);
+    }
+  };
+
+  const handlePrevLayout = () => {
+    const currentIndex = layouts.findIndex(l => l.id === selectedLayoutId);
+    if (currentIndex > 0) {
+      triggerSwitch(layouts[currentIndex - 1].id);
+    } else {
+      triggerSwitch(layouts[layouts.length - 1].id);
+    }
+  };
+
+  const triggerSwitch = (id: string) => {
+    setIsSwitchingLayout(true);
+    setSelectedLayoutId(id);
+    // Micro-delay to ensure SlidePreview gets the loading state before we release it
+    // SlidePreview will then hold isInternalLoading until SLIDE_READY
+    setTimeout(() => setIsSwitchingLayout(false), 50);
+  };
 
   const startResizingTheme = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -294,6 +371,8 @@ export function TemplateBuilder() {
 
 
 
+  const [mobileTab, setMobileTab] = useState<'layouts' | 'preview' | 'code'>('preview');
+
   if (!activeTemplate || !activeLayout) {
      return <div className="p-8">Loading...</div>;
   }
@@ -306,10 +385,9 @@ export function TemplateBuilder() {
   }
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#111111] text-gray-200 overflow-y-auto lg:overflow-hidden relative">
+    <div className="flex flex-col h-full w-full bg-[#111111] text-gray-200 overflow-hidden relative">
       <GoogleFontLoader fonts={[designConfig.fontFamily, designConfig.headingFont]} />
-      {/* Top Bar for Layout Editor */}
-      {/* Top Bar for Layout Editor */}
+      
       <PageHeader 
         backTo="/templates"
         title={
@@ -317,7 +395,7 @@ export function TemplateBuilder() {
             {isEditingTemplateName ? (
               <input 
                 autoFocus
-                className="bg-transparent border-b border-[#fe6247] outline-none text-white font-bold text-base md:text-lg w-full max-w-xs"
+                className="bg-transparent border-b border-[#fe6247] outline-none text-white font-bold text-sm md:text-lg w-full max-w-[120px] md:max-w-xs"
                 value={templateName}
                 onChange={(e) => setTemplateName(e.target.value)}
                 onBlur={() => {
@@ -340,576 +418,338 @@ export function TemplateBuilder() {
               />
             ) : (
               <h2 
-                className="font-bold text-white text-base md:text-lg truncate cursor-pointer hover:text-[#fe6247] transition-colors flex items-center gap-2 group max-w-[200px] sm:max-w-xs overflow-hidden text-ellipsis"
+                className="font-bold text-white text-sm md:text-lg truncate cursor-pointer hover:text-[#fe6247] transition-colors flex items-center gap-1 group max-w-[100px] sm:max-w-xs overflow-hidden text-ellipsis"
                 onClick={() => setIsEditingTemplateName(true)}
               >
                 {activeTemplate.name}
-                <Edit2 size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Edit2 size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
               </h2>
             )}
             {builderMode === 'individual' && (
               <>
-                <span className="opacity-50 mx-2 text-[#85858b]">|</span> 
-                <span className="text-[#85858b] truncate text-sm">{activeLayout.name}</span>
+                <span className="opacity-50 mx-1 md:mx-2 text-[#85858b]">/</span> 
+                <span className="text-[#85858b] truncate text-xs md:text-sm max-w-[80px] md:max-w-none">{activeLayout.name}</span>
               </>
             )}
           </div>
         }
         actions={
-          <>
-            {/* Builder Mode Toggle */}
-            <div className="flex items-center bg-[#111111] rounded-lg p-1 border border-[#2d2d30] shrink-0 mr-4">
+          <div className="flex items-center gap-2">
+            <div className="hidden lg:flex items-center gap-2">
+              <Button onClick={handleExport} variant="outline" size="sm" className="gap-2 border-[#333] hover:bg-[#252526] text-gray-300">
+                <Download size={14} /> Export
+              </Button>
+              <Button onClick={() => setShowThemeEditor(!showThemeEditor)} size="sm" className="gap-2 bg-[#252526] hover:bg-[#2d2d30] text-gray-300 border border-[#333]">
+                <Palette size={14} /> Theme
+              </Button>
+            </div>
+
+            <div className="flex items-center bg-[#111111] rounded-lg p-0.5 border border-[#2d2d30] shrink-0">
                <button 
                  onClick={() => setBuilderMode('individual')} 
-                 className={cn("px-3 py-1.5 text-xs sm:text-sm font-bold rounded flex items-center gap-2 transition-colors", builderMode === 'individual' ? "bg-[#252526] text-white shadow-sm" : "text-gray-500 hover:text-gray-300")}
+                 className={cn("px-2 md:px-3 py-1 text-[10px] md:text-xs font-bold rounded transition-colors", builderMode === 'individual' ? "bg-[#252526] text-white" : "text-gray-500 hover:text-gray-300")}
                >
-                 <LayoutTemplate size={14} /> Single Layout
+                 Single
                </button>
                <button 
                  onClick={() => setBuilderMode('full')} 
-                 className={cn("px-3 py-1.5 text-xs sm:text-sm font-bold rounded flex items-center gap-2 transition-colors", builderMode === 'full' ? "bg-[#252526] text-white shadow-sm" : "text-gray-500 hover:text-gray-300")}
+                 className={cn("px-2 md:px-3 py-1 text-[10px] md:text-xs font-bold rounded transition-colors", builderMode === 'full' ? "bg-[#252526] text-white" : "text-gray-500 hover:text-gray-300")}
                >
-                 <Sparkles size={14} /> Full Deck
+                 Full
                </button>
             </div>
-            
-            <Button onClick={handleExport} variant="outline" className="gap-2 shrink-0 border-[#333] hover:bg-[#252526] text-gray-300 hover:text-white">
-               <Download size={16} /> Export
+
+            <Button onClick={handleSave} size="sm" className="bg-[#b20112] hover:bg-[#d62828] text-white border-none font-bold">
+               Save
             </Button>
-            <Button onClick={() => setShowThemeEditor(!showThemeEditor)} className="gap-2 shrink-0 bg-[#252526] hover:bg-[#2d2d30] text-gray-300 hover:text-white border border-[#333]">
-               <Palette size={16} /> Theme
-            </Button>
-            <Button onClick={handleSave} disabled={workingCode === activeLayout.code && (() => {
-              try {
-                return JSON.stringify(JSON.parse(workingJson)) === JSON.stringify(activeLayout.mockData || SAMPLE_DATA[activeLayout.variant] || { title: "Sample" });
-              } catch(e) { return true; }
-            })()} className="gap-2 shrink-0 border-none bg-[#b20112] hover:bg-[#d62828] text-white">
-               Save Changes
-            </Button>
-          </>
+
+            <div className="lg:hidden flex gap-1">
+              <button onClick={() => setShowThemeEditor(true)} className="p-2 text-gray-400 hover:text-white bg-white/5 rounded-lg">
+                <Palette size={16} />
+              </button>
+            </div>
+          </div>
         }
       />
 
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
         {builderMode === 'individual' ? (
           <>
-        {/* Left Panel: Layout Manager */}
-        <div className="w-full h-40 md:h-full md:w-64 border-b md:border-b-0 md:border-r border-[#2d2d30] bg-[#161618] flex flex-col shrink-0">
-          <div className="p-4 md:p-6 pb-2 flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-widest text-[#85858b]">Layouts</span>
-            <button onClick={handleAddLayout} className="text-gray-400 hover:text-white transition-colors" title="Add Layout"><Plus size={14} /></button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-3 flex flex-row md:flex-col gap-2 md:gap-1 space-y-0 md:space-y-1">
-            {layouts.map(l => (
-               <div 
-                 key={l.id}
-                 onClick={() => setSelectedLayoutId(l.id)}
-                 className={cn(
-                   "px-4 py-2 md:py-3 text-sm rounded-xl cursor-pointer transition-colors font-medium flex items-center justify-between group min-w-[120px] md:min-w-0 shrink-0 border border-[#2d2d30] md:border-transparent",
-                   selectedLayoutId === l.id ? "bg-[#2d2d30] text-white font-bold" : "text-[#85858b] hover:bg-[#2d2d30]/50 hover:text-white hover:border-[#333]"
-                 )}
-               >
-                 {editingLayoutId === l.id ? (
-                   <input
-                     autoFocus
-                     value={editingLayoutName}
-                     onChange={(e) => setEditingLayoutName(e.target.value)}
-                     onBlur={() => {
-                        if (editingLayoutName.trim() && editingLayoutName !== l.name) {
-                          renameLayoutInActiveTemplate(l.id, editingLayoutName.trim());
-                        }
-                        setEditingLayoutId(null);
+            <div className={cn(
+              "w-full md:w-64 border-r border-[#2d2d30] bg-[#161618] flex flex-col shrink-0 transition-transform duration-300",
+              "absolute inset-0 z-20 md:relative md:translate-x-0",
+              mobileTab === 'layouts' ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+            )}>
+              <div className="p-4 md:p-6 pb-2 flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-widest text-[#85858b]">Layout Library</span>
+                <button onClick={handleAddLayout} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 text-gray-400 hover:text-white transition-colors">
+                  <Plus size={16} />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-3 space-y-1">
+                {layouts.map(l => (
+                   <div 
+                     key={l.id}
+                     onClick={() => {
+                       setSelectedLayoutId(l.id);
+                       if (window.innerWidth < 768) setMobileTab('preview');
                      }}
-                     onKeyDown={(e) => {
-                       if (e.key === 'Enter') {
-                          if (editingLayoutName.trim() && editingLayoutName !== l.name) {
-                            renameLayoutInActiveTemplate(l.id, editingLayoutName.trim());
-                          }
-                          setEditingLayoutId(null);
-                       } else if (e.key === 'Escape') {
-                          setEditingLayoutId(null);
-                       }
-                     }}
-                     className="bg-transparent border-none outline-none text-white w-full shrink min-w-0"
-                     onClick={(e) => e.stopPropagation()}
-                   />
-                 ) : (
-                   <>
-                     <span className="truncate">{l.name}</span>
-                     <div className="flex items-center gap-2">
-                       {selectedLayoutId === l.id && workingCode !== l.code && <span className="w-2 h-2 rounded-full bg-[#fe6247]"></span>}
-                       <button
-                         onClick={(e) => {
-                           e.stopPropagation();
-                           setEditingLayoutId(l.id);
-                           setEditingLayoutName(l.name);
-                         }}
-                         className="md:opacity-0 group-hover:opacity-100 text-gray-500 hover:text-white p-1 rounded-md transition-colors"
-                         title="Rename layout"
-                       >
-                         <Edit2 size={14} />
-                       </button>
-                       {layouts.length > 1 && (
-                         <button 
-                           onClick={(e) => { e.stopPropagation(); if (window.confirm("Delete layout?")) removeLayoutFromActiveTemplate(l.id); }}
-                           className="md:opacity-0 group-hover:opacity-100 text-gray-500 hover:text-[#D62828] p-1 rounded-md transition-colors"
-                           title="Delete layout"
-                         >
-                           <Trash2 size={14} />
-                         </button>
-                       )}
-                     </div>
-                   </>
-                 )}
-               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Center: IDE and Preview Area */}
-        <div className="flex-1 flex bg-[#161618] relative overflow-hidden flex-col">
-          
-          {/* Split View */}
-          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden w-full relative">
-            <div className="flex flex-col flex-1 lg:flex-none lg:w-1/2 min-w-0 border-b lg:border-b-0 lg:border-r border-[#2d2d30] relative min-h-0">
-               <div className="h-12 bg-[#1e1e1e] border-b border-[#2d2d30] text-xs text-[#85858b] flex items-center shrink-0">
-                  <div 
-                    onClick={() => setActiveTab('hbs')}
-                    className={cn(
-                      "px-5 border-r border-[#2d2d30] h-full flex items-center gap-2 font-mono cursor-pointer transition-colors",
-                      activeTab === 'hbs' ? "bg-[#252526] text-[#e0e0e0]" : "hover:bg-[#252526]/50 hover:text-white text-[#85858b]"
-                    )}
-                  >
-                    <span className="text-[#fe6247]">~</span> {activeLayout.id}.hbs
-                  </div>
-                  <div 
-                    onClick={() => setActiveTab('json')}
-                    className={cn(
-                      "px-5 border-r border-[#2d2d30] h-full flex items-center gap-2 font-mono cursor-pointer transition-colors",
-                      activeTab === 'json' ? "bg-[#252526] text-[#e0e0e0]" : "hover:bg-[#252526]/50 hover:text-white text-[#85858b]"
-                    )}
-                  >
-                    <span className="text-[#47fe90]">~</span> data.json
-                  </div>
-               </div>
-               <div className="flex-1 min-h-0 bg-[#1e1e1e] p-2 relative">
-                  {activeTab === 'hbs' ? (
-                     <Editor
-                       height="100%"
-                       defaultLanguage="handlebars"
-                       theme="vs-dark"
-                       value={workingCode}
-                       onChange={(val) => setWorkingCode(val || "")}
-                       options={{
-                         minimap: { enabled: false },
-                         fontSize: 14,
-                         wordWrap: "on",
-                         padding: { top: 8, bottom: 100 },
-                         scrollBeyondLastLine: false,
-                       }}
-                     />
-                  ) : (
-                     <Editor
-                       height="100%"
-                       defaultLanguage="json"
-                       theme="vs-dark"
-                       value={workingJson}
-                       onChange={(val) => setWorkingJson(val || "")}
-                       options={{
-                         minimap: { enabled: false },
-                         fontSize: 14,
-                         wordWrap: "on",
-                         padding: { top: 8, bottom: 100 },
-                         scrollBeyondLastLine: false,
-                       }}
-                     />
-                  )}
-
-                  {/* Floating AI Panel */}
-                  <div className="absolute bottom-6 left-6 right-6 z-10 lg:w-[450px]">
-                     <AIAssistantPanel 
-                       promptValue={aiPrompt}
-                       onPromptChange={setAiPrompt}
-                       onGenerate={handleAiGenerate}
-                       isGenerating={isAiLoading}
-                       showPromptSettings={true}
-                       promptSettings={promptSettings}
-                       onPromptSettingsChange={setPromptSettings}
-                       placeholder="e.g., Convert this to a modern 3-column layout..."
-                       defaultMode={aiMode}
-                       onModeChange={(mode) => setAiMode(mode as 'ai' | 'prompt')}
-                       systemPromptBuilder={(p) => buildLayoutPrompt(p, workingCode, workingJson, promptSettings)}
-                     />
-                     {aiMode === 'prompt' && (
-                       <div className="relative mt-2 bg-[#1e1e1e] border border-[#2d2d30] rounded-xl p-2 shadow-2xl">
-                         <Textarea 
-                           value={aiResponse}
-                           onChange={e => setAiResponse(e.target.value)}
-                           placeholder="Paste AI generated code here..."
-                           className="w-full bg-[#252526] border border-[#333] text-gray-200 text-sm focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-sans resize-none rounded-lg p-3 min-h-[60px]"
-                         />
-                         <button 
-                           onClick={() => {
-                             if (aiResponse.trim()) {
-                               const slideMatch = aiResponse.match(/<slide>([\s\S]*?)<\/slide>/i);
-                               let code = slideMatch ? slideMatch[1].trim() : "";
-                               
-                               if (!code) {
-                                 let match = aiResponse.match(/```(?:html|handlebars)?\n([\s\S]*?)```/);
-                                 code = match ? match[1] : aiResponse;
-                               }
-                               
-                               const jsonMatch = aiResponse.match(/<json>([\s\S]*?)<\/json>/i);
-                               if (jsonMatch && jsonMatch[1]) {
-                                 setWorkingJson(jsonMatch[1].trim());
-                               }
-                               
-                               setWorkingCode(code);
-                               setAiResponse("");
-                             }
-                           }}
-                           disabled={!aiResponse.trim()}
-                           className="absolute right-3 bottom-3 bg-[#D62828] hover:bg-[#b20112] text-white disabled:opacity-50 transition-colors px-2 py-1 rounded text-xs font-bold"
-                         >
-                           Apply
-                         </button>
-                       </div>
+                     className={cn(
+                       "px-4 py-3 text-sm rounded-xl cursor-pointer transition-all border flex items-center justify-between group",
+                       selectedLayoutId === l.id 
+                         ? "bg-[#D62828]/10 border-[#D62828] text-white font-bold" 
+                         : "bg-transparent border-transparent text-[#85858b] hover:bg-[#2d2d30]/50 hover:text-white"
                      )}
-                  </div>
-               </div>
+                   >
+                     {editingLayoutId === l.id ? (
+                       <input
+                         autoFocus
+                         value={editingLayoutName}
+                         onChange={(e) => setEditingLayoutName(e.target.value)}
+                         onBlur={() => {
+                            if (editingLayoutName.trim() && editingLayoutName !== l.name) {
+                              renameLayoutInActiveTemplate(l.id, editingLayoutName.trim());
+                            }
+                            setEditingLayoutId(null);
+                         }}
+                         onKeyDown={(e) => {
+                           if (e.key === 'Enter') {
+                              if (editingLayoutName.trim() && editingLayoutName !== l.name) {
+                                renameLayoutInActiveTemplate(l.id, editingLayoutName.trim());
+                              }
+                              setEditingLayoutId(null);
+                           } else if (e.key === 'Escape') {
+                              setEditingLayoutId(null);
+                           }
+                         }}
+                         className="bg-transparent border-none outline-none text-white w-full"
+                         onClick={(e) => e.stopPropagation()}
+                       />
+                     ) : (
+                       <>
+                         <span className="truncate">{l.name}</span>
+                         <div className="flex items-center gap-1">
+                           {selectedLayoutId === l.id && workingCode !== l.code && <div className="w-2 h-2 rounded-full bg-[#fe6247] mr-1" />}
+                           <button onClick={(e) => { e.stopPropagation(); setEditingLayoutId(l.id); setEditingLayoutName(l.name); }} className="opacity-0 group-hover:opacity-100 p-1.5 hover:text-white"><Edit2 size={12} /></button>
+                           {layouts.length > 1 && (
+                             <button onClick={(e) => { e.stopPropagation(); if (window.confirm("Delete layout?")) removeLayoutFromActiveTemplate(l.id); }} className="opacity-0 group-hover:opacity-100 p-1.5 hover:text-[#D62828]"><Trash2 size={12} /></button>
+                           )}
+                         </div>
+                       </>
+                     )}
+                   </div>
+                ))}
+              </div>
             </div>
 
-            <div className="overflow-auto lg:overflow-hidden bg-[#111111] flex items-center justify-center p-4 lg:p-12 relative flex-1 lg:flex-none lg:h-full min-w-0 lg:w-1/2 min-h-[50vh] lg:min-h-0">
-              <SlidePreview 
-                templateCode={workingCode}
-                data={currentSampleData}
-                designConfig={designConfig}
-                config={designConfig}
-                interactive={true}
-                onImageUpload={(key, path) => {
-                  try {
-                    const parsed = JSON.parse(workingJson);
-                    parsed[key] = path;
-                    setWorkingJson(JSON.stringify(parsed, null, 2));
-                  } catch(e) {}
-                }}
-              />
-              {/* <SlideShowcase config={designConfig} data={workingJson} templateCode={workingCode} /> */}
+            <div className="flex-1 flex flex-col bg-[#111111] relative overflow-hidden">
+              <div className="md:hidden flex border-b border-[#2d2d30] bg-[#161618]">
+                <button onClick={() => setMobileTab('preview')} className={cn("flex-1 py-3 text-[10px] font-black uppercase tracking-widest", mobileTab === 'preview' ? "text-[#D62828] border-b-2 border-[#D62828]" : "text-gray-500")}>Preview</button>
+                <button onClick={() => setMobileTab('code')} className={cn("flex-1 py-3 text-[10px] font-black uppercase tracking-widest", mobileTab === 'code' ? "text-[#D62828] border-b-2 border-[#D62828]" : "text-gray-500")}>Editor</button>
+              </div>
 
+              <div className={cn(
+                "flex-1 flex flex-col lg:flex-row overflow-hidden relative",
+                "pb-16 md:pb-0"
+              )}>
+                <div className={cn(
+                  "flex flex-col flex-1 lg:flex-none lg:w-1/2 min-w-0 border-b lg:border-b-0 lg:border-r border-[#2d2d30] bg-[#1e1e1e] relative",
+                  "absolute inset-0 z-10 lg:relative lg:translate-x-0",
+                  mobileTab === 'code' ? "translate-x-0" : "translate-x-full lg:translate-x-0"
+                )}>
+                   <div className="h-10 md:h-12 bg-[#1a1a1b] border-b border-[#2d2d30] text-[10px] md:text-xs text-[#85858b] flex items-center shrink-0">
+                      <div onClick={() => setActiveTab('hbs')} className={cn("px-4 md:px-5 border-r border-[#2d2d30] h-full flex items-center gap-2 font-mono cursor-pointer transition-colors", activeTab === 'hbs' ? "bg-[#252526] text-white" : "hover:text-white")}>
+                        <span className="text-[#fe6247]">~</span> {activeLayout.id}.hbs
+                      </div>
+                      <div onClick={() => setActiveTab('json')} className={cn("px-4 md:px-5 border-r border-[#2d2d30] h-full flex items-center gap-2 font-mono cursor-pointer transition-colors", activeTab === 'json' ? "bg-[#252526] text-white" : "hover:text-white")}>
+                        <span className="text-[#47fe90]">~</span> data.json
+                      </div>
+                   </div>
+                   <div className="flex-1 min-h-0 relative">
+                      <Editor
+                        height="100%"
+                        defaultLanguage={activeTab === 'hbs' ? "handlebars" : "json"}
+                        language={activeTab === 'hbs' ? "handlebars" : "json"}
+                        theme="vs-dark"
+                        value={activeTab === 'hbs' ? workingCode : workingJson}
+                        onChange={(val) => activeTab === 'hbs' ? setWorkingCode(val || "") : setWorkingJson(val || "")}
+                        options={{ minimap: { enabled: false }, fontSize: 14, wordWrap: "on", padding: { top: 12, bottom: 100 }, scrollBeyondLastLine: false, fixedOverflowWidgets: true }}
+                      />
 
+                      <div className="lg:hidden absolute bottom-4 right-4 z-30">
+                        <button onClick={() => setShowAiOnMobile(!showAiOnMobile)} className={cn("w-12 h-12 rounded-full flex items-center justify-center shadow-2xl transition-all active:scale-95", showAiOnMobile ? "bg-[#1e1e1e] text-white rotate-45 border border-white/10" : "bg-[#D62828] text-white")}><X size={24} /></button>
+                      </div>
 
-              
-              {/* Syntax Error overlay */}
-              {parseError && (
-                <div className="absolute inset-0 bg-[#b20112]/20 backdrop-blur-sm flex flex-col items-center justify-center p-8 text-center border-[8px] border-[#b20112] z-10 pointer-events-none">
-                   <CircleAlert size={48} className="mb-4 text-[#ffdad6]" />
-                   <h3 className="font-bold text-2xl mb-2 text-white">Syntax Error</h3>
-                   <p className="font-mono text-sm max-w-lg bg-[#161618] text-red-400 p-6 rounded-xl shadow-2xl overflow-auto text-left leading-relaxed">{parseError}</p>
+                      <div className={cn("absolute bottom-4 left-4 right-4 z-20 lg:w-[450px] transition-all duration-300 lg:block", showAiOnMobile ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0 pointer-events-none lg:translate-y-0 lg:opacity-100 lg:pointer-events-auto")}>
+                         <AIAssistantPanel 
+                           promptValue={aiPrompt} onPromptChange={setAiPrompt} onGenerate={handleAiGenerate} isGenerating={isAiLoading} showPromptSettings={true} promptSettings={promptSettings} onPromptSettingsChange={setPromptSettings} placeholder="e.g., Add a dark overlay..." defaultMode={aiMode} onModeChange={(mode) => setAiMode(mode as 'ai' | 'prompt')} systemPromptBuilder={(p) => buildLayoutPrompt(p, workingCode, workingJson, promptSettings)}
+                         />
+                      </div>
+                   </div>
                 </div>
-              )}
-              
+
+                 <div className={cn(
+                  "flex-1 bg-[#111111] flex flex-col items-center justify-center p-4 md:p-8 lg:p-12 relative overflow-hidden",
+                  "absolute inset-0 z-0 md:relative md:translate-x-0",
+                  mobileTab === 'preview' ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+                )}>
+                  <div 
+                    className="w-full h-full flex items-center justify-center relative"
+                    onTouchStart={onTouchStart}
+                    onTouchMove={onTouchMove}
+                    onTouchEnd={onTouchEnd}
+                  >
+                    <SlidePreview 
+                      templateCode={workingCode} 
+                      data={currentSampleData} 
+                      designConfig={designConfig} 
+                      config={designConfig} 
+                      interactive={true} 
+                      loading={isSwitchingLayout}
+                      className="w-full h-full max-h-[80vh] md:max-h-none transition-all duration-300" 
+                    />
+
+                    {/* Mobile Navigation Buttons */}
+                    <div className="md:hidden absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2 pointer-events-none">
+                       <button 
+                         onClick={handlePrevLayout}
+                         className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white pointer-events-auto active:scale-90 transition-transform"
+                       >
+                         <ChevronLeft size={24} />
+                       </button>
+                       <button 
+                         onClick={handleNextLayout}
+                         className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white pointer-events-auto active:scale-90 transition-transform"
+                       >
+                         <ChevronRight size={24} />
+                       </button>
+                    </div>
+
+                    {parseError && (
+                      <div className="absolute inset-0 bg-[#b20112]/40 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-10 rounded-2xl border-4 border-[#b20112]">
+                         <CircleAlert size={48} className="mb-4 text-white" />
+                         <h3 className="font-bold text-lg mb-2 text-white">Syntax Error</h3>
+                         <div className="w-full max-w-sm bg-black/60 p-4 rounded-xl text-red-300 font-mono text-[10px] text-left overflow-auto max-h-40">{parseError}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-        </>
-      ) : (
-        <div className="flex-1 overflow-y-auto bg-[#111111] p-4 lg:p-8 flex flex-col items-center relative">
-           <div className="w-full max-w-5xl flex flex-col gap-6">
-              
-              {/* Generation Card */}
-              <div className="bg-[#1e1e1e] border border-[#2d2d30] rounded-xl overflow-hidden shadow-lg mt-4">
-                 <div className="px-6 py-5 bg-[#161618] border-b border-[#2d2d30]">
-                    <div className="flex items-center justify-between mb-2">
-                       <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                         <Sparkles className="text-[#D62828]" /> AI Full Template Generator
-                       </h3>
-                       <div className="flex items-center bg-[#252526] rounded-md border border-[#333] overflow-hidden text-[10px] font-bold text-gray-400">
-                         <button onClick={() => setAiMode('ai')} className={cn("px-3 py-1.5 transition-colors", aiMode === 'ai' && "bg-[#2d2d30] text-white")}>AI Generate</button>
-                         <button onClick={() => setAiMode('prompt')} className={cn("px-3 py-1.5 transition-colors", aiMode === 'prompt' && "bg-[#2d2d30] text-white")}>Raw Prompt</button>
+
+            <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#0f0f10]/80 backdrop-blur-xl border-t border-white/5 flex items-center justify-around px-4 z-50 shrink-0">
+               <button onClick={() => setMobileTab('layouts')} className={cn("flex flex-col items-center gap-1", mobileTab === 'layouts' ? "text-[#D62828]" : "text-gray-500")}><LayoutTemplate size={20} /><span className="text-[9px] font-bold uppercase tracking-widest">Library</span></button>
+               <button onClick={() => setMobileTab('preview')} className={cn("flex flex-col items-center gap-1", mobileTab === 'preview' ? "text-[#D62828]" : "text-gray-500")}><Play size={20} /><span className="text-[9px] font-bold uppercase tracking-widest">Preview</span></button>
+               <button onClick={() => setMobileTab('code')} className={cn("flex flex-col items-center gap-1", mobileTab === 'code' ? "text-[#D62828]" : "text-gray-500")}><Code2 size={20} /><span className="text-[9px] font-bold uppercase tracking-widest">Editor</span></button>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 overflow-y-auto bg-[#111111] p-4 md:p-8 flex flex-col items-center relative">
+            <div className="w-full max-w-5xl flex flex-col gap-6">
+              <div className="bg-[#1e1e1e] border border-[#2d2d30] rounded-xl overflow-hidden shadow-lg">
+                 <div className="px-4 md:px-6 py-4 md:py-5 bg-[#161618] border-b border-[#2d2d30]">
+                    <div className="flex items-center justify-between flex-wrap gap-3 mb-2">
+                       <h3 className="text-base md:text-xl font-bold text-white flex items-center gap-2"><Sparkles className="text-[#D62828]" size={18} /> AI Deck Generator</h3>
+                       <div className="flex items-center bg-[#252526] rounded-md border border-[#333] overflow-hidden text-[9px] md:text-[10px] font-bold text-gray-400 p-0.5">
+                         <button onClick={() => setAiMode('ai')} className={cn("px-2 md:px-3 py-1 transition-colors", aiMode === 'ai' && "bg-[#2d2d30] text-white")}>Direct AI</button>
+                         <button onClick={() => setAiMode('prompt')} className={cn("px-2 md:px-3 py-1 transition-colors", aiMode === 'prompt' && "bg-[#2d2d30] text-white")}>Raw Prompt</button>
                        </div>
                     </div>
-                    <p className="text-[#85858b] text-sm mb-6">Describe your presentation's purpose to generate a cohesive set of slide layouts.</p>
-                    
+                    <p className="text-[#85858b] text-[11px] md:text-sm mb-4">Describe your presentation's purpose to generate a cohesive set of slide layouts.</p>
                     <div className="space-y-4">
-                      <PromptSettingsForm settings={promptSettings} setSettings={setPromptSettings} />
-                      
-                      <div className="relative mt-4">
-                         <div className="mb-2">
-                           <select 
-                             onChange={e => {
-                                if (e.target.value !== "custom" && e.target.value !== "") {
-                                   setFullPrompt(e.target.value);
-                                } else if (e.target.value === "custom") {
-                                   if (PRESET_PROMPTS.some(p => p.value === fullPrompt)) {
-                                       setFullPrompt("");
-                                   }
-                                } else {
-                                   setFullPrompt("");
-                                }
-                             }}
-                             value={PRESET_PROMPTS.some(p => p.value === fullPrompt) ? fullPrompt : (fullPrompt ? "custom" : "")}
-                             className="w-full bg-[#1a1a1c] border border-[#333] text-gray-400 text-sm rounded p-2 outline-none focus:border-[#D62828] font-sans"
-                           >
-                             <option value="">Start from scratch...</option>
-                             {PRESET_PROMPTS.map(p => (
-                               <option key={p.label} value={p.value}>{p.label}</option>
-                             ))}
-                             <option value="custom">Custom details...</option>
+                      <div className="bg-black/20 p-3 md:p-4 rounded-xl border border-white/5">
+                        <PromptSettingsForm settings={promptSettings} setSettings={setPromptSettings} />
+                      </div>
+                      <div className="relative space-y-4">
+                         <div>
+                           <label className="block text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Select Blueprint</label>
+                           <select onChange={e => setFullPrompt(e.target.value)} value={PRESET_PROMPTS.some(p => p.value === fullPrompt) ? fullPrompt : (fullPrompt ? "custom" : "")} className="w-full bg-[#1a1a1c] border border-[#333] text-gray-300 text-xs rounded-lg p-2.5 outline-none focus:border-[#D62828] transition-all">
+                             <option value="">Choose a template...</option>
+                             {PRESET_PROMPTS.map(p => (<option key={p.label} value={p.value}>{p.label}</option>))}
+                             <option value="custom">Custom instructions...</option>
                            </select>
                          </div>
-                         <Textarea 
-                           value={fullPrompt}
-                           onChange={e => setFullPrompt(e.target.value)}
-                           placeholder="e.g., Create a 5 layout template for a SaaS pitch..."
-                           className="w-full bg-[#252526] border border-[#333] text-gray-200 text-sm focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-sans resize-none rounded-lg p-3 min-h-[80px]"
-                           disabled={isAiLoading}
-                           onKeyDown={(e) => {
-                             if(e.key === 'Enter' && !e.shiftKey) {
-                               e.preventDefault();
-                               if (aiMode === 'ai') {
-                                 handleFullDeckGenerate();
-                               } else if (fullPrompt.trim()) {
-                                 const instruction = `Please generate a comprehensive set of slide layouts based on the following request:\n${fullPrompt}`;
-                                 const simplifiedLayouts = layouts.map(l => ({ id: l.id, name: l.name }));
-                                 const fullTextPrompt = buildFullTemplatePrompt(instruction, simplifiedLayouts, promptSettings);
-                                 navigator.clipboard.writeText(fullTextPrompt + "\n\nReturn ONLY a JSON array of layouts.");
-                                 setCopiedPrompt(true);
-                                 setTimeout(() => setCopiedPrompt(false), 2000);
-                               }
-                             }
-                           }}
-                         />
-                         <div className="flex justify-end mt-4">
-                           <Button 
-                             onClick={() => {
-                               if (aiMode === 'ai') {
-                                 handleFullDeckGenerate();
-                               } else if (fullPrompt.trim()) {
-                                 const instruction = `Please generate a comprehensive set of slide layouts based on the following request:\n${fullPrompt}`;
-                                 const simplifiedLayouts = layouts.map(l => ({ id: l.id, name: l.name }));
-                                 const fullTextPrompt = buildFullTemplatePrompt(instruction, simplifiedLayouts, promptSettings);
-                                 navigator.clipboard.writeText(fullTextPrompt + "\n\nReturn ONLY a JSON array of layouts like [{ name, code, variant }]. No other text.");
-                                 setCopiedPrompt(true);
-                                 setTimeout(() => setCopiedPrompt(false), 2000);
-                               }
-                             }}
-                             disabled={isAiLoading || !fullPrompt.trim()}
-                             className="bg-[#D62828] hover:bg-[#b20112] text-white border-none disabled:opacity-50 flex items-center gap-2"
-                           >
-                             {isAiLoading ? <span className="animate-pulse">Generating...</span> : (aiMode === 'ai' ? <><Sparkles size={16} /> Generate {layouts.length > 0 ? "Additional " : ""}Layouts</> : (copiedPrompt ? <><Check size={16} className="text-green-500" /> Copied Prompt</> : <><Copy size={16} /> Copy Prompt</>))}
+                         <Textarea value={fullPrompt} onChange={e => setFullPrompt(e.target.value)} placeholder="e.g., A professional 5-slide SaaS pitch deck..." className="w-full bg-[#252526] border border-[#333] text-gray-200 text-sm focus-visible:ring-1 focus-visible:ring-[#D62828] font-sans resize-none rounded-xl p-4 min-h-[100px]" disabled={isAiLoading} />
+                         <div className="flex justify-end pt-2">
+                           <Button onClick={() => { if (aiMode === 'ai') { handleFullDeckGenerate(); } else if (fullPrompt.trim()) { const instruction = `Please generate layouts for: ${fullPrompt}`; const simplifiedLayouts = layouts.map(l => ({ id: l.id, name: l.name })); const fullTextPrompt = buildFullTemplatePrompt(instruction, simplifiedLayouts, promptSettings); copyToClipboard(fullTextPrompt + "\n\nReturn ONLY a JSON array of layouts."); setCopiedPrompt(true); setTimeout(() => setCopiedPrompt(false), 2000); } }} disabled={isAiLoading || !fullPrompt.trim()} className="w-full md:w-auto bg-[#D62828] hover:bg-[#b20112] text-white border-none font-bold py-6 px-8 shadow-xl shadow-[#D62828]/20 group">
+                             {isAiLoading ? <Loader2 size={18} className="animate-spin mr-2" /> : (aiMode === 'ai' ? <><Sparkles size={18} className="mr-2" /> Generate Layouts</> : (copiedPrompt ? <><Check size={18} className="mr-2" /> Copied</> : <><Copy size={18} className="mr-2" /> Copy Prompt</>))}
                            </Button>
                          </div>
                       </div>
-                      
-                      {aiMode === 'prompt' && (
-                         <div className="relative mt-4 pt-4 border-t border-[#2d2d30]">
-                           <label className="block text-sm font-medium text-gray-400 mb-2">Paste AI Generated JSON:</label>
-                           <Textarea 
-                             value={aiResponse}
-                             onChange={e => setAiResponse(e.target.value)}
-                             placeholder="Paste the JSON array of layouts here..."
-                             className="w-full bg-[#252526] border border-[#333] text-gray-200 text-sm focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-sans resize-none rounded-lg p-3 min-h-[120px]"
-                           />
-                           <div className="flex justify-end mt-3">
-                             <Button 
-                               onClick={() => {
-                                 if (aiResponse.trim()) {
-                                   try {
-                                     let jsonStr = aiResponse;
-                                     const jsonMatch = aiResponse.match(/```(?:json)?\n([\s\S]*?)```/i) || aiResponse.match(/<json>\s*([\s\S]*?)\s*<\/json>/i);
-                                     if (jsonMatch) {
-                                       jsonStr = jsonMatch[1];
-                                     } else {
-                                       const startIdx = jsonStr.indexOf('[');
-                                       const endIdx = jsonStr.lastIndexOf(']');
-                                       if (startIdx !== -1 && endIdx !== -1) {
-                                          jsonStr = jsonStr.slice(startIdx, endIdx + 1);
-                                       }
-                                     }
-                                     const newLayouts = JSON.parse(jsonStr);
-                                     if (Array.isArray(newLayouts) && newLayouts.length > 0) {
-                                       let firstNewId: string | null = null;
-                                       newLayouts.forEach((nl, index) => {
-                                         const newId = `l-gen-${Date.now()}-${index}`;
-                                         if (index === 0) firstNewId = newId;
-                                         
-                                         addLayoutToActiveTemplate({
-                                           id: newId,
-                                           name: nl.name || `Generated Layout ${index + 1}`,
-                                           variant: nl.variant || "content",
-                                           code: nl.code || "<div>Empty</div>",
-                                           mockData: nl.mockData || undefined
-                                         });
-                                       });
-                                       
-                                       if (firstNewId) {
-                                         setSelectedLayoutId(firstNewId);
-                                       }
-                                       setAiResponse("");
-                                     } else {
-                                       alert("Invalid layouts array.");
-                                     }
-                                   } catch (e: any) {
-                                     alert("Failed to parse JSON: " + e.message);
-                                   }
-                                 }
-                               }}
-                               disabled={!aiResponse.trim()}
-                               className="bg-[#D62828] hover:bg-[#b20112] text-white disabled:opacity-50 transition-colors border-none"
-                             >
-                               Apply Layouts
-                             </Button>
-                           </div>
-                         </div>
-                      )}
                     </div>
                  </div>
+                 {aiMode === 'prompt' && (
+                    <div className="p-4 md:p-6 border-t border-[#2d2d30] bg-[#1a1a1b]">
+                      <label className="block text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Paste Generated JSON</label>
+                      <Textarea value={aiResponse} onChange={e => setAiResponse(e.target.value)} placeholder="Paste the JSON array of layouts here..." className="w-full bg-[#252526] border border-[#333] text-gray-200 text-sm focus-visible:ring-1 focus-visible:ring-[#D62828] font-sans resize-none rounded-xl p-4 min-h-[120px]" />
+                      <div className="flex justify-end mt-3">
+                        <Button onClick={() => { if (aiResponse.trim()) { try { let jsonStr = aiResponse; const jsonMatch = aiResponse.match(/```(?:json)?\n([\s\S]*?)```/i) || aiResponse.match(/<json>\s*([\s\S]*?)\s*<\/json>/i); if (jsonMatch) jsonStr = jsonMatch[1]; const newLayouts = JSON.parse(jsonStr); if (Array.isArray(newLayouts) && newLayouts.length > 0) { newLayouts.forEach((nl, index) => { const newId = `l-gen-${Date.now()}-${index}`; addLayoutToActiveTemplate({ id: newId, name: nl.name || `Generated Layout ${index + 1}`, variant: nl.variant || "content", code: nl.code || "<div>Empty</div>", mockData: nl.mockData || undefined }); }); setAiResponse(""); } } catch (e) { alert("Invalid JSON"); } } }} disabled={!aiResponse.trim()} className="bg-[#D62828] text-white border-none">Apply Layouts</Button>
+                      </div>
+                    </div>
+                 )}
               </div>
-
-              {/* Grid of existing layouts */}
               <div className="mt-8 mb-12">
                  <div className="flex items-center justify-between mb-6">
                    <h4 className="text-sm font-bold text-[#85858b] uppercase tracking-wider">Current Layouts ({layouts.length})</h4>
-                   <Button onClick={() => { handleAddLayout(); setBuilderMode('individual'); }} variant="outline" className="text-xs border-[#333] hover:bg-[#252526] h-8 text-gray-300">
-                     <Plus size={14} className="mr-1" /> Add Blank Layout
-                   </Button>
+                   <Button onClick={() => { handleAddLayout(); setBuilderMode('individual'); }} variant="outline" className="text-xs border-[#333] hover:bg-[#252526] h-8 text-gray-300"><Plus size={14} className="mr-1" /> Add Blank Layout</Button>
                  </div>
-                 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                     {layouts.map(l => (
-                       <div key={l.id} className="border border-[#2d2d30] rounded-xl overflow-hidden bg-[#161618] group flex flex-col shadow-md hover:border-[#444] transition-colors">
-                          {/* Lightweight CSS thumbnail — no iframe */}
-                          <div
-                            className="aspect-[16/9] w-full relative flex flex-col overflow-hidden"
-                            style={{ backgroundColor: designConfig.bg || '#1a1a1a' }}
-                          >
-                            {/* Brand color accent bar */}
-                            <div className="h-1.5 w-full shrink-0" style={{ backgroundColor: designConfig.primary || '#6750a4' }} />
-                            {/* Mock content blocks */}
-                            <div className="flex-1 flex flex-col p-4 gap-2">
-                              <div className="h-3 rounded w-2/3" style={{ backgroundColor: designConfig.primary || '#6750a4', opacity: 0.9 }} />
-                              <div className="h-2 rounded w-full" style={{ backgroundColor: designConfig.onSurface || '#ffffff', opacity: 0.15 }} />
-                              <div className="h-2 rounded w-4/5" style={{ backgroundColor: designConfig.onSurface || '#ffffff', opacity: 0.1 }} />
-                              <div className="h-2 rounded w-3/5" style={{ backgroundColor: designConfig.onSurface || '#ffffff', opacity: 0.1 }} />
-                              {(l.variant === 'image-text' || l.variant === 'comparison') && (
-                                <div className="flex gap-2 mt-1 flex-1">
-                                  <div className="flex-1 rounded" style={{ backgroundColor: designConfig.surfaceVariant || '#333', opacity: 0.4 }} />
-                                  <div className="flex-1 rounded" style={{ backgroundColor: designConfig.surfaceVariant || '#333', opacity: 0.4 }} />
-                                </div>
-                              )}
-                            </div>
-                            {/* Variant label overlay */}
-                            <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider"
-                              style={{ backgroundColor: designConfig.primary || '#6750a4', color: designConfig.onPrimary || '#fff' }}>
-                              {l.variant || 'layout'}
-                            </div>
-                          </div>
-                          <div className="p-3 border-t border-[#2d2d30] flex items-center justify-between bg-[#1e1e1e]">
-                            <span className="text-sm font-medium text-gray-200 truncate pr-2" title={l.name}>{l.name}</span>
-                            <div className="flex gap-2 shrink-0">
-                               <button onClick={() => { setSelectedLayoutId(l.id); setBuilderMode('individual'); }} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Edit Layout"><Edit2 size={14} /></button>
-                               {true && (
-                                 <button onClick={() => { if (window.confirm("Delete layout?")) removeLayoutFromActiveTemplate(l.id); }} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Delete Layout"><Trash2 size={14} /></button>
-                               )}
-                            </div>
-                          </div>
-                       </div>
-                     ))}
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {layouts.map(l => (
+                      <div key={l.id} className="border border-[#2d2d30] rounded-xl overflow-hidden bg-[#161618] group flex flex-col shadow-md hover:border-[#444] transition-colors">
+                         <div className="aspect-[16/9] w-full relative flex flex-col overflow-hidden" style={{ backgroundColor: designConfig.bg || '#1a1a1a' }}>
+                           <div className="h-1.5 w-full shrink-0" style={{ backgroundColor: designConfig.primary || '#6750a4' }} />
+                           <div className="flex-1 flex flex-col p-4 gap-2">
+                             <div className="h-3 rounded w-2/3" style={{ backgroundColor: designConfig.primary || '#6750a4', opacity: 0.9 }} />
+                             <div className="h-2 rounded w-full" style={{ backgroundColor: designConfig.onSurface || '#ffffff', opacity: 0.15 }} />
+                             <div className="h-2 rounded w-4/5" style={{ backgroundColor: designConfig.onSurface || '#ffffff', opacity: 0.1 }} />
+                           </div>
+                           <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider" style={{ backgroundColor: designConfig.primary || '#6750a4', color: designConfig.onPrimary || '#fff' }}>{l.variant || 'layout'}</div>
+                         </div>
+                         <div className="p-3 border-t border-[#2d2d30] flex items-center justify-between bg-[#1e1e1e]">
+                           <span className="text-sm font-medium text-gray-200 truncate pr-2" title={l.name}>{l.name}</span>
+                           <div className="flex gap-2 shrink-0">
+                              <button onClick={() => { setSelectedLayoutId(l.id); setBuilderMode('individual'); }} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors"><Edit2 size={14} /></button>
+                              <button onClick={() => { if (window.confirm("Delete layout?")) removeLayoutFromActiveTemplate(l.id); }} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors"><Trash2 size={14} /></button>
+                           </div>
+                         </div>
+                      </div>
+                    ))}
                  </div>
               </div>
-
-           </div>
-           
             </div>
-          )}
-        </div>
-      {/* Theme Engine Full Screen Modal */}
-      <FullScreenModal
-        isOpen={showThemeEditor}
-        onClose={() => setShowThemeEditor(false)}
-        title={
-          <div className="flex items-center gap-3">
-             <Palette size={20} className="text-[#D62828]" />
-             <span className="font-black uppercase tracking-widest text-sm">Theme Engine</span>
           </div>
-}
-      >
-        <div className="flex flex-col lg:flex-row h-full overflow-y-auto lg:overflow-hidden bg-[#0f0f10]">
-           {/* Preview Canvas */}
-           <div className="order-first lg:order-last lg:flex-1 bg-[#0f0f10] flex items-center justify-center p-4 md:p-8 lg:p-10 shrink-0">
-             <ThemePreviewCanvas className="w-full h-auto">
-               <ThemeShowcase config={designConfig} />
-             </ThemePreviewCanvas>
-           </div>
+        )}
+      </div>
 
-           {/* Settings Sidebar */}
-           <div 
-              style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1024 ? themeSidebarWidth : undefined }}
-              className="w-full lg:border-r border-t lg:border-t-0 border-white/5 bg-[#0c0c0e] flex flex-col lg:overflow-hidden relative group/sidebar shrink-0"
-            >
-              {/* Resize Handle — desktop only */}
-              <div 
-                onMouseDown={startResizingTheme}
-                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#D62828]/50 transition-colors z-30 hidden lg:block"
-              />
-              
-              {/* Sidebar Header with Toggle */}
+      <FullScreenModal isOpen={showThemeEditor} onClose={() => setShowThemeEditor(false)} title={<div className="flex items-center gap-3"><Palette size={20} className="text-[#D62828]" /><span className="font-black uppercase tracking-widest text-sm">Theme Engine</span></div>}>
+        <div className="flex flex-col lg:flex-row h-full overflow-y-auto lg:overflow-hidden bg-[#0f0f10]">
+           <div className="order-first lg:order-last lg:flex-1 bg-[#0f0f10] flex items-center justify-center p-4 md:p-8 lg:p-10 shrink-0">
+             <ThemePreviewCanvas className="w-full h-auto"><ThemeShowcase config={designConfig} /></ThemePreviewCanvas>
+           </div>
+           <div style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1024 ? themeSidebarWidth : undefined }} className="w-full lg:border-r border-t lg:border-t-0 border-white/5 bg-[#0c0c0e] flex flex-col lg:overflow-hidden relative group/sidebar shrink-0">
+              <div onMouseDown={startResizingTheme} className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#D62828]/50 transition-colors z-30 hidden lg:block" />
               <div className="p-4 md:p-6 border-b border-white/5 bg-[#0c0c0e]">
                 <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
                   <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">Visual DNA Engine</p>
                   <div className="flex p-1 bg-white/[0.03] rounded-xl border border-white/5">
-                    <button 
-                      onClick={() => setThemeEntryMode('ai')}
-                      className={cn(
-                        "px-3 md:px-4 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-2",
-                        themeEntryMode === 'ai' ? "bg-[#D62828] text-white shadow-lg shadow-[#D62828]/20" : "text-gray-500 hover:text-gray-300"
-                      )}
-                    >
-                      <Sparkles size={12} /> AI
-                    </button>
-                    <button 
-                      onClick={() => setThemeEntryMode('manual')}
-                      className={cn(
-                        "px-3 md:px-4 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-2",
-                        themeEntryMode === 'manual' ? "bg-[#D62828] text-white shadow-lg shadow-[#D62828]/20" : "text-gray-500 hover:text-gray-300"
-                      )}
-                    >
-                      <Settings2 size={12} /> MANUAL
-                    </button>
+                    <button onClick={() => setThemeEntryMode('ai')} className={cn("px-3 md:px-4 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-2", themeEntryMode === 'ai' ? "bg-[#D62828] text-white" : "text-gray-500 hover:text-gray-300")}><Sparkles size={12} /> AI</button>
+                    <button onClick={() => setThemeEntryMode('manual')} className={cn("px-3 md:px-4 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-2", themeEntryMode === 'manual' ? "bg-[#D62828] text-white" : "text-gray-500 hover:text-gray-300")}><Settings2 size={12} /> MANUAL</button>
                   </div>
                 </div>
               </div>
-
               <div className="flex-1 lg:overflow-y-auto custom-scrollbar">
                 {themeEntryMode === 'ai' ? (
                    <div className="p-4 md:p-6 animate-in fade-in slide-in-from-left-4 duration-300">
-                      <AIAssistantPanel 
-                        promptValue={themeAiPrompt}
-                        onPromptChange={setThemeAiPrompt}
-                        onGenerate={handleThemeAiGenerate}
-                        isGenerating={isGeneratingTheme}
-                        placeholder="Describe your brand's personality, colors, or mood..."
-                        defaultMode="ai"
-                        onModeChange={() => {}}
-                        systemPromptBuilder={buildDesignConfigPrompt}
-                        responseValue={themeAiResponse}
-                        onResponseChange={setThemeAiResponse}
-                        onApplyResponse={handleApplyThemeAiResponse}
-                      />
+                      <AIAssistantPanel promptValue={themeAiPrompt} onPromptChange={setThemeAiPrompt} onGenerate={handleThemeAiGenerate} isGenerating={isGeneratingTheme} placeholder="Describe brand..." defaultMode="ai" onModeChange={() => {}} systemPromptBuilder={buildDesignConfigPrompt} responseValue={themeAiResponse} onResponseChange={setThemeAiResponse} onApplyResponse={handleApplyThemeAiResponse} />
                    </div>
                 ) : (
                    <div className="animate-in fade-in slide-in-from-left-4 duration-300 h-full">
-                     <ThemeSettingsPanel 
-                       config={designConfig} 
-                       onChange={(updates) => updateActiveTemplateDesign(updates)} 
-                       layout="sidebar" 
-                       width={themeSidebarWidth}
-                     />
+                     <ThemeSettingsPanel config={designConfig} onChange={(updates) => updateActiveTemplateDesign(updates)} layout="sidebar" width={themeSidebarWidth} />
                    </div>
                 )}
               </div>
-            </div>
-         </div>
+           </div>
+        </div>
       </FullScreenModal>
     </div>
   );

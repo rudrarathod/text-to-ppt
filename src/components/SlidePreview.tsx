@@ -378,6 +378,9 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
             } else {
               init();
             }
+
+            // Signal that we are ready
+            window.parent.postMessage({ type: 'SLIDE_READY' }, '*');
           })();
         </script>
         <div id="slide-root" class="h-full w-full">
@@ -444,7 +447,8 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
   interactive?: boolean;
   onImageUpload?: (key: string, path: string) => void;
   className?: string;
-}>(({ templateCode, data, designConfig, interactive = false, onImageUpload, className }, ref) => {
+  loading?: boolean;
+}>(({ templateCode, data, designConfig, interactive = false, onImageUpload, className, loading = false }, ref) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -464,8 +468,14 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
   const [zoom, setZoom] = useState(1);
   const resolvedData = useResolvedData(data);
 
+  const [isInternalLoading, setIsInternalLoading] = useState(true);
+  const isInitialMount = useRef(true);
+
   useEffect(() => {
     const handleMessage = async (e: MessageEvent) => {
+      if (e.data?.type === 'SLIDE_READY') {
+        setIsInternalLoading(false);
+      }
       if (e.data?.type === 'IMAGE_UPLOAD' && onImageUpload) {
         const { key, data: base64 } = e.data;
         try {
@@ -509,12 +519,13 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
       // This is MUCH faster than doc.write
       iframe.contentWindow?.postMessage({ type: 'UPDATE_HTML', html }, '*');
     }
-  }, [html]);
+  }, [html, loading]);
 
-  // Reset shell ready if critical dependencies change (e.g. templateCode which might have new script needs)
+  // Reset shell ready if critical dependencies change or if we are loading (iframe is unmounted)
   useEffect(() => {
     isShellReady.current = false;
-  }, [templateCode, JSON.stringify(designConfig)]);
+    setIsInternalLoading(true);
+  }, [templateCode, JSON.stringify(designConfig), loading]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -541,6 +552,20 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
         className="relative overflow-hidden bg-white shadow-2xl rounded-xl ring-1 ring-white/10" 
         style={{ width: 1280 * zoom, height: 720 * zoom, flexShrink: 0 }}
       >
+        {(loading || isInternalLoading) && (
+          <div 
+            className="w-full h-full animate-pulse flex flex-col p-12 gap-6 absolute inset-0 z-10"
+            style={{ backgroundColor: designConfig?.bg || designConfig?.background || '#ffffff' }}
+          >
+             <div className="h-16 w-1/2 bg-black/5 rounded-xl" />
+             <div className="space-y-3">
+               <div className="h-4 w-full bg-black/5 rounded-full" />
+               <div className="h-4 w-full bg-black/5 rounded-full" />
+               <div className="h-4 w-3/4 bg-black/5 rounded-full" />
+             </div>
+             <div className="mt-auto h-32 w-full bg-black/5 rounded-2xl" />
+          </div>
+        )}
         <iframe
           ref={iframeRef}
           style={{
@@ -549,10 +574,12 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
             transform: `scale(${zoom})`,
             transformOrigin: 'top left',
             border: 'none',
-            pointerEvents: interactive ? 'auto' : 'none',
+            pointerEvents: (interactive && !loading && !isInternalLoading) ? 'auto' : 'none',
             position: 'absolute',
             top: 0,
-            left: 0
+            left: 0,
+            visibility: (loading || isInternalLoading) ? 'hidden' : 'visible',
+            opacity: (loading || isInternalLoading) ? 0 : 1
           }}
           title="Slide Preview"
         />
