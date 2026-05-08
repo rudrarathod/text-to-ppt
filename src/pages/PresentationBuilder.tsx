@@ -9,6 +9,7 @@ import { toJpeg } from "html-to-image";
 import { cn } from "../lib/utils";
 import { askAiForSlideContent, buildSlideContentPrompt, askAiForFullPresentation, buildPresentationPrompt, PromptSettings, askAiForLayoutCode, buildLayoutPrompt } from "../lib/gemini";
 import { generateFullPresentationHtml } from "../lib/export";
+import { generatePPTX, generatePNGZip } from "../lib/exportUtils";
 
 const IMAGE_PLACEHOLDER = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300' width='100%25' height='100%25'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Cpath stroke='%239ca3af' stroke-width='4' stroke-dasharray='10,10' d='M20 20 h360 v260 h-360 z' fill='none'/%3E%3Ccircle cx='200' cy='120' r='40' fill='%23d1d5db'/%3E%3Cpath d='M200 160 l50 -50 l80 80 v90 h-260 v-40 l60 -60 z' fill='%23d1d5db'/%3E%3Ctext x='50%25' y='85%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%239ca3af'%3EImage Placeholder%3C/text%3E%3C/svg%3E";
 
@@ -48,7 +49,8 @@ import { useParams, useNavigate } from "react-router-dom";
 export function PresentationBuilder() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { templates, presentations, activePresentationId, setSlides, addSlide, removeSlide, updateSlideContent, updateSlideLayout, setActiveTemplate, setPresentationTemplate, setActivePresentation, updateSlideThumbnail } = useAppStore();
+  const { templates, presentations, activePresentationId, setSlides, addSlide, removeSlide, updateSlideContent, updateSlideLayout, setActiveTemplate, setPresentationTemplate, setActivePresentation, updateSlideThumbnail, addToast } = useAppStore();
+  const [isCapturing, setIsCapturing] = useState(false);
   
   useEffect(() => {
     if (id && id !== activePresentationId) {
@@ -121,6 +123,13 @@ export function PresentationBuilder() {
     style: ""
   });
   const [mobileTab, setMobileTab] = useState<'slides' | 'preview' | 'editor'>('preview');
+  const [captureSlideData, setCaptureSlideData] = useState<{
+    templateCode: string;
+    data: any;
+    designConfig: any;
+  } | null>(null);
+  const captureRef = useRef<any>(null);
+  const [exportType, setExportType] = useState<'PDF' | 'PPTX' | 'PNG' | 'Google Slides'>('PDF');
   const [isSwitchingSlide, setIsSwitchingSlide] = useState(false);
   const touchStart = useRef<number | null>(null);
   const touchEnd = useRef<number | null>(null);
@@ -303,6 +312,7 @@ export function PresentationBuilder() {
   const handleExportPDF = async () => {
     if (!activePresentation || slides.length === 0) return;
     
+    setExportType('PDF');
     setIsExporting(true);
     setExportProgress(10);
     
@@ -349,6 +359,77 @@ export function PresentationBuilder() {
     }
   };
 
+  const captureAllSlides = async () => {
+    const images: string[] = [];
+    setIsExporting(true);
+    setExportProgress(0);
+    setIsCapturing(true);
+    
+    try {
+      for (let i = 0; i < slides.length; i++) {
+        const slide = slides[i];
+        const layout = layouts.find(l => l.id === slide.layoutId) || layouts[0];
+        
+        setCaptureSlideData({
+          templateCode: layout.code,
+          data: slide.content,
+          designConfig: designConfig
+        });
+        
+        // Wait for render and fonts
+        await new Promise(resolve => setTimeout(resolve, 1200));
+        
+        if (captureRef.current) {
+          const img = await captureRef.current.capture();
+          if (img) images.push(img);
+        }
+        
+        setExportProgress(Math.round(((i + 1) / slides.length) * 100));
+      }
+    } finally {
+      setIsCapturing(false);
+      setCaptureSlideData(null);
+    }
+    
+    return images;
+  };
+
+  const handleExportPPTX = async () => {
+    if (!activePresentation || slides.length === 0) return;
+    setExportType('PPTX');
+    try {
+      const images = await captureAllSlides();
+      if (images.length > 0) {
+        await generatePPTX(images, activePresentation.name);
+        addToast('PowerPoint exported successfully!', 'success');
+      }
+    } catch (e: any) {
+      console.error(e);
+      addToast('Failed to export PowerPoint: ' + e.message, 'error');
+    } finally {
+      setIsExporting(false);
+      setExportProgress(0);
+    }
+  };
+
+  const handleExportPNGs = async () => {
+    if (!activePresentation || slides.length === 0) return;
+    setExportType('PNG');
+    try {
+      const images = await captureAllSlides();
+      if (images.length > 0) {
+        await generatePNGZip(images, activePresentation.name);
+        addToast('Images exported successfully!', 'success');
+      }
+    } catch (e: any) {
+      console.error(e);
+      addToast('Failed to export images: ' + e.message, 'error');
+    } finally {
+      setIsExporting(false);
+      setExportProgress(0);
+    }
+  };
+
 
 
   const previewData = useMemo(() => {
@@ -392,7 +473,11 @@ export function PresentationBuilder() {
                  </div>
               </div>
               <div className="space-y-2">
-                 <h2 className="text-2xl font-black text-white tracking-tight">Generating PDF</h2>
+                 <h2 className="text-2xl font-black text-white tracking-tight">
+                   {exportType === 'PDF' ? 'Generating PDF' : 
+                    exportType === 'PPTX' ? 'Creating PowerPoint' :
+                    exportType === 'PNG' ? 'Exporting Images' : 'Generating Slides'}
+                 </h2>
                  <p className="text-gray-400">Please wait while we render your slides with high fidelity...</p>
               </div>
               <div className="w-full bg-white/10 h-2.5 rounded-full overflow-hidden shadow-inner border border-white/5">
@@ -405,6 +490,18 @@ export function PresentationBuilder() {
            </div>
         </div>
       )}
+
+      {/* Hidden Capture Area */}
+      <div className="fixed -left-[5000px] top-0 opacity-0 pointer-events-none z-[-1]">
+        {captureSlideData && (
+          <SlideStatic 
+            ref={captureRef}
+            templateCode={captureSlideData.templateCode}
+            data={captureSlideData.data}
+            designConfig={captureSlideData.designConfig}
+          />
+        )}
+      </div>
 
       {/* Left Panel: Thumbnails */}
       <div className={cn(
@@ -1216,29 +1313,33 @@ export function PresentationBuilder() {
               <Button 
                 onClick={() => {
                   setShowExportModal(false);
-                  addToast('PowerPoint export is coming soon.', 'info');
+                  handleExportPPTX();
                 }}
+                disabled={isExporting}
                 className="w-full justify-start gap-3 bg-[#2d2d30] border border-[#3d3d40] hover:bg-[#3d3d40] hover:border-white/20 h-12 text-sm text-white shadow-none transition-all active:scale-[0.98]"
               >
-                 <PresentationIcon size={18} className="text-[#D62828]" /> Export to PowerPoint
+                 {isExporting && exportType === 'PPTX' ? <Loader2 size={18} className="animate-spin text-gray-400" /> : <PresentationIcon size={18} className="text-[#D62828]" />} Export to PowerPoint
               </Button>
               <Button 
                 onClick={() => {
                   setShowExportModal(false);
-                  addToast('Google Slides export is coming soon.', 'info');
+                  handleExportPPTX(); // PPTX is best for Google Slides too
+                  addToast('Downloading PPTX... You can upload this to Google Slides.', 'info');
                 }}
+                disabled={isExporting}
                 className="w-full justify-start gap-3 bg-[#2d2d30] border border-[#3d3d40] hover:bg-[#3d3d40] hover:border-white/20 h-12 text-sm text-white shadow-none transition-all active:scale-[0.98]"
               >
-                 <LayoutIcon size={18} className="text-[#D62828]" /> Export to Google Slides
+                 {isExporting && exportType === 'Google Slides' ? <Loader2 size={18} className="animate-spin text-gray-400" /> : <LayoutIcon size={18} className="text-[#D62828]" />} Export to Google Slides
               </Button>
               <Button 
                 onClick={() => {
                   setShowExportModal(false);
-                  addToast('PNG export is coming soon.', 'info');
+                  handleExportPNGs();
                 }}
+                disabled={isExporting}
                 className="w-full justify-start gap-3 bg-[#2d2d30] border border-[#3d3d40] hover:bg-[#3d3d40] hover:border-white/20 h-12 text-sm text-white shadow-none transition-all active:scale-[0.98]"
               >
-                 <Download size={18} className="text-[#D62828]" /> Export as PNGs
+                 {isExporting && exportType === 'PNG' ? <Loader2 size={18} className="animate-spin text-gray-400" /> : <Download size={18} className="text-[#D62828]" />} Export as PNGs
               </Button>
             </div>
           </div>
