@@ -549,7 +549,7 @@ export function PresentationBuilder() {
       <div className={cn(
         "bg-[#161618] border-b lg:border-b-0 lg:border-r border-[#2d2d30] flex flex-col shrink-0 transition-all duration-500",
         "absolute inset-0 z-20 lg:relative lg:translate-x-0 lg:w-64 lg:h-full lg:opacity-100 lg:pointer-events-auto",
-        isEditingLayoutCode ? "w-0 opacity-0 border-r-0 pointer-events-none" : "",
+        isEditingLayoutCode ? "hidden" : "flex",
         mobileTab === 'slides' ? "translate-x-0 opacity-100 pointer-events-auto h-full" : "translate-x-[-100%] opacity-0 pointer-events-none lg:translate-x-0 lg:opacity-100"
       )}>
         <div className="p-3 lg:p-4 border-b border-[#2d2d30] flex items-center justify-between shrink-0">
