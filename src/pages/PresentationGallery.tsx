@@ -13,8 +13,21 @@ import { GalleryLayout } from "../components/layout/GalleryLayout";
 import { FullScreenModal } from "../components/layout/FullScreenModal";
 
 export function PresentationGallery() {
-  const { presentations, activePresentationId, createPresentation, deletePresentation, setActivePresentation, templates, createTemplate, updateActiveTemplateDesign, setSlides, importPresentation } = useAppStore();
+  const { 
+    presentations, 
+    activePresentationId, 
+    createPresentation, 
+    deletePresentation, 
+    setActivePresentation, 
+    templates, 
+    createTemplate, 
+    updateActiveTemplateDesign, 
+    setSlides, 
+    importPresentation,
+    addToast
+  } = useAppStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [presentationToDelete, setPresentationToDelete] = useState<{id: string, name: string} | null>(null);
 
   const [newTitle, setNewTitle] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
@@ -82,13 +95,6 @@ export function PresentationGallery() {
       headerActions={
         <div className="flex items-center gap-2 md:gap-3">
           <Button 
-            onClick={() => fileInputRef.current?.click()}
-            className="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-3 md:px-4 h-9 md:h-10 text-xs transition-all flex items-center"
-          >
-            <Upload size={16} className="md:mr-2" />
-            <span className="hidden md:inline">Import</span>
-          </Button>
-          <Button 
             onClick={() => setShowCreateModal(true)}
             className="bg-[#D62828] hover:bg-[#b20112] text-white border-none font-bold px-4 md:px-6 h-9 md:h-10 text-xs md:text-sm transition-all"
           >
@@ -152,9 +158,7 @@ export function PresentationGallery() {
                 danger: true,
                 onClick: (e) => {
                   e.stopPropagation();
-                  if (window.confirm(`Delete "${presentation.name}"?`)) {
-                    deletePresentation(presentation.id);
-                  }
+                  setPresentationToDelete({ id: presentation.id, name: presentation.name });
                 }
               }
             ]}
@@ -371,6 +375,40 @@ export function PresentationGallery() {
                   Create <ChevronRight size={18} className="ml-1 group-hover:translate-x-1 transition-transform" />
                 </Button>
                </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {presentationToDelete && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-[#1a1a1c] border border-white/10 rounded-2xl p-6 w-full max-w-sm flex flex-col items-center text-center shadow-2xl">
+            <div className="w-12 h-12 rounded-full bg-[#D62828]/20 text-[#D62828] flex items-center justify-center mb-4">
+              <Trash2 size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Delete Presentation?</h3>
+            <p className="text-gray-400 mb-6 font-medium text-sm">
+              Are you sure you want to delete <span className="text-white font-bold">"{presentationToDelete.name}"</span>? This action cannot be undone.
+            </p>
+            <div className="flex gap-3 w-full">
+              <Button 
+                variant="secondary" 
+                onClick={() => setPresentationToDelete(null)}
+                className="flex-1 bg-white/5 hover:bg-white/10 text-white font-bold"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => {
+                  deletePresentation(presentationToDelete.id);
+                  addToast(`Presentation "${presentationToDelete.name}" deleted.`, "success");
+                  setPresentationToDelete(null);
+                }}
+                className="flex-1 bg-[#D62828] hover:bg-[#b20112] text-white font-bold"
+              >
+                Delete
+              </Button>
             </div>
           </div>
         </div>
