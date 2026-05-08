@@ -29,6 +29,54 @@ Handlebars.registerHelper('not', function(value) {
     return !value;
 });
 
+Handlebars.registerHelper('add', function(...args) {
+    args.pop(); // Remove Handlebars options
+    return args.reduce((acc, val) => parseFloat(acc) + parseFloat(val), 0);
+});
+
+Handlebars.registerHelper('sub', function(v1, v2) {
+    return parseFloat(v1) - parseFloat(v2);
+});
+
+Handlebars.registerHelper('mul', function(...args) {
+    args.pop(); // Remove Handlebars options
+    return args.reduce((acc, val) => parseFloat(acc) * parseFloat(val), 1);
+});
+
+Handlebars.registerHelper('div', function(v1, v2) {
+    return parseFloat(v1) / parseFloat(v2);
+});
+
+Handlebars.registerHelper('mod', function(v1, v2) {
+    return parseFloat(v1) % parseFloat(v2);
+});
+
+Handlebars.registerHelper('abs', function(value) {
+    return Math.abs(parseFloat(value));
+});
+
+Handlebars.registerHelper('round', function(value) {
+    return Math.round(parseFloat(value));
+});
+
+Handlebars.registerHelper('ceil', function(value) {
+    return Math.ceil(parseFloat(value));
+});
+
+Handlebars.registerHelper('floor', function(value) {
+    return Math.floor(parseFloat(value));
+});
+
+Handlebars.registerHelper('min', function(...args) {
+    args.pop(); // Remove Handlebars options
+    return Math.min(...args.map(v => parseFloat(v)));
+});
+
+Handlebars.registerHelper('max', function(...args) {
+    args.pop(); // Remove Handlebars options
+    return Math.max(...args.map(v => parseFloat(v)));
+});
+
 const useResolvedData = (data: Record<string, any>) => {
   const [resolved, setResolved] = useState(data);
 
