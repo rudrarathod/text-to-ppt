@@ -3,13 +3,12 @@ import { useAppStore, SlideData } from "../store";
 import Editor from "../components/LazyEditor";
 import { SlidePreview, SlideStatic, SlidePreviewRef } from "../components/SlidePreview";
 import { Button, Textarea } from "../components/ui";
-import { Download, Plus, Trash2, LayoutTemplate, Sparkles, X, Mic, Copy, Check, Settings2, ChevronDown, ChevronUp, Save, Loader2, Palette, Code2, Presentation as PresentationIcon, Layout as LayoutIcon, ArrowLeft, Play, ChevronLeft, ChevronRight, Maximize, Minimize, Edit2 } from "lucide-react";
+import { Download, Plus, Trash2, LayoutTemplate, Sparkles, X, Copy, Check, Settings2, Save, Loader2, Palette, Code2, Presentation as PresentationIcon, Layout as LayoutIcon, ArrowLeft, Play, ChevronLeft, ChevronRight, Edit2 } from "lucide-react";
 import jsPDF from "jspdf";
-import { toJpeg } from "html-to-image";
-import { cn } from "../lib/utils";
+import { cn, copyToClipboard } from "../lib/utils";
 import { askAiForSlideContent, buildSlideContentPrompt, askAiForFullPresentation, buildPresentationPrompt, PromptSettings, askAiForLayoutCode, buildLayoutPrompt } from "../lib/gemini";
-import { generateFullPresentationHtml } from "../lib/export";
 import { generatePPTX, generatePNGZip } from "../lib/exportUtils";
+import { ExportModal } from "../components/ExportModal";
 
 const IMAGE_PLACEHOLDER = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300' width='100%25' height='100%25'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Cpath stroke='%239ca3af' stroke-width='4' stroke-dasharray='10,10' d='M20 20 h360 v260 h-360 z' fill='none'/%3E%3Ccircle cx='200' cy='120' r='40' fill='%23d1d5db'/%3E%3Cpath d='M200 160 l50 -50 l80 80 v90 h-260 v-40 l60 -60 z' fill='%23d1d5db'/%3E%3Ctext x='50%25' y='85%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%239ca3af'%3EImage Placeholder%3C/text%3E%3C/svg%3E";
 
@@ -309,30 +308,38 @@ export function PresentationBuilder() {
     setTimeout(() => setIsSaved(false), 2000);
   };
 
-  const handleExportPDF = async () => {
+  const handleExport = async (type: 'PDF' | 'PPTX' | 'PNG' | 'Google Slides') => {
     if (!activePresentation || slides.length === 0) return;
     
-    setExportType('PDF');
+    setExportType(type);
     try {
       const images = await captureAllSlides();
       if (images.length > 0) {
-        const pdf = new jsPDF({
-          orientation: 'landscape',
-          unit: 'px',
-          format: [1280, 720]
-        });
+        if (type === 'PDF') {
+          const pdf = new jsPDF({
+            orientation: 'landscape',
+            unit: 'px',
+            format: [1280, 720]
+          });
 
-        images.forEach((img, index) => {
-          if (index > 0) pdf.addPage([1280, 720], 'landscape');
-          pdf.addImage(img, 'JPEG', 0, 0, 1280, 720, undefined, 'FAST');
-        });
+          images.forEach((img, index) => {
+            if (index > 0) pdf.addPage([1280, 720], 'landscape');
+            pdf.addImage(img, 'JPEG', 0, 0, 1280, 720, undefined, 'FAST');
+          });
 
-        pdf.save(`${activePresentation.name || 'presentation'}.pdf`);
-        addToast('PDF exported successfully!', 'success');
+          pdf.save(`${activePresentation.name || 'presentation'}.pdf`);
+          addToast('PDF exported successfully!', 'success');
+        } else if (type === 'PPTX' || type === 'Google Slides') {
+          await generatePPTX(images, activePresentation.name);
+          addToast(type === 'PPTX' ? 'PowerPoint exported successfully!' : 'PowerPoint exported! You can now upload it to Google Slides.', 'success');
+        } else if (type === 'PNG') {
+          await generatePNGZip(images, activePresentation.name);
+          addToast('Images exported successfully!', 'success');
+        }
       }
     } catch (e: any) {
       console.error("Export Error:", e);
-      addToast("Failed to export PDF: " + e.message, 'error');
+      addToast(`Failed to export ${type}: ` + e.message, 'error');
     } finally {
       setIsExporting(false);
       setExportProgress(0);
@@ -372,42 +379,6 @@ export function PresentationBuilder() {
     }
     
     return images;
-  };
-
-  const handleExportPPTX = async () => {
-    if (!activePresentation || slides.length === 0) return;
-    setExportType('PPTX');
-    try {
-      const images = await captureAllSlides();
-      if (images.length > 0) {
-        await generatePPTX(images, activePresentation.name);
-        addToast('PowerPoint exported successfully!', 'success');
-      }
-    } catch (e: any) {
-      console.error(e);
-      addToast('Failed to export PowerPoint: ' + e.message, 'error');
-    } finally {
-      setIsExporting(false);
-      setExportProgress(0);
-    }
-  };
-
-  const handleExportPNGs = async () => {
-    if (!activePresentation || slides.length === 0) return;
-    setExportType('PNG');
-    try {
-      const images = await captureAllSlides();
-      if (images.length > 0) {
-        await generatePNGZip(images, activePresentation.name);
-        addToast('Images exported successfully!', 'success');
-      }
-    } catch (e: any) {
-      console.error(e);
-      addToast('Failed to export images: ' + e.message, 'error');
-    } finally {
-      setIsExporting(false);
-      setExportProgress(0);
-    }
   };
 
 
@@ -810,7 +781,7 @@ export function PresentationBuilder() {
                       } else if (presentationPrompt.trim()) {
                         const layoutsArray = activeTemplate.layouts.map(l => ({id: l.id, name: l.name, code: l.code}));
                         const fullPrompt = buildPresentationPrompt(presentationPrompt, layoutsArray, promptSettings);
-                        navigator.clipboard.writeText(fullPrompt);
+                        copyToClipboard(fullPrompt);
                         setCopiedPrompt(true);
                         setTimeout(() => setCopiedPrompt(false), 2000);
                       }
@@ -824,7 +795,7 @@ export function PresentationBuilder() {
                     } else if (presentationPrompt.trim()) {
                       const layoutsArray = activeTemplate.layouts.map(l => ({id: l.id, name: l.name, code: l.code}));
                       const fullPrompt = buildPresentationPrompt(presentationPrompt, layoutsArray, promptSettings);
-                      navigator.clipboard.writeText(fullPrompt);
+                      copyToClipboard(fullPrompt);
                       setCopiedPrompt(true);
                       setTimeout(() => setCopiedPrompt(false), 2000);
                     }
@@ -1022,7 +993,7 @@ export function PresentationBuilder() {
                                    handleLayoutAiGenerate();
                                  } else if (layoutAiPrompt.trim()) {
                                    const fullPrompt = buildLayoutPrompt(layoutAiPrompt, layoutEditCode, jsonInput, designConfig, promptSettings);
-                                   navigator.clipboard.writeText(fullPrompt);
+                                   copyToClipboard(fullPrompt);
                                    setCopiedPrompt(true);
                                    setTimeout(() => setCopiedPrompt(false), 2000);
                                  }
@@ -1035,7 +1006,7 @@ export function PresentationBuilder() {
                                  handleLayoutAiGenerate();
                                } else if (layoutAiPrompt.trim()) {
                                  const fullPrompt = buildLayoutPrompt(layoutAiPrompt, layoutEditCode, jsonInput, designConfig, promptSettings);
-                                 navigator.clipboard.writeText(fullPrompt);
+                                 copyToClipboard(fullPrompt);
                                  setCopiedPrompt(true);
                                  setTimeout(() => setCopiedPrompt(false), 2000);
                                }
@@ -1265,69 +1236,13 @@ export function PresentationBuilder() {
          <button onClick={() => setMobileTab('editor')} className={cn("flex flex-col items-center gap-1", mobileTab === 'editor' ? "text-[#D62828]" : "text-gray-500")}><Edit2 size={20} /><span className="text-[9px] font-bold uppercase tracking-widest">Editor</span></button>
       </div>
 
-      {/* Export Options Modal */}
-      {showExportModal && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-[#1a1a1c] border border-white/10 rounded-2xl p-6 w-full max-w-sm flex flex-col items-center shadow-2xl relative">
-            <button 
-              onClick={() => setShowExportModal(false)}
-              className="absolute right-4 top-4 text-gray-400 hover:text-white"
-            >
-              <X size={20} />
-            </button>
-            <div className="w-12 h-12 rounded-full bg-[#D62828]/20 text-[#D62828] flex items-center justify-center mb-4">
-              <Download size={24} />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-6 w-full text-center">
-              Export Options
-            </h3>
-            
-            <div className="flex flex-col gap-3 w-full">
-              <Button 
-                onClick={() => {
-                  setShowExportModal(false);
-                  handleExportPDF();
-                }}
-                disabled={isExporting}
-                className="w-full justify-start gap-3 bg-[#2d2d30] border border-[#3d3d40] hover:bg-[#3d3d40] hover:border-white/20 h-12 text-sm text-white shadow-none transition-all active:scale-[0.98]"
-              >
-                 {isExporting ? <Loader2 size={18} className="animate-spin text-gray-400" /> : <Download size={18} className="text-[#D62828]" />} Export to PDF
-              </Button>
-              <Button 
-                onClick={() => {
-                  setShowExportModal(false);
-                  handleExportPPTX();
-                }}
-                disabled={isExporting}
-                className="w-full justify-start gap-3 bg-[#2d2d30] border border-[#3d3d40] hover:bg-[#3d3d40] hover:border-white/20 h-12 text-sm text-white shadow-none transition-all active:scale-[0.98]"
-              >
-                 {isExporting && exportType === 'PPTX' ? <Loader2 size={18} className="animate-spin text-gray-400" /> : <PresentationIcon size={18} className="text-[#D62828]" />} Export to PowerPoint
-              </Button>
-              <Button 
-                onClick={() => {
-                  setShowExportModal(false);
-                  handleExportPPTX(); // PPTX is best for Google Slides too
-                  addToast('Downloading PPTX... You can upload this to Google Slides.', 'info');
-                }}
-                disabled={isExporting}
-                className="w-full justify-start gap-3 bg-[#2d2d30] border border-[#3d3d40] hover:bg-[#3d3d40] hover:border-white/20 h-12 text-sm text-white shadow-none transition-all active:scale-[0.98]"
-              >
-                 {isExporting && exportType === 'Google Slides' ? <Loader2 size={18} className="animate-spin text-gray-400" /> : <LayoutIcon size={18} className="text-[#D62828]" />} Export to Google Slides
-              </Button>
-              <Button 
-                onClick={() => {
-                  setShowExportModal(false);
-                  handleExportPNGs();
-                }}
-                disabled={isExporting}
-                className="w-full justify-start gap-3 bg-[#2d2d30] border border-[#3d3d40] hover:bg-[#3d3d40] hover:border-white/20 h-12 text-sm text-white shadow-none transition-all active:scale-[0.98]"
-              >
-                 {isExporting && exportType === 'PNG' ? <Loader2 size={18} className="animate-spin text-gray-400" /> : <Download size={18} className="text-[#D62828]" />} Export as PNGs
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ExportModal 
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onExport={handleExport}
+        isExporting={isExporting}
+        exportType={exportType}
+      />
     </div>
   );
 }

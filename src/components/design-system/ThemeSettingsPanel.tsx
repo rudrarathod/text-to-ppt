@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Palette, Type, Square, Zap, ChevronDown, Copy, Check, MousePointer2, Layers, Move, Settings, CircleAlert } from "lucide-react";
-import { cn } from "../../lib/utils";
+import { cn, copyToClipboard } from "../../lib/utils";
 import { FontSelector } from "./FontSelector";
 
 interface ThemeSettingsPanelProps {
@@ -28,7 +28,7 @@ export function ThemeSettingsPanel({ config, onChange, layout = 'sidebar', width
   const gridGap = "gap-x-8 gap-y-6";
 
   const handleCopy = (key: string, value: string) => {
-    navigator.clipboard.writeText(value);
+    copyToClipboard(value);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 2000);
   };
