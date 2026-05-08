@@ -292,6 +292,7 @@ export function PresentationBuilder() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   const handleSave = () => {
     // Zustand persists state automatically, so we just provide visual feedback
@@ -531,11 +532,10 @@ export function PresentationBuilder() {
               <Play size={14} className="fill-current" /> <span className="hidden sm:inline">Present</span>
             </Button>
             <Button 
-              onClick={handleExportPDF} 
-              disabled={isExporting}
+              onClick={() => setShowExportModal(true)} 
               className="gap-2 border-none shrink-0 h-8 lg:h-10 text-xs lg:text-sm px-3 bg-[#D62828] hover:bg-[#b20112] text-white transition-colors shadow-lg"
             >
-              {isExporting ? <Loader2 size={14} className="animate-spin" /> : <><Download size={14} /> <span className="hidden sm:inline">Export</span> PDF</>}
+              <Download size={14} /> <span className="hidden sm:inline">Export</span>
             </Button>
           </div>
         </div>
@@ -1184,6 +1184,66 @@ export function PresentationBuilder() {
          <button onClick={() => setMobileTab('preview')} className={cn("flex flex-col items-center gap-1", mobileTab === 'preview' ? "text-[#D62828]" : "text-gray-500")}><Play size={20} /><span className="text-[9px] font-bold uppercase tracking-widest">Preview</span></button>
          <button onClick={() => setMobileTab('editor')} className={cn("flex flex-col items-center gap-1", mobileTab === 'editor' ? "text-[#D62828]" : "text-gray-500")}><Edit2 size={20} /><span className="text-[9px] font-bold uppercase tracking-widest">Editor</span></button>
       </div>
+
+      {/* Export Options Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[#1a1a1c] border border-white/10 rounded-2xl p-6 w-full max-w-sm flex flex-col items-center shadow-2xl relative">
+            <button 
+              onClick={() => setShowExportModal(false)}
+              className="absolute right-4 top-4 text-gray-400 hover:text-white"
+            >
+              <X size={20} />
+            </button>
+            <div className="w-12 h-12 rounded-full bg-[#D62828]/20 text-[#D62828] flex items-center justify-center mb-4">
+              <Download size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-6 w-full text-center">
+              Export Options
+            </h3>
+            
+            <div className="flex flex-col gap-3 w-full">
+              <Button 
+                onClick={() => {
+                  setShowExportModal(false);
+                  handleExportPDF();
+                }}
+                disabled={isExporting}
+                className="w-full justify-start gap-3 bg-[#2d2d30] border border-[#3d3d40] hover:bg-[#3d3d40] hover:border-white/20 h-12 text-sm text-white shadow-none transition-all active:scale-[0.98]"
+              >
+                 {isExporting ? <Loader2 size={18} className="animate-spin text-gray-400" /> : <Download size={18} className="text-[#D62828]" />} Export to PDF
+              </Button>
+              <Button 
+                onClick={() => {
+                  setShowExportModal(false);
+                  addToast('PowerPoint export is coming soon.', 'info');
+                }}
+                className="w-full justify-start gap-3 bg-[#2d2d30] border border-[#3d3d40] hover:bg-[#3d3d40] hover:border-white/20 h-12 text-sm text-white shadow-none transition-all active:scale-[0.98]"
+              >
+                 <PresentationIcon size={18} className="text-[#D62828]" /> Export to PowerPoint
+              </Button>
+              <Button 
+                onClick={() => {
+                  setShowExportModal(false);
+                  addToast('Google Slides export is coming soon.', 'info');
+                }}
+                className="w-full justify-start gap-3 bg-[#2d2d30] border border-[#3d3d40] hover:bg-[#3d3d40] hover:border-white/20 h-12 text-sm text-white shadow-none transition-all active:scale-[0.98]"
+              >
+                 <LayoutIcon size={18} className="text-[#D62828]" /> Export to Google Slides
+              </Button>
+              <Button 
+                onClick={() => {
+                  setShowExportModal(false);
+                  addToast('PNG export is coming soon.', 'info');
+                }}
+                className="w-full justify-start gap-3 bg-[#2d2d30] border border-[#3d3d40] hover:bg-[#3d3d40] hover:border-white/20 h-12 text-sm text-white shadow-none transition-all active:scale-[0.98]"
+              >
+                 <Download size={18} className="text-[#D62828]" /> Export as PNGs
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
