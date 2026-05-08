@@ -43,6 +43,8 @@ import { AIAssistantPanel } from "../components/ai/AIAssistantPanel";
 import { PageHeader } from "../components/layout/PageHeader";
 
 import { SlideShowcase } from "../components/SlideShowcase";
+import { ConfirmationModal } from "../components/ConfirmationModal";
+
 
 
 
@@ -79,7 +81,8 @@ const SAMPLE_DATA: Record<LayoutVariant, any> = {
 };
 
 
-const ReorderableLayout = ({ l, selectedLayoutId, setSelectedLayoutId, setMobileTab, editingLayoutId, editingLayoutName, setEditingLayoutName, renameLayoutInActiveTemplate, setEditingLayoutId, workingCode, duplicateLayoutInActiveTemplate, removeLayoutFromActiveTemplate, layouts, isDefaultTemplate }: any) => {
+const ReorderableLayout = ({ l, selectedLayoutId, setSelectedLayoutId, setMobileTab, editingLayoutId, editingLayoutName, setEditingLayoutName, renameLayoutInActiveTemplate, setEditingLayoutId, workingCode, duplicateLayoutInActiveTemplate, setLayoutToDelete, layouts, isDefaultTemplate }: any) => {
+
   const controls = useDragControls();
   
   return (
@@ -147,7 +150,8 @@ const ReorderableLayout = ({ l, selectedLayoutId, setSelectedLayoutId, setMobile
                 <button onClick={(e) => { e.stopPropagation(); duplicateLayoutInActiveTemplate(l.id); }} className="p-1 hover:text-white" title="Duplicate"><Copy size={12} /></button>
                 <button onClick={(e) => { e.stopPropagation(); setEditingLayoutId(l.id); setEditingLayoutName(l.name); }} className="p-1 hover:text-white" title="Rename"><Edit2 size={12} /></button>
                 {layouts.length > 1 && (
-                  <button onClick={(e) => { e.stopPropagation(); if (window.confirm("Delete layout?")) removeLayoutFromActiveTemplate(l.id); }} className="p-1 hover:text-[#D62828]" title="Delete"><Trash2 size={12} /></button>
+                  <button onClick={(e) => { e.stopPropagation(); setLayoutToDelete(l.id); }} className="p-1 hover:text-[#D62828]" title="Delete"><Trash2 size={12} /></button>
+
                 )}
               </div>
             )}
@@ -213,6 +217,8 @@ export function TemplateBuilder() {
   const [themeAiPrompt, setThemeAiPrompt] = useState("");
   const [themeAiResponse, setThemeAiResponse] = useState("");
   const [isGeneratingTheme, setIsGeneratingTheme] = useState(false);
+  const [layoutToDelete, setLayoutToDelete] = useState<string | null>(null);
+
 
   const handleThemeAiGenerate = async () => {
     if (!themeAiPrompt.trim()) return;
@@ -677,7 +683,7 @@ export function TemplateBuilder() {
                      setEditingLayoutId={setEditingLayoutId}
                      workingCode={workingCode}
                      duplicateLayoutInActiveTemplate={duplicateLayoutInActiveTemplate}
-                     removeLayoutFromActiveTemplate={removeLayoutFromActiveTemplate}
+                     setLayoutToDelete={setLayoutToDelete}
                      layouts={layouts}
                      isDefaultTemplate={activeTemplate?.isDefault}
                    />
@@ -867,7 +873,8 @@ export function TemplateBuilder() {
                                <button onClick={() => moveLayoutInActiveTemplate(l.id, 'down')} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Move Down"><ChevronDown size={14} /></button>
                                <button onClick={() => duplicateLayoutInActiveTemplate(l.id)} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Duplicate"><Copy size={14} /></button>
                                <button onClick={() => { setSelectedLayoutId(l.id); setBuilderMode('individual'); }} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Edit"><Edit2 size={14} /></button>
-                               <button onClick={() => { if (window.confirm("Delete layout?")) removeLayoutFromActiveTemplate(l.id); }} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Delete"><Trash2 size={14} /></button>
+                               <button onClick={() => setLayoutToDelete(l.id)} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Delete"><Trash2 size={14} /></button>
+
                            </div>
                          </div>
                       </div>
@@ -909,6 +916,22 @@ export function TemplateBuilder() {
            </div>
         </div>
       </FullScreenModal>
+
+      <ConfirmationModal 
+        isOpen={!!layoutToDelete}
+        title="Delete Layout?"
+        message="Are you sure you want to delete this layout? This action cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (layoutToDelete) {
+            removeLayoutFromActiveTemplate(layoutToDelete);
+            setLayoutToDelete(null);
+          }
+        }}
+        onCancel={() => setLayoutToDelete(null)}
+        variant="danger"
+      />
     </div>
+
   );
 }

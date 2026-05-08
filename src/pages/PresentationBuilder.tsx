@@ -15,6 +15,8 @@ const IMAGE_PLACEHOLDER = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http:/
 
 import { PromptSettingsForm, MOOD_OPTIONS, LANGUAGE_OPTIONS, LENGTH_OPTIONS, STYLE_OPTIONS, PRESET_PROMPTS, SINGLE_SLIDE_PROMPTS, DETAIL_OPTIONS, SelectOrCustom } from "../components/PromptSettingsUI";
 import { AIAssistantPanel } from "../components/ai/AIAssistantPanel";
+import { ConfirmationModal } from "../components/ConfirmationModal";
+
 
 const extractDefaultContent = (layoutCode: string, existingContent: Record<string, any> = {}) => {
   const regex = /\{\{\{?\s*(?:[#^]?(?:if|each|unless)\s+)?([a-zA-Z0-9_]+)\s*\}\}\}?/g;
@@ -47,7 +49,8 @@ const extractDefaultContent = (layoutCode: string, existingContent: Record<strin
 import { useParams, useNavigate } from "react-router-dom";
 
 
-const ReorderableSlide = ({ s, idx, selectedSlideId, setSelectedSlideId, layouts, designConfig, duplicateSlideInActivePresentation, removeSlide }: any) => {
+const ReorderableSlide = ({ s, idx, selectedSlideId, setSelectedSlideId, layouts, designConfig, duplicateSlideInActivePresentation, setSlideToDelete }: any) => {
+
   const controls = useDragControls();
   const l = layouts.find((x: any) => x.id === s.layoutId);
   
@@ -117,9 +120,8 @@ const ReorderableSlide = ({ s, idx, selectedSlideId, setSelectedSlideId, layouts
         <button 
           onClick={(e) => { 
             e.stopPropagation(); 
-            if (window.confirm("Delete this slide?")) {
-              removeSlide(s.id); 
-            }
+            setSlideToDelete(s.id);
+
           }}
           className="h-7 w-7 flex items-center justify-center bg-black/60 hover:bg-[#b20112] text-white rounded-lg backdrop-blur-md shadow-lg border border-white/10"
           title="Delete Slide"
@@ -136,7 +138,7 @@ const ReorderableSlide = ({ s, idx, selectedSlideId, setSelectedSlideId, layouts
 export function PresentationBuilder() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { templates, presentations, activePresentationId, setSlides, addSlide, removeSlide, updateSlideContent, updateSlideLayout, updateLayoutInTemplate, setActiveTemplate, setPresentationTemplate, setActivePresentation, updateSlideThumbnail, addToast, duplicateSlideInActivePresentation, moveSlideInActivePresentation } = useAppStore();
+  const { templates, presentations, activePresentationId, setSlides, addSlide, removeSlide, updateSlideContent, updateSlideLayout, updateLayoutInTemplate, setActiveTemplate, setPresentationTemplate, setActivePresentation, updateSlideThumbnail, updateSlideCode, addToast, duplicateSlideInActivePresentation, moveSlideInActivePresentation } = useAppStore();
   const [isCapturing, setIsCapturing] = useState(false);
   
   useEffect(() => {
@@ -205,11 +207,10 @@ export function PresentationBuilder() {
   const [showPromptSettings, setShowPromptSettings] = useState(false);
   const [isLayoutAiCollapsed, setIsLayoutAiCollapsed] = useState(false);
   const [promptSettings, setPromptSettings] = useState<PromptSettings>({
-    mood: "",
-    length: "",
-    language: "",
     style: ""
   });
+  const [slideToDelete, setSlideToDelete] = useState<string | null>(null);
+
   const [mobileTab, setMobileTab] = useState<'slides' | 'preview' | 'editor'>('preview');
   const [captureSlideData, setCaptureSlideData] = useState<{
     templateCode: string;
@@ -334,7 +335,7 @@ export function PresentationBuilder() {
     if (!aiPrompt.trim() || !activeLayout || !selectedSlideId) return;
     setIsAiLoading(true);
     try {
-      const newJsonString = await askAiForSlideContent(aiPrompt, activeLayout.code, jsonInput, promptSettings);
+      const newJsonString = await askAiForSlideContent(aiPrompt, selectedSlide?.code || activeLayout.code, jsonInput, promptSettings);
       if (newJsonString) {
         setJsonInput(newJsonString);
         try {
@@ -448,7 +449,7 @@ export function PresentationBuilder() {
         const layout = layouts.find(l => l.id === slide.layoutId) || layouts[0];
         
         setCaptureSlideData({
-          templateCode: layout.code,
+          templateCode: slide.code || layout.code,
           data: slide.content,
           designConfig: designConfig
         });
@@ -574,8 +575,9 @@ export function PresentationBuilder() {
                 layouts={layouts}
                 designConfig={designConfig}
                 duplicateSlideInActivePresentation={duplicateSlideInActivePresentation}
-                removeSlide={removeSlide}
+                setSlideToDelete={setSlideToDelete}
               />
+
             ))}
           </Reorder.Group>
       </div>
@@ -647,7 +649,7 @@ export function PresentationBuilder() {
               <>
                 <SlidePreview 
                    ref={previewRef}
-                   templateCode={isEditingLayoutCode ? layoutEditCode : (activeLayout?.code || "")} 
+                   templateCode={isEditingLayoutCode ? layoutEditCode : (selectedSlide?.code || activeLayout?.code || "")} 
                    data={previewData} 
                    designConfig={designConfig}
                    interactive={true}
@@ -941,7 +943,7 @@ export function PresentationBuilder() {
                         <Button 
                           onClick={() => {
                             if (activeLayout && activeTemplateId) {
-                              updateLayoutInTemplate(activeTemplateId, activeLayout.id, { code: layoutEditCode });
+                              updateSlideCode(selectedSlideId!, layoutEditCode);
                               if (tempJsonInput) {
                                 try {
                                   const parsed = JSON.parse(tempJsonInput);
@@ -1136,7 +1138,7 @@ export function PresentationBuilder() {
                            <button 
                              onClick={() => {
                                if (activeLayout) {
-                                 setLayoutEditCode(activeLayout.code);
+                                 setLayoutEditCode(selectedSlide.code || activeLayout.code);
                                  setTempJsonInput(jsonInput);
                                  setIsEditingLayoutCode(true);
                                }
@@ -1156,6 +1158,7 @@ export function PresentationBuilder() {
                                if (newLayout && selectedSlide) {
                                  const newContent = extractDefaultContent(newLayout.code, selectedSlide.content);
                                  updateSlideLayout(selectedSlide.id, l.id);
+                                 updateSlideCode(selectedSlide.id, ""); // Clear custom code when changing layout
                                  updateSlideContent(selectedSlide.id, newContent);
                                  setJsonInput(JSON.stringify(newContent, null, 2));
                                }
@@ -1252,7 +1255,7 @@ export function PresentationBuilder() {
                  placeholder="e.g. Generate 3 key points..."
                  defaultMode={aiMode}
                  onModeChange={(mode) => setAiMode(mode as 'ai' | 'prompt')}
-                 systemPromptBuilder={(p) => buildSlideContentPrompt(p, activeLayout?.code || "", jsonInput, promptSettings)}
+                  systemPromptBuilder={(p) => buildSlideContentPrompt(p, selectedSlide?.code || activeLayout?.code || "", jsonInput, promptSettings)}
                />
                {aiMode === 'prompt' && (
                  <div className="relative mt-2 bg-[#1e1e1e] border border-[#2d2d30] rounded-xl p-2 shadow-2xl">
@@ -1313,6 +1316,21 @@ export function PresentationBuilder() {
         onExport={handleExport}
         isExporting={isExporting}
         exportType={exportType}
+      />
+
+      <ConfirmationModal 
+        isOpen={!!slideToDelete}
+        title="Delete Slide?"
+        message="Are you sure you want to delete this slide? This action cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (slideToDelete) {
+            removeSlide(slideToDelete);
+            setSlideToDelete(null);
+          }
+        }}
+        onCancel={() => setSlideToDelete(null)}
+        variant="danger"
       />
     </div>
   );

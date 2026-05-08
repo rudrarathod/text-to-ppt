@@ -214,6 +214,7 @@ interface AppState {
   moveSlideInActivePresentation: (slideId: string, direction: 'up' | 'down') => void;
   updateTemplateDesign: (templateId: string, config: Partial<DesignConfig>) => void;
   updateSlideThumbnail: (slideId: string, thumbnail: string) => void;
+  updateSlideCode: (slideId: string, code: string) => void;
   loadDefaultTemplatesFromAssets: () => void;
   
   toasts: Toast[];
@@ -756,6 +757,13 @@ export const useAppStore = create<AppState>()(
         presentations: state.presentations.map(p => 
           p.id === state.activePresentationId 
             ? { ...p, slides: p.slides.map(s => s.id === slideId ? { ...s, thumbnail } : s) }
+            : p
+        )
+      })),
+      updateSlideCode: (slideId, code) => set((state) => ({
+        presentations: state.presentations.map(p => 
+          p.id === state.activePresentationId 
+            ? { ...p, slides: p.slides.map(s => s.id === slideId ? { ...s, code } : s), updatedAt: Date.now() }
             : p
         )
       })),
