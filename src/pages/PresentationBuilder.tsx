@@ -1,22 +1,19 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { Reorder, useDragControls } from "motion/react";
 import { useAppStore, SlideData } from "../store";
 import Editor from "../components/LazyEditor";
 import { SlidePreview, SlideStatic, SlidePreviewRef } from "../components/SlidePreview";
 import { Button, Textarea } from "../components/ui";
-import { Download, Plus, Trash2, LayoutTemplate, Sparkles, X, Copy, Check, Settings2, Save, Loader2, Palette, Code2, Presentation as PresentationIcon, Layout as LayoutIcon, ArrowLeft, Play, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit2, GripVertical } from "lucide-react";
+import { Download, Plus, Trash2, LayoutTemplate, Sparkles, X, Mic, Copy, Check, Settings2, ChevronDown, ChevronUp, Save, Loader2, Palette, Code2, Presentation as PresentationIcon, Layout as LayoutIcon, ArrowLeft, Play, ChevronLeft, ChevronRight, Maximize, Minimize, Edit2 } from "lucide-react";
 import jsPDF from "jspdf";
-import { cn, copyToClipboard } from "../lib/utils";
+import { toJpeg } from "html-to-image";
+import { cn } from "../lib/utils";
 import { askAiForSlideContent, buildSlideContentPrompt, askAiForFullPresentation, buildPresentationPrompt, PromptSettings, askAiForLayoutCode, buildLayoutPrompt } from "../lib/gemini";
-import { generatePPTX, generatePNGZip } from "../lib/exportUtils";
-import { ExportModal } from "../components/ExportModal";
+import { generateFullPresentationHtml } from "../lib/export";
 
 const IMAGE_PLACEHOLDER = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300' width='100%25' height='100%25'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Cpath stroke='%239ca3af' stroke-width='4' stroke-dasharray='10,10' d='M20 20 h360 v260 h-360 z' fill='none'/%3E%3Ccircle cx='200' cy='120' r='40' fill='%23d1d5db'/%3E%3Cpath d='M200 160 l50 -50 l80 80 v90 h-260 v-40 l60 -60 z' fill='%23d1d5db'/%3E%3Ctext x='50%25' y='85%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%239ca3af'%3EImage Placeholder%3C/text%3E%3C/svg%3E";
 
 import { PromptSettingsForm, MOOD_OPTIONS, LANGUAGE_OPTIONS, LENGTH_OPTIONS, STYLE_OPTIONS, PRESET_PROMPTS, SINGLE_SLIDE_PROMPTS, DETAIL_OPTIONS, SelectOrCustom } from "../components/PromptSettingsUI";
 import { AIAssistantPanel } from "../components/ai/AIAssistantPanel";
-import { ConfirmationModal } from "../components/ConfirmationModal";
-
 
 const extractDefaultContent = (layoutCode: string, existingContent: Record<string, any> = {}) => {
   const regex = /\{\{\{?\s*(?:[#^]?(?:if|each|unless)\s+)?([a-zA-Z0-9_]+)\s*\}\}\}?/g;
@@ -48,98 +45,10 @@ const extractDefaultContent = (layoutCode: string, existingContent: Record<strin
 
 import { useParams, useNavigate } from "react-router-dom";
 
-
-const ReorderableSlide = ({ s, idx, selectedSlideId, setSelectedSlideId, layouts, designConfig, duplicateSlideInActivePresentation, setSlideToDelete }: any) => {
-
-  const controls = useDragControls();
-  const l = layouts.find((x: any) => x.id === s.layoutId);
-  
-  return (
-    <Reorder.Item 
-      value={s}
-      dragListener={false}
-      dragControls={controls}
-      transition={{ type: "spring", stiffness: 400, damping: 40 }}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileDrag={{ 
-        scale: 1.02, 
-        boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.5)",
-        zIndex: 50,
-        cursor: "grabbing"
-      }}
-      onClick={() => setSelectedSlideId(s.id)}
-      className={cn(
-        "relative group cursor-pointer border-2 rounded-xl aspect-video w-full lg:w-full flex-shrink-0 flex flex-col bg-[#1e1e1e] overflow-hidden select-none",
-        selectedSlideId === s.id ? "border-[#D62828] shadow-lg shadow-[#D62828]/20 ring-1 ring-[#D62828]/20" : "border-[#2d2d30] hover:border-[#3d3d40]"
-      )}
-    >
-      {/* Visual Preview Area */}
-      <div 
-        className="flex-1 flex items-center justify-center overflow-hidden pointer-events-none"
-        style={{ backgroundColor: designConfig.bg }}
-      >
-         {s.thumbnail ? (
-           <img src={s.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
-         ) : (
-           <div className="p-2 text-center">
-              <div 
-                className="line-clamp-2 text-[10px] font-bold leading-tight"
-                style={{ color: designConfig.primary }}
-              >
-                {s.content.title || "Untitled Slide"}
-              </div>
-           </div>
-         )}
-      </div>
-
-      {/* Footer with meta info */}
-      <div className="h-7 border-t border-[#2d2d30] px-2 flex items-center justify-between bg-[#161618]">
-         <div className="flex items-center gap-1">
-            <div 
-              onPointerDown={(e) => { e.preventDefault(); controls.start(e); }}
-              className="p-1.5 -ml-1.5 cursor-grab active:cursor-grabbing text-gray-500 hover:text-white hover:bg-white/10 rounded-md transition-all flex items-center justify-center"
-              title="Drag to reorder"
-            >
-              <GripVertical size={14} />
-            </div>
-           <span className="text-[9px] font-bold text-gray-500">{idx + 1}</span>
-         </div>
-         <span className="text-[8px] text-gray-500 uppercase tracking-tighter opacity-70 truncate max-w-[60px]">{l?.variant || "Slide"}</span>
-      </div>
-
-      {/* Actions Overlay */}
-      <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-20">
-        <button 
-          onClick={(e) => { e.stopPropagation(); duplicateSlideInActivePresentation(s.id); }}
-          className="h-7 w-7 flex items-center justify-center bg-black/60 hover:bg-[#D62828] text-white rounded-lg backdrop-blur-md shadow-lg border border-white/10"
-          title="Duplicate Slide"
-        >
-          <Copy size={14} />
-        </button>
-        <button 
-          onClick={(e) => { 
-            e.stopPropagation(); 
-            setSlideToDelete(s.id);
-
-          }}
-          className="h-7 w-7 flex items-center justify-center bg-black/60 hover:bg-[#b20112] text-white rounded-lg backdrop-blur-md shadow-lg border border-white/10"
-          title="Delete Slide"
-        >
-          <Trash2 size={14} />
-        </button>
-      </div>
-    </Reorder.Item>
-  );
-};
-
-
-
 export function PresentationBuilder() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { templates, presentations, activePresentationId, setSlides, addSlide, removeSlide, updateSlideContent, updateSlideLayout, updateLayoutInTemplate, setActiveTemplate, setPresentationTemplate, setActivePresentation, updateSlideThumbnail, updateSlideCode, addToast, duplicateSlideInActivePresentation, moveSlideInActivePresentation } = useAppStore();
-  const [isCapturing, setIsCapturing] = useState(false);
+  const { templates, presentations, activePresentationId, setSlides, addSlide, removeSlide, updateSlideContent, updateSlideLayout, setActiveTemplate, setPresentationTemplate, setActivePresentation, updateSlideThumbnail } = useAppStore();
   
   useEffect(() => {
     if (id && id !== activePresentationId) {
@@ -205,20 +114,13 @@ export function PresentationBuilder() {
   const [isGeneratingPresentation, setIsGeneratingPresentation] = useState(false);
   
   const [showPromptSettings, setShowPromptSettings] = useState(false);
-  const [isLayoutAiCollapsed, setIsLayoutAiCollapsed] = useState(false);
   const [promptSettings, setPromptSettings] = useState<PromptSettings>({
+    mood: "",
+    length: "",
+    language: "",
     style: ""
   });
-  const [slideToDelete, setSlideToDelete] = useState<string | null>(null);
-
   const [mobileTab, setMobileTab] = useState<'slides' | 'preview' | 'editor'>('preview');
-  const [captureSlideData, setCaptureSlideData] = useState<{
-    templateCode: string;
-    data: any;
-    designConfig: any;
-  } | null>(null);
-  const captureRef = useRef<any>(null);
-  const [exportType, setExportType] = useState<'PDF' | 'PPTX' | 'PNG' | 'Google Slides'>('PDF');
   const [isSwitchingSlide, setIsSwitchingSlide] = useState(false);
   const touchStart = useRef<number | null>(null);
   const touchEnd = useRef<number | null>(null);
@@ -335,7 +237,7 @@ export function PresentationBuilder() {
     if (!aiPrompt.trim() || !activeLayout || !selectedSlideId) return;
     setIsAiLoading(true);
     try {
-      const newJsonString = await askAiForSlideContent(aiPrompt, selectedSlide?.code || activeLayout.code, jsonInput, promptSettings);
+      const newJsonString = await askAiForSlideContent(aiPrompt, activeLayout.code, jsonInput, promptSettings);
       if (newJsonString) {
         setJsonInput(newJsonString);
         try {
@@ -376,13 +278,12 @@ export function PresentationBuilder() {
   };
 
   const handleAddSlide = () => {
-    const layout = layouts[0];
-    if (!layout) return;
-
+    const layoutId = layouts[0]?.id || "";
+    const layoutCode = layouts[0]?.code || "";
     const newSlide: SlideData = {
       id: `s-${Date.now()}`,
-      layoutId: layout.id,
-      content: layout.mockData ? { ...layout.mockData } : extractDefaultContent(layout.code, { title: "New Slide" })
+      layoutId: layoutId,
+      content: extractDefaultContent(layoutCode, { title: "New Slide" })
     };
     addSlide(newSlide);
     setSelectedSlideId(newSlide.id);
@@ -399,77 +300,53 @@ export function PresentationBuilder() {
     setTimeout(() => setIsSaved(false), 2000);
   };
 
-  const handleExport = async (type: 'PDF' | 'PPTX' | 'PNG' | 'Google Slides') => {
+  const handleExportPDF = async () => {
     if (!activePresentation || slides.length === 0) return;
     
-    setExportType(type);
+    setIsExporting(true);
+    setExportProgress(10);
+    
     try {
-      const images = await captureAllSlides();
-      if (images.length > 0) {
-        if (type === 'PDF') {
-          const pdf = new jsPDF({
-            orientation: 'landscape',
-            unit: 'px',
-            format: [1280, 720]
-          });
+      setExportProgress(30);
+      const fullHtml = generateFullPresentationHtml(slides, layouts, designConfig);
+      
+      setExportProgress(50);
+      const response = await fetch('/api/export-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          html: fullHtml,
+          name: activePresentation.name
+        }),
+      });
 
-          images.forEach((img, index) => {
-            if (index > 0) pdf.addPage([1280, 720], 'landscape');
-            pdf.addImage(img, 'JPEG', 0, 0, 1280, 720, undefined, 'FAST');
-          });
-
-          pdf.save(`${activePresentation.name || 'presentation'}.pdf`);
-          addToast('PDF exported successfully!', 'success');
-        } else if (type === 'PPTX' || type === 'Google Slides') {
-          await generatePPTX(images, activePresentation.name);
-          addToast(type === 'PPTX' ? 'PowerPoint exported successfully!' : 'PowerPoint exported! You can now upload it to Google Slides.', 'success');
-        } else if (type === 'PNG') {
-          await generatePNGZip(images, activePresentation.name);
-          addToast('Images exported successfully!', 'success');
-        }
+      if (!response.ok) {
+        throw new Error(await response.text());
       }
+
+      setExportProgress(80);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${activePresentation.name || 'presentation'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      setExportProgress(100);
     } catch (e: any) {
       console.error("Export Error:", e);
-      addToast(`Failed to export ${type}: ` + e.message, 'error');
+      alert("Failed to export PDF: " + e.message);
     } finally {
-      setIsExporting(false);
-      setExportProgress(0);
+      setTimeout(() => {
+        setIsExporting(false);
+        setExportProgress(0);
+      }, 1000);
     }
-  };
-
-  const captureAllSlides = async () => {
-    const images: string[] = [];
-    setIsExporting(true);
-    setExportProgress(0);
-    setIsCapturing(true);
-    
-    try {
-      for (let i = 0; i < slides.length; i++) {
-        const slide = slides[i];
-        const layout = layouts.find(l => l.id === slide.layoutId) || layouts[0];
-        
-        setCaptureSlideData({
-          templateCode: slide.code || layout.code,
-          data: slide.content,
-          designConfig: designConfig
-        });
-        
-        // Wait for render and fonts
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        if (captureRef.current) {
-          const img = await captureRef.current.capture();
-          if (img) images.push(img);
-        }
-        
-        setExportProgress(Math.round(((i + 1) / slides.length) * 100));
-      }
-    } finally {
-      setIsCapturing(false);
-      setCaptureSlideData(null);
-    }
-    
-    return images;
   };
 
 
@@ -515,11 +392,7 @@ export function PresentationBuilder() {
                  </div>
               </div>
               <div className="space-y-2">
-                 <h2 className="text-2xl font-black text-white tracking-tight">
-                   {exportType === 'PDF' ? 'Generating PDF' : 
-                    exportType === 'PPTX' ? 'Creating PowerPoint' :
-                    exportType === 'PNG' ? 'Exporting Images' : 'Generating Slides'}
-                 </h2>
+                 <h2 className="text-2xl font-black text-white tracking-tight">Generating PDF</h2>
                  <p className="text-gray-400">Please wait while we render your slides with high fidelity...</p>
               </div>
               <div className="w-full bg-white/10 h-2.5 rounded-full overflow-hidden shadow-inner border border-white/5">
@@ -533,53 +406,82 @@ export function PresentationBuilder() {
         </div>
       )}
 
-      {/* Hidden Capture Area */}
-      <div 
-        className="fixed -left-[5000px] top-0 opacity-0 pointer-events-none z-[-1]"
-        style={{ width: 1280, height: 720 }}
-      >
-        {captureSlideData && (
-          <SlideStatic 
-            ref={captureRef}
-            templateCode={captureSlideData.templateCode}
-            data={captureSlideData.data}
-            designConfig={captureSlideData.designConfig}
-          />
-        )}
-      </div>
-
       {/* Left Panel: Thumbnails */}
       <div className={cn(
         "bg-[#161618] border-b lg:border-b-0 lg:border-r border-[#2d2d30] flex flex-col shrink-0 transition-all duration-500",
         "absolute inset-0 z-20 lg:relative lg:translate-x-0 lg:w-64 lg:h-full lg:opacity-100 lg:pointer-events-auto",
-        isEditingLayoutCode ? "hidden" : "flex",
+        isEditingLayoutCode ? "w-0 opacity-0 border-r-0 pointer-events-none" : "",
         mobileTab === 'slides' ? "translate-x-0 opacity-100 pointer-events-auto h-full" : "translate-x-[-100%] opacity-0 pointer-events-none lg:translate-x-0 lg:opacity-100"
       )}>
         <div className="p-3 lg:p-4 border-b border-[#2d2d30] flex items-center justify-between shrink-0">
           <h2 className="font-bold text-sm text-white flex items-center gap-2">Slides <span className="bg-[#2d2d30] text-xs px-2 py-0.5 rounded-full">{slides.length}</span></h2>
           <Button onClick={handleAddSlide} variant="ghost" className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-[#2d2d30]" title="Add Slide"><Plus size={16} /></Button>
         </div>
-        <Reorder.Group 
-            axis="y" 
-            values={slides} 
-            onReorder={setSlides}
-            className="flex-1 overflow-y-auto p-3 lg:p-4 flex flex-col gap-4 content-start"
-          >
-            {slides.map((s, idx) => (
-              <ReorderableSlide 
+        <div 
+          ref={sidebarRef}
+          onScroll={handleSidebarScroll}
+          className="flex-1 overflow-y-auto p-3 lg:p-4 grid grid-cols-2 lg:flex lg:flex-col gap-4 content-start"
+        >
+          {/* Top spacer for virtualization */}
+          <div className="hidden lg:block shrink-0" style={{ height: paddingTop }} />
+          
+          {(window.innerWidth < 1024 ? slides : slides.slice(startIndex, endIndex)).map((s, sliceIdx) => {
+            const idx = startIndex + sliceIdx;
+            const l = layouts.find(x => x.id === s.layoutId);
+            return (
+              <div 
                 key={s.id}
-                s={s}
-                idx={idx}
-                selectedSlideId={selectedSlideId}
-                setSelectedSlideId={setSelectedSlideId}
-                layouts={layouts}
-                designConfig={designConfig}
-                duplicateSlideInActivePresentation={duplicateSlideInActivePresentation}
-                setSlideToDelete={setSlideToDelete}
-              />
+                onClick={() => setSelectedSlideId(s.id)}
+                className={cn(
+                  "relative group cursor-pointer border-2 rounded-xl aspect-video w-full lg:w-full flex-shrink-0 flex flex-col bg-[#1e1e1e] transition-all overflow-hidden",
+                  selectedSlideId === s.id ? "border-[#D62828] shadow-lg shadow-[#D62828]/20 ring-1 ring-[#D62828]/20" : "border-[#2d2d30] hover:border-[#3d3d40]"
+                )}
+              >
+                {/* Visual Preview Area */}
+                <div 
+                  className="flex-1 flex items-center justify-center overflow-hidden"
+                  style={{ backgroundColor: designConfig.bg }}
+                >
+                   {s.thumbnail ? (
+                     <img src={s.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
+                   ) : (
+                     <div className="p-2 text-center">
+                        <div 
+                          className="line-clamp-2 text-[10px] font-bold leading-tight"
+                          style={{ color: designConfig.primary }}
+                        >
+                          {s.content.title || "Untitled Slide"}
+                        </div>
+                     </div>
+                   )}
+                </div>
 
-            ))}
-          </Reorder.Group>
+                {/* Footer with meta info */}
+                <div className="h-7 border-t border-[#2d2d30] px-2 flex items-center justify-between bg-[#161618]">
+                   <span className="text-[9px] font-bold text-gray-500">{idx + 1}</span>
+                   <span className="text-[8px] text-gray-500 uppercase tracking-tighter opacity-70 truncate max-w-[60px]">{l?.variant || "Slide"}</span>
+                </div>
+
+                {/* Delete button */}
+                <button 
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    if (window.confirm("Delete this slide?")) {
+                      removeSlide(s.id); 
+                    }
+                  }}
+                  className="absolute top-1.5 right-1.5 h-7 w-7 flex items-center justify-center bg-black/60 hover:bg-[#b20112] text-white rounded-lg lg:opacity-0 lg:group-hover:opacity-100 transition-all backdrop-blur-md z-20 shadow-lg border border-white/10"
+                  title="Delete Slide"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            );
+          })}
+          
+          {/* Bottom spacer for virtualization */}
+          <div className="hidden lg:block shrink-0" style={{ height: paddingBottom }} />
+        </div>
       </div>
 
       {/* Center: Canvas */}
@@ -649,7 +551,7 @@ export function PresentationBuilder() {
               <>
                 <SlidePreview 
                    ref={previewRef}
-                   templateCode={isEditingLayoutCode ? layoutEditCode : (selectedSlide?.code || activeLayout?.code || "")} 
+                   templateCode={isEditingLayoutCode ? layoutEditCode : (activeLayout?.code || "")} 
                    data={previewData} 
                    designConfig={designConfig}
                    interactive={true}
@@ -828,7 +730,7 @@ export function PresentationBuilder() {
                       } else if (presentationPrompt.trim()) {
                         const layoutsArray = activeTemplate.layouts.map(l => ({id: l.id, name: l.name, code: l.code}));
                         const fullPrompt = buildPresentationPrompt(presentationPrompt, layoutsArray, promptSettings);
-                        copyToClipboard(fullPrompt);
+                        navigator.clipboard.writeText(fullPrompt);
                         setCopiedPrompt(true);
                         setTimeout(() => setCopiedPrompt(false), 2000);
                       }
@@ -842,7 +744,7 @@ export function PresentationBuilder() {
                     } else if (presentationPrompt.trim()) {
                       const layoutsArray = activeTemplate.layouts.map(l => ({id: l.id, name: l.name, code: l.code}));
                       const fullPrompt = buildPresentationPrompt(presentationPrompt, layoutsArray, promptSettings);
-                      copyToClipboard(fullPrompt);
+                      navigator.clipboard.writeText(fullPrompt);
                       setCopiedPrompt(true);
                       setTimeout(() => setCopiedPrompt(false), 2000);
                     }
@@ -942,8 +844,8 @@ export function PresentationBuilder() {
                       <div className="flex items-center gap-2">
                         <Button 
                           onClick={() => {
-                            if (activeLayout && activeTemplateId) {
-                              updateSlideCode(selectedSlideId!, layoutEditCode);
+                            if (activeLayout) {
+                              (useAppStore.getState() as any).updateLayoutInActiveTemplate(activeLayout.id, { code: layoutEditCode });
                               if (tempJsonInput) {
                                 try {
                                   const parsed = JSON.parse(tempJsonInput);
@@ -953,7 +855,6 @@ export function PresentationBuilder() {
                               }
                               setIsEditingLayoutCode(false);
                               setTempJsonInput(null);
-                              addToast("Layout updated successfully!", "success");
                             }
                           }}
                           className="h-7 text-[10px] px-4 bg-[#D62828] hover:bg-[#b20112] text-white font-bold"
@@ -1002,82 +903,59 @@ export function PresentationBuilder() {
                     </div>
 
                     {/* Layout AI Assistant Panel */}
-                    <div className={cn(
-                      "absolute left-6 right-6 bg-[#161618] border border-[#2d2d30] rounded-2xl shadow-2xl flex flex-col shrink-0 overflow-hidden z-20 transition-all duration-300",
-                      isLayoutAiCollapsed ? "bottom-6" : "bottom-6"
-                    )}>
-                       <div 
-                         className="flex items-center justify-between px-4 py-3 border-b border-[#2d2d30] bg-[#1c1c1e] cursor-pointer"
-                         onClick={() => setIsLayoutAiCollapsed(!isLayoutAiCollapsed)}
-                       >
+                    <div className="absolute bottom-6 left-6 right-6 bg-[#161618] border border-[#2d2d30] rounded-2xl shadow-2xl flex flex-col shrink-0 overflow-hidden z-20">
+                       <div className="flex items-center justify-between px-4 py-3 border-b border-[#2d2d30] bg-[#1c1c1e]">
                          <div className="flex items-center gap-3">
                            <div className="w-6 h-6 rounded-lg bg-[#fe6247]/10 flex items-center justify-center">
-                             <Sparkles size={12} className={cn("text-[#fe6247]", isLayoutAiLoading && "animate-pulse")} />
+                             <Sparkles size={12} className="text-[#fe6247] animate-pulse" />
                            </div>
                            <span className="text-white text-[11px] font-black uppercase tracking-widest">Layout AI</span>
-                           {isLayoutAiCollapsed && layoutAiPrompt && (
-                             <span className="text-[10px] text-gray-500 truncate max-w-[200px] font-medium hidden sm:inline">— {layoutAiPrompt}</span>
-                           )}
-                           {!isLayoutAiCollapsed && (
-                             <div className="flex items-center bg-[#111111] rounded-md border border-[#2d2d30] overflow-hidden text-[9px] font-bold text-gray-500 p-0.5" onClick={e => e.stopPropagation()}>
-                               <button onClick={() => setLayoutAiMode('ai')} className={cn("px-2 py-1 rounded transition-all", layoutAiMode === 'ai' ? "bg-[#252526] text-white shadow-sm" : "hover:text-gray-300")}>Auto</button>
-                               <button onClick={() => setLayoutAiMode('prompt')} className={cn("px-2 py-1 rounded transition-all", layoutAiMode === 'prompt' ? "bg-[#252526] text-white shadow-sm" : "hover:text-gray-300")}>Draft</button>
-                             </div>
-                           )}
+                           <div className="flex items-center bg-[#111111] rounded-md border border-[#2d2d30] overflow-hidden text-[9px] font-bold text-gray-500 p-0.5">
+                             <button onClick={() => setLayoutAiMode('ai')} className={cn("px-2 py-1 rounded transition-all", layoutAiMode === 'ai' ? "bg-[#252526] text-white shadow-sm" : "hover:text-gray-300")}>Auto</button>
+                             <button onClick={() => setLayoutAiMode('prompt')} className={cn("px-2 py-1 rounded transition-all", layoutAiMode === 'prompt' ? "bg-[#252526] text-white shadow-sm" : "hover:text-gray-300")}>Draft</button>
+                           </div>
                          </div>
-                         <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                            {!isLayoutAiCollapsed && (
-                              <button onClick={() => setShowPromptSettings(!showPromptSettings)} title="Prompt Settings" className={cn("text-gray-500 hover:text-white transition-colors", showPromptSettings && "text-[#fe6247]")}>
-                                 <Settings2 size={14} />
-                              </button>
-                            )}
-                            <button 
-                              onClick={() => setIsLayoutAiCollapsed(!isLayoutAiCollapsed)}
-                              className="p-1 text-gray-500 hover:text-white transition-colors"
-                            >
-                              {isLayoutAiCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-                            </button>
-                         </div>
+                         <button onClick={() => setShowPromptSettings(!showPromptSettings)} title="Prompt Settings" className={cn("text-gray-500 hover:text-white transition-colors", showPromptSettings && "text-[#fe6247]")}>
+                            <Settings2 size={14} />
+                         </button>
                        </div>
                        
-                       {!isLayoutAiCollapsed && (
-                         <>
-                           {showPromptSettings && (
-                             <div className="px-3 pb-3 border-b border-[#2d2d30] bg-[#1a1a1a]">
-                               <span className="text-[10px] font-bold text-white uppercase opacity-50 block mt-2">Settings</span>
-                               <PromptSettingsForm settings={promptSettings} setSettings={setPromptSettings} />
-                             </div>
-                           )}
-                           
-                           <div className="p-2 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                             <div className="relative">
-                               <Textarea 
-                                 value={layoutAiPrompt}
-                                 onChange={e => setLayoutAiPrompt(e.target.value)}
-                                 placeholder="e.g. Add a 3-column feature list with icons..."
-                                 className="w-full bg-[#252526] border border-[#333] text-gray-200 text-xs focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-sans resize-none rounded-lg p-2 pr-8 min-h-[50px]"
-                                 disabled={isLayoutAiLoading}
-                                 onKeyDown={(e) => {
-                                   if(e.key === 'Enter' && !e.shiftKey) {
-                                     e.preventDefault();
-                                     if (layoutAiMode === 'ai') {
-                                       handleLayoutAiGenerate();
-                                     } else if (layoutAiPrompt.trim()) {
-                                       const fullPrompt = buildLayoutPrompt(layoutAiPrompt, layoutEditCode, jsonInput, designConfig, promptSettings);
-                                       copyToClipboard(fullPrompt);
-                                       setCopiedPrompt(true);
-                                       setTimeout(() => setCopiedPrompt(false), 2000);
-                                     }
-                                   }
-                                 }}
-                               />
-                               <button 
-                                 onClick={() => {
-                                   if (layoutAiMode === 'ai') {
-                                     handleLayoutAiGenerate();
+                       {showPromptSettings && (
+                         <div className="px-3 pb-3 border-b border-[#2d2d30] bg-[#1a1a1a]">
+                           <span className="text-[10px] font-bold text-white uppercase opacity-50 block mt-2">Settings</span>
+                           <PromptSettingsForm settings={promptSettings} setSettings={setPromptSettings} />
+                         </div>
+                       )}
+                       
+                       <div className="p-2 space-y-2">
+                         <div className="relative">
+                           <Textarea 
+                             value={layoutAiPrompt}
+                             onChange={e => setLayoutAiPrompt(e.target.value)}
+                             placeholder="e.g. Add a 3-column feature list with icons..."
+                             className="w-full bg-[#252526] border border-[#333] text-gray-200 text-xs focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-sans resize-none rounded-lg p-2 pr-8 min-h-[50px]"
+                             disabled={isLayoutAiLoading}
+                             onKeyDown={(e) => {
+                               if(e.key === 'Enter' && !e.shiftKey) {
+                                 e.preventDefault();
+                                 if (layoutAiMode === 'ai') {
+                                   handleLayoutAiGenerate();
+                                 } else if (layoutAiPrompt.trim()) {
+                                   const fullPrompt = buildLayoutPrompt(layoutAiPrompt, layoutEditCode, jsonInput, designConfig, promptSettings);
+                                   navigator.clipboard.writeText(fullPrompt);
+                                   setCopiedPrompt(true);
+                                   setTimeout(() => setCopiedPrompt(false), 2000);
+                                 }
+                               }
+                             }}
+                           />
+                           <button 
+                             onClick={() => {
+                               if (layoutAiMode === 'ai') {
+                                 handleLayoutAiGenerate();
                                } else if (layoutAiPrompt.trim()) {
                                  const fullPrompt = buildLayoutPrompt(layoutAiPrompt, layoutEditCode, jsonInput, designConfig, promptSettings);
-                                 copyToClipboard(fullPrompt);
+                                 navigator.clipboard.writeText(fullPrompt);
                                  setCopiedPrompt(true);
                                  setTimeout(() => setCopiedPrompt(false), 2000);
                                }
@@ -1124,9 +1002,7 @@ export function PresentationBuilder() {
                              </button>
                            </div>
                          )}
-                           </div>
-                         </>
-                       )}
+                       </div>
                     </div>
                   </div>
                 ) : (
@@ -1138,7 +1014,7 @@ export function PresentationBuilder() {
                            <button 
                              onClick={() => {
                                if (activeLayout) {
-                                 setLayoutEditCode(selectedSlide.code || activeLayout.code);
+                                 setLayoutEditCode(activeLayout.code);
                                  setTempJsonInput(jsonInput);
                                  setIsEditingLayoutCode(true);
                                }
@@ -1158,7 +1034,6 @@ export function PresentationBuilder() {
                                if (newLayout && selectedSlide) {
                                  const newContent = extractDefaultContent(newLayout.code, selectedSlide.content);
                                  updateSlideLayout(selectedSlide.id, l.id);
-                                 updateSlideCode(selectedSlide.id, ""); // Clear custom code when changing layout
                                  updateSlideContent(selectedSlide.id, newContent);
                                  setJsonInput(JSON.stringify(newContent, null, 2));
                                }
@@ -1255,7 +1130,7 @@ export function PresentationBuilder() {
                  placeholder="e.g. Generate 3 key points..."
                  defaultMode={aiMode}
                  onModeChange={(mode) => setAiMode(mode as 'ai' | 'prompt')}
-                  systemPromptBuilder={(p) => buildSlideContentPrompt(p, selectedSlide?.code || activeLayout?.code || "", jsonInput, promptSettings)}
+                 systemPromptBuilder={(p) => buildSlideContentPrompt(p, activeLayout?.code || "", jsonInput, promptSettings)}
                />
                {aiMode === 'prompt' && (
                  <div className="relative mt-2 bg-[#1e1e1e] border border-[#2d2d30] rounded-xl p-2 shadow-2xl">
@@ -1310,28 +1185,65 @@ export function PresentationBuilder() {
          <button onClick={() => setMobileTab('editor')} className={cn("flex flex-col items-center gap-1", mobileTab === 'editor' ? "text-[#D62828]" : "text-gray-500")}><Edit2 size={20} /><span className="text-[9px] font-bold uppercase tracking-widest">Editor</span></button>
       </div>
 
-      <ExportModal 
-        isOpen={showExportModal}
-        onClose={() => setShowExportModal(false)}
-        onExport={handleExport}
-        isExporting={isExporting}
-        exportType={exportType}
-      />
-
-      <ConfirmationModal 
-        isOpen={!!slideToDelete}
-        title="Delete Slide?"
-        message="Are you sure you want to delete this slide? This action cannot be undone."
-        confirmLabel="Delete"
-        onConfirm={() => {
-          if (slideToDelete) {
-            removeSlide(slideToDelete);
-            setSlideToDelete(null);
-          }
-        }}
-        onCancel={() => setSlideToDelete(null)}
-        variant="danger"
-      />
+      {/* Export Options Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[#1a1a1c] border border-white/10 rounded-2xl p-6 w-full max-w-sm flex flex-col items-center shadow-2xl relative">
+            <button 
+              onClick={() => setShowExportModal(false)}
+              className="absolute right-4 top-4 text-gray-400 hover:text-white"
+            >
+              <X size={20} />
+            </button>
+            <div className="w-12 h-12 rounded-full bg-[#D62828]/20 text-[#D62828] flex items-center justify-center mb-4">
+              <Download size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-6 w-full text-center">
+              Export Options
+            </h3>
+            
+            <div className="flex flex-col gap-3 w-full">
+              <Button 
+                onClick={() => {
+                  setShowExportModal(false);
+                  handleExportPDF();
+                }}
+                disabled={isExporting}
+                className="w-full justify-start gap-3 bg-[#2d2d30] border border-[#3d3d40] hover:bg-[#3d3d40] hover:border-white/20 h-12 text-sm text-white shadow-none transition-all active:scale-[0.98]"
+              >
+                 {isExporting ? <Loader2 size={18} className="animate-spin text-gray-400" /> : <Download size={18} className="text-[#D62828]" />} Export to PDF
+              </Button>
+              <Button 
+                onClick={() => {
+                  setShowExportModal(false);
+                  addToast('PowerPoint export is coming soon.', 'info');
+                }}
+                className="w-full justify-start gap-3 bg-[#2d2d30] border border-[#3d3d40] hover:bg-[#3d3d40] hover:border-white/20 h-12 text-sm text-white shadow-none transition-all active:scale-[0.98]"
+              >
+                 <PresentationIcon size={18} className="text-[#D62828]" /> Export to PowerPoint
+              </Button>
+              <Button 
+                onClick={() => {
+                  setShowExportModal(false);
+                  addToast('Google Slides export is coming soon.', 'info');
+                }}
+                className="w-full justify-start gap-3 bg-[#2d2d30] border border-[#3d3d40] hover:bg-[#3d3d40] hover:border-white/20 h-12 text-sm text-white shadow-none transition-all active:scale-[0.98]"
+              >
+                 <LayoutIcon size={18} className="text-[#D62828]" /> Export to Google Slides
+              </Button>
+              <Button 
+                onClick={() => {
+                  setShowExportModal(false);
+                  addToast('PNG export is coming soon.', 'info');
+                }}
+                className="w-full justify-start gap-3 bg-[#2d2d30] border border-[#3d3d40] hover:bg-[#3d3d40] hover:border-white/20 h-12 text-sm text-white shadow-none transition-all active:scale-[0.98]"
+              >
+                 <Download size={18} className="text-[#D62828]" /> Export as PNGs
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
