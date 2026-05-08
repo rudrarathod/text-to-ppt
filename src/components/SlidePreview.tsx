@@ -86,7 +86,9 @@ const useResolvedData = (data: Record<string, any>) => {
 
     const resolveImages = async () => {
       // Check if there are any IDB images to resolve
-      const needsResolution = Object.values(data).some(v => isIdbImage(v));
+      const needsResolution = Object.values(data).some(v => 
+        typeof v === 'string' && (isIdbImage(v) || (v.startsWith('http') && !v.startsWith(window.location.origin)))
+      );
       
       if (!needsResolution) {
         if (active) setResolved(data);
@@ -94,21 +96,45 @@ const useResolvedData = (data: Record<string, any>) => {
       }
 
       const nextData = { ...data };
-      for (const key in nextData) {
-        const val = nextData[key];
+      const resolutionPromises = Object.entries(nextData).map(async ([key, val]) => {
+        if (typeof val !== 'string') return;
+
+        const blobToDataUrl = (blob: Blob): Promise<string> => {
+           return new Promise((resolve, reject) => {
+             const reader = new FileReader();
+             reader.onload = () => resolve(reader.result as string);
+             reader.onerror = reject;
+             reader.readAsDataURL(blob);
+           });
+        };
+
         if (isIdbImage(val)) {
           try {
             const blob = await getImage(val);
             if (blob && active) {
-              const url = URL.createObjectURL(blob);
-              blobUrls.push(url);
-              nextData[key] = url;
+              const dataUrl = await blobToDataUrl(blob);
+              nextData[key] = dataUrl;
             }
           } catch (err) {
-            console.error("Failed to resolve image:", val, err);
+            console.error("Failed to resolve IDB image:", val, err);
+          }
+        } else if (val.startsWith('http') && !val.startsWith(window.location.origin) && !val.startsWith('data:')) {
+          // Pre-fetch external images to avoid CORS issues in html-to-image
+          try {
+            const response = await fetch(val, { mode: 'cors' });
+            if (response.ok) {
+              const blob = await response.blob();
+              const dataUrl = await blobToDataUrl(blob);
+              nextData[key] = dataUrl;
+            }
+          } catch (err) {
+            console.warn("Failed to pre-fetch external image (CORS likely):", val);
+            // Fallback: keep original URL, but html-to-image might fail on it
           }
         }
-      }
+      });
+
+      await Promise.all(resolutionPromises);
       if (active) setResolved(nextData);
     };
 
@@ -116,7 +142,6 @@ const useResolvedData = (data: Record<string, any>) => {
 
     return () => {
       active = false;
-      blobUrls.forEach(url => URL.revokeObjectURL(url));
     };
   }, [data]);
 
@@ -170,6 +195,11 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
     }
     
     renderedHtml = template(data || {});
+
+    // Post-process to add crossorigin="anonymous" to all images for capture fidelity
+    // and ensuring we don't duplicate it if already present
+    renderedHtml = renderedHtml.replace(/<img\s+(?![^>]*crossorigin=)/g, '<img crossorigin="anonymous" ');
+
   } catch (e: any) {
     renderedHtml = `<div style="color: red; padding: 20px; font-family: sans-serif;">Template error: ${e?.message}</div>`;
   }
@@ -381,15 +411,41 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
                if (document.readyState === 'loading') {
                  await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
                }
-               if (document.fonts) await document.fonts.ready;
+               
+               // Wait for fonts
+               if (document.fonts) {
+                 await Promise.race([
+                   document.fonts.ready,
+                   new Promise(resolve => setTimeout(resolve, 3000)) // Max wait for fonts
+                 ]);
+               }
+               
+               // Wait for all images to be loaded
+               const images = Array.from(document.querySelectorAll('img'));
+               await Promise.all(images.map(img => {
+                 if (img.complete) return Promise.resolve();
+                 return new Promise(resolve => {
+                   img.onload = resolve;
+                   img.onerror = resolve; // Continue even if one fails
+                 });
+               }));
+
+               // Extra tick for layout settling
+               await new Promise(resolve => setTimeout(resolve, 100));
                
                const element = document.getElementById('slide-root') || document.body;
-               return await htmlToImage.toJpeg(element, { 
-                  quality: 1, 
-                  pixelRatio: 2,
-                  backgroundColor: '${designConfig?.background || designConfig?.bg || '#ffffff'}',
-                  cacheBust: true,
-               });
+               try {
+                 return await htmlToImage.toJpeg(element, { 
+                    quality: 1, 
+                    pixelRatio: 2,
+                    backgroundColor: '${designConfig?.background || designConfig?.bg || '#ffffff'}',
+                    cacheBust: false,
+                 });
+               } catch (err) {
+                 console.error("htmlToImage.toJpeg failed:", err);
+                 // Fallback
+                 return null;
+               }
             };
 
             window.addEventListener('message', (e) => {
