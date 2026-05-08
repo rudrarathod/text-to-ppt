@@ -226,13 +226,8 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
         </style>
       </head>
       <body>
-        <div id="slide-root" style="width: 100%; height: 100%; box-sizing: border-box;">
-          ${renderedHtml}
-        </div>
-
-        <!-- Scripts at the end for document.body safety -->
-        <script src="https://cdn.tailwindcss.com" defer></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.js" defer></script>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.js"></script>
         
         <script>
           (function() {
@@ -357,6 +352,12 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
                   const doc = parser.parseFromString(e.data.html, 'text/html');
                   const newContent = doc.getElementById('slide-root')?.innerHTML || doc.body.innerHTML;
                   root.innerHTML = newContent;
+
+                  // Force Tailwind CDN to re-scan for new utility classes
+                  if (window.tailwind) {
+                    tailwind.config = window.tailwindConfig;
+                  }
+
                   // Send ready signal after update
                   window.parent.postMessage({ type: 'SLIDE_READY' }, '*');
                 }
@@ -397,7 +398,7 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
             window.parent.postMessage({ type: 'SLIDE_READY' }, '*');
           })();
         </script>
-        <div id="slide-root" class="h-full w-full">
+        <div id="slide-root" style="width: 100%; height: 100%; box-sizing: border-box;">
           ${renderedHtml}
         </div>
       </body>
@@ -512,30 +513,20 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
     [templateCode, JSON.stringify(resolvedData), interactive, JSON.stringify(designConfig)]
   );
 
-  // Tracks if the iframe "shell" (scripts/styles) is ready
-  const isShellReady = useRef(false);
-
   useEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe) return;
 
-    // If shell isn't ready or it's a completely new template, do a full write
-    if (!isShellReady.current) {
-      const doc = iframe.contentWindow?.document;
-      if (doc) {
-        doc.open();
-        doc.write(html);
-        doc.close();
-        isShellReady.current = true;
-      }
-    } else {
-      // If shell is ready, just send the update via postMessage
-      // This is MUCH faster than doc.write
-      iframe.contentWindow?.postMessage({ type: 'UPDATE_HTML', html }, '*');
+    // Always do a full write to ensure Tailwind CDN processes all classes
+    const doc = iframe.contentWindow?.document;
+    if (doc) {
+      doc.open();
+      doc.write(html);
+      doc.close();
     }
   }, [html, loading]);
 
-  // Reset shell ready if critical dependencies change or if we are loading (iframe is unmounted)
+  // Reset loading state when critical dependencies change
   useEffect(() => {
     if (loading) {
       setIsInternalLoading(true);
@@ -543,7 +534,6 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
   }, [loading]);
 
   useEffect(() => {
-    isShellReady.current = false;
     setIsInternalLoading(true);
   }, [templateCode, JSON.stringify(designConfig)]);
 

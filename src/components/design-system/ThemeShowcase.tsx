@@ -79,11 +79,11 @@ export const ThemeShowcase: React.FC<ThemeShowcaseProps> = ({ config }) => {
   } as React.CSSProperties;
 
   const fontFamilies = Array.from(new Set([
-    config.typeDisplayXl.fontFamily,
-    config.typeHeadlineLg.fontFamily,
-    config.typeBodyLg.fontFamily,
-    config.typeLabelSm.fontFamily
-  ]));
+    config.typeDisplayXl?.fontFamily || config.headingFont || 'Inter',
+    config.typeHeadlineLg?.fontFamily || config.headingFont || 'Inter',
+    config.typeBodyLg?.fontFamily || config.fontFamily || 'Inter',
+    config.typeLabelSm?.fontFamily || config.fontFamily || 'Inter'
+  ])).filter(Boolean);
 
   const colorTokens = [
     { label: 'Primary', hex: config.primary, on: config.onPrimary, container: config.primaryContainer },
@@ -92,10 +92,11 @@ export const ThemeShowcase: React.FC<ThemeShowcaseProps> = ({ config }) => {
     { label: 'Neutral', hex: config.surface, on: config.onSurface, container: config.surfaceVariant },
   ];
 
+  const defaultType = { fontFamily: config.fontFamily || 'Inter', fontSize: '16px', fontWeight: '400', lineHeight: '24px', letterSpacing: '0px' };
   const typeSpecs = [
-    { label: 'Headline LG', val: config.typeHeadlineLg },
-    { label: 'Headline MD', val: config.typeHeadlineMd },
-    { label: 'Body MD', val: config.typeBodyMd },
+    { label: 'Headline LG', val: config.typeHeadlineLg || { ...defaultType, fontFamily: config.headingFont || 'Inter', fontSize: '32px', fontWeight: '700' } },
+    { label: 'Headline MD', val: config.typeHeadlineMd || { ...defaultType, fontFamily: config.headingFont || 'Inter', fontSize: '28px', fontWeight: '600' } },
+    { label: 'Body MD', val: config.typeBodyMd || defaultType },
   ];
 
   return (
@@ -224,7 +225,7 @@ export const ThemeShowcase: React.FC<ThemeShowcaseProps> = ({ config }) => {
           }}
         >
           {/* Subtle Background Mark */}
-          <div style={{ position: 'absolute', top: -100, right: -50, fontSize: 400, fontWeight: 900, color: 'var(--ds-on-surface)', opacity: 0.03, pointerEvents: 'none', fontFamily: config.typeDisplayXl.fontFamily }}>
+          <div style={{ position: 'absolute', top: -100, right: -50, fontSize: 400, fontWeight: 900, color: 'var(--ds-on-surface)', opacity: 0.03, pointerEvents: 'none', fontFamily: config.typeDisplayXl?.fontFamily || config.headingFont || 'Inter' }}>
             Aa
           </div>
 
@@ -236,8 +237,8 @@ export const ThemeShowcase: React.FC<ThemeShowcaseProps> = ({ config }) => {
               </p>
             </div>
             <div style={{ display: 'flex', gap: 24 }}>
-              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--ds-on-surface-variant)', background: 'var(--ds-surface-variant)', padding: '6px 16px', borderRadius: 999 }}>{config.typeDisplayXl.fontFamily}</span>
-              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--ds-on-surface-variant)', background: 'var(--ds-surface-variant)', padding: '6px 16px', borderRadius: 999 }}>{config.typeBodyLg.fontFamily}</span>
+              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--ds-on-surface-variant)', background: 'var(--ds-surface-variant)', padding: '6px 16px', borderRadius: 999 }}>{config.typeDisplayXl?.fontFamily || config.headingFont || 'Inter'}</span>
+              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--ds-on-surface-variant)', background: 'var(--ds-surface-variant)', padding: '6px 16px', borderRadius: 999 }}>{config.typeBodyLg?.fontFamily || config.fontFamily || 'Inter'}</span>
             </div>
           </div>
 
@@ -245,10 +246,10 @@ export const ThemeShowcase: React.FC<ThemeShowcaseProps> = ({ config }) => {
             <div
               style={{
                 fontSize: 180,
-                fontFamily: config.typeDisplayXl.fontFamily,
+                fontFamily: config.typeDisplayXl?.fontFamily || config.headingFont || 'Inter',
                 color: 'var(--ds-primary)',
-                fontWeight: config.typeDisplayXl.fontWeight,
-                letterSpacing: config.typeDisplayXl.letterSpacing,
+                fontWeight: config.typeDisplayXl?.fontWeight || '700',
+                letterSpacing: config.typeDisplayXl?.letterSpacing || '-0.25px',
                 lineHeight: 0.8,
                 userSelect: 'none',
               }}
@@ -258,10 +259,10 @@ export const ThemeShowcase: React.FC<ThemeShowcaseProps> = ({ config }) => {
             <div style={{ flex: 1, paddingTop: 16 }}>
               <h1
                 style={{
-                  fontFamily: config.typeDisplayXl.fontFamily,
+                  fontFamily: config.typeDisplayXl?.fontFamily || config.headingFont || 'Inter',
                   color: 'var(--ds-on-surface)',
                   fontSize: 84,
-                  fontWeight: config.typeDisplayXl.fontWeight,
+                  fontWeight: config.typeDisplayXl?.fontWeight || '700',
                   lineHeight: 1,
                   letterSpacing: '-0.04em',
                   margin: '0 0 24px 0',
@@ -271,12 +272,12 @@ export const ThemeShowcase: React.FC<ThemeShowcaseProps> = ({ config }) => {
               </h1>
               <p
                 style={{
-                  fontFamily: config.typeBodyLg.fontFamily,
+                  fontFamily: config.typeBodyLg?.fontFamily || config.fontFamily || 'Inter',
                   color: 'var(--ds-on-surface-variant)',
                   fontSize: 24,
-                  fontWeight: config.typeBodyLg.fontWeight,
+                  fontWeight: config.typeBodyLg?.fontWeight || '400',
                   lineHeight: 1.5,
-                  letterSpacing: config.typeBodyLg.letterSpacing,
+                  letterSpacing: config.typeBodyLg?.letterSpacing || '0.5px',
                   margin: 0,
                   maxWidth: 800,
                 }}
@@ -304,9 +305,9 @@ export const ThemeShowcase: React.FC<ThemeShowcaseProps> = ({ config }) => {
                 </p>
                 <p
                   style={{
-                    fontFamily: item.val.fontFamily,
+                    fontFamily: item.val?.fontFamily || 'Inter',
                     fontSize: 22,
-                    fontWeight: item.val.fontWeight,
+                    fontWeight: item.val?.fontWeight || '400',
                     color: 'var(--ds-on-surface)',
                     margin: 0,
                     whiteSpace: 'nowrap',

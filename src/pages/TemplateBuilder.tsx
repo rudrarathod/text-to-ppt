@@ -47,11 +47,35 @@ import { SlideShowcase } from "../components/SlideShowcase";
 
 
 const SAMPLE_DATA: Record<LayoutVariant, any> = {
-  title: { title: "Sample Title Slide", subtitle: "This is a sample subtitle" },
-  content: { title: "Key Objectives", points: ["First objective", "Second point of interest", "Final conclusion to discuss."] },
-  "image-text": { title: "Visual Growth", description: "Our metrics have consistently trended upwards quarter over quarter, demonstrating the value of our strategic pivot.", image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80" },
-  comparison: { title: "Plan Comparison", leftTitle: "Basic Tier", leftPoints: ["Up to 5 Projects", "Community Support", "Basic Analytics"], rightTitle: "Pro Tier", rightPoints: ["Unlimited Projects", "24/7 Priority Support", "Advanced Custom Analytics", "AI Assistant Access"] },
-  divider: { section: "Financials" }
+  title: { 
+    title: "The Future of Design Systems", 
+    subtitle: "Scaling consistency and precision with Material 3" 
+  },
+  content: { 
+    title: "Key Strategic Pillars", 
+    points: [
+      "Modular Architecture for infinite scalability",
+      "Dynamic Token Propagation across platforms",
+      "High-Fidelity Prototyping in real-time",
+      "Accessibility-First Component Engineering"
+    ] 
+  },
+  "image-text": { 
+    title: "Visual Intelligence", 
+    description: "Our new algorithmic layout engine intelligently balances negative space and typography to create stunning, readable slides automatically.", 
+    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80" 
+  },
+  comparison: { 
+    title: "Efficiency Gains", 
+    leftTitle: "Legacy Workflow", 
+    leftPoints: ["Manual CSS updates", "Disconnected design files", "Slow handoff process"], 
+    rightTitle: "Lumina Engine", 
+    rightPoints: ["Token-based styling", "Live synced layouts", "Instant AI generation", "Standardized M3 components"] 
+  },
+  divider: { 
+    section: "Technical Deep-Dive",
+    description: "Exploring the underlying architecture of our rendering pipeline."
+  }
 };
 
 
@@ -414,7 +438,16 @@ export function TemplateBuilder() {
       id: newId,
       name: "New Layout",
       variant: "content",
-      code: `<!-- Custom Layout -->\n<div class="p-8 bg-lumina-surface h-full w-full">\n  <h1 class="text-4xl text-lumina-primary">{{title}}</h1>\n</div>`
+      code: `<div class="flex flex-col h-full w-full bg-lumina-surface p-lumina-xl">
+  <h2 class="text-lumina-primary type-headline-lg mb-lumina-lg border-b-4 border-lumina-primary-container pb-lumina-sm inline-block">{{title}}</h2>
+  <div class="text-lumina-on-surface-variant type-body-lg">
+    {{description}}
+  </div>
+</div>`,
+      mockData: {
+        title: "New Section Title",
+        description: "Enter your content description here. This layout is pre-configured with the Lumina design system tokens for perfect visual alignment."
+      }
     });
     setSelectedLayoutId(newId);
   };

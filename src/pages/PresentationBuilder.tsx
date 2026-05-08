@@ -375,12 +375,13 @@ export function PresentationBuilder() {
   };
 
   const handleAddSlide = () => {
-    const layoutId = layouts[0]?.id || "";
-    const layoutCode = layouts[0]?.code || "";
+    const layout = layouts[0];
+    if (!layout) return;
+
     const newSlide: SlideData = {
       id: `s-${Date.now()}`,
-      layoutId: layoutId,
-      content: extractDefaultContent(layoutCode, { title: "New Slide" })
+      layoutId: layout.id,
+      content: layout.mockData ? { ...layout.mockData } : extractDefaultContent(layout.code, { title: "New Slide" })
     };
     addSlide(newSlide);
     setSelectedSlideId(newSlide.id);

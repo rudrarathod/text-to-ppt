@@ -226,82 +226,116 @@ const DEFAULT_LAYOUTS: LayoutDef[] = [
     id: "l-title",
     name: "Standard Title",
     variant: "title",
-    code: `<div class="flex flex-col items-center justify-center h-full w-full bg-lumina-bg p-12 text-center rounded-lumina">
-  <h1 class="text-lumina-primary mb-6 drop-shadow-sm">{{title}}</h1>
+    code: `<div class="flex flex-col items-center justify-center h-full w-full bg-lumina-background p-lumina-xl text-center">
+  <h1 class="text-lumina-primary type-display-xl mb-lumina-md">{{title}}</h1>
   {{#if subtitle}}
-    <h2 class="text-lumina-text-secondary">{{subtitle}}</h2>
+    <h2 class="text-lumina-on-surface-variant type-headline-lg">{{subtitle}}</h2>
   {{/if}}
-</div>`
+</div>`,
+    mockData: {
+      title: "Main Presentation Title",
+      subtitle: "Professional Subtitle or Presenter Name"
+    }
   },
   {
     id: "l-content",
     name: "Bullet Content",
     variant: "content",
-    code: `<div class="flex flex-col h-full w-full bg-lumina-surface p-16 rounded-lumina">
-  <h2 class="text-lumina-text-primary mb-10 border-b-4 border-lumina-secondary pb-4 inline-block">{{title}}</h2>
-  <ul class="list-disc list-inside text-lumina-text-secondary space-y-6 font-medium">
+    code: `<div class="flex flex-col h-full w-full bg-lumina-surface p-lumina-xl">
+  <h2 class="text-lumina-on-surface type-headline-lg mb-lumina-lg border-b-4 border-lumina-primary-container pb-lumina-sm inline-block">{{title}}</h2>
+  <ul class="list-disc list-inside text-lumina-on-surface-variant space-y-lumina-md type-body-lg">
     {{#each points}}
-      <li>{{this}}</li>
+      <li class="pl-lumina-sm">{{this}}</li>
     {{/each}}
   </ul>
-</div>`
+</div>`,
+    mockData: {
+      title: "Key Insights & Strategy",
+      points: [
+        "Leverage Material 3 design system for visual consistency",
+        "Implement high-fidelity Handlebars templates",
+        "Streamline AI-driven layout generation",
+        "Optimized for real-time canvas rendering"
+      ]
+    }
   },
   {
     id: "l-image-text",
     name: "Image + Text",
     variant: "image-text",
-    code: `<div class="flex h-full w-full bg-lumina-surface rounded-lumina overflow-hidden">
-  <div class="w-1/2 p-16 flex flex-col justify-center">
-    <h2 class="text-lumina-primary mb-8">{{title}}</h2>
-    <p class="text-lumina-text-secondary leading-relaxed font-medium">{{description}}</p>
+    code: `<div class="flex h-full w-full bg-lumina-surface overflow-hidden">
+  <div class="w-1/2 p-lumina-xl flex flex-col justify-center">
+    <h2 class="text-lumina-primary type-headline-lg mb-lumina-lg">{{title}}</h2>
+    <p class="text-lumina-on-surface-variant type-body-lg leading-relaxed">{{description}}</p>
   </div>
-  <div class="w-1/2 flex items-center justify-center p-8 bg-lumina-bg">
-    <div class="relative w-full h-full flex flex-col justify-center overflow-hidden rounded-lumina shadow-lumina-md group" data-image-key="image">
+  <div class="w-1/2 flex items-center justify-center p-lumina-lg bg-lumina-surface-container-low">
+    <div class="relative w-full h-full flex flex-col justify-center overflow-hidden rounded-lumina-lg shadow-lumina-md group" data-image-key="image">
       {{#if image}}
         <img src="{{image}}" alt="Slide image" class="w-full h-full object-cover" />
       {{else}}
-        <div class="w-full h-full flex flex-col items-center justify-center bg-gray-100 text-gray-400 border-4 border-dashed border-gray-300 rounded-lumina">
-          <svg class="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-          <span class="text-2xl font-bold">Image Placeholder</span>
+        <div class="w-full h-full flex flex-col items-center justify-center bg-lumina-surface-container text-lumina-on-surface-variant border-4 border-dashed border-lumina-outline-variant rounded-lumina-lg group-hover:bg-lumina-surface-high group-hover:border-lumina-primary transition-all cursor-pointer">
+          <svg class="w-16 h-16 mb-lumina-sm opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          <span class="type-headline-md font-bold">Image Placeholder</span>
+          <span class="type-label-sm mt-lumina-xs opacity-70 uppercase tracking-widest">Click to Upload</span>
         </div>
       {{/if}}
     </div>
   </div>
-</div>`
+</div>`,
+    mockData: {
+      title: "Visual Architecture",
+      description: "Combining structural integrity with aesthetic precision. Our design system ensures every component serves a specific user need while maintaining a premium feel.",
+      image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80"
+    }
   },
   {
     id: "l-comparison",
     name: "2-Column Comparison",
     variant: "comparison",
-    code: `<div class="flex flex-col h-full w-full bg-lumina-surface p-12 rounded-lumina">
-  <h2 class="text-center text-lumina-text-primary mb-12">{{title}}</h2>
-  <div class="flex flex-1 gap-12">
-    <div class="flex-1 bg-lumina-bg p-8 rounded-lumina shadow-lumina-sm border border-lumina-border">
-      <h3 class="text-lumina-primary mb-6">{{leftTitle}}</h3>
-      <ul class="list-disc list-inside space-y-4 text-lumina-text-secondary font-medium">
+    code: `<div class="flex flex-col h-full w-full bg-lumina-surface p-lumina-xl">
+  <h2 class="text-center text-lumina-on-surface type-headline-lg mb-lumina-xl">{{title}}</h2>
+  <div class="flex flex-1 gap-lumina-lg">
+    <div class="flex-1 bg-lumina-surface-container-low p-lumina-lg rounded-lumina-lg shadow-lumina-sm border border-lumina-outline-variant">
+      <h3 class="text-lumina-primary type-headline-md mb-lumina-md">{{leftTitle}}</h3>
+      <ul class="list-disc list-inside space-y-lumina-sm text-lumina-on-surface-variant type-body-md">
         {{#each leftPoints}}<li>{{this}}</li>{{/each}}
       </ul>
     </div>
-    <div class="flex-1 bg-lumina-bg p-8 rounded-lumina shadow-lumina-sm border border-lumina-border">
-      <h3 class="text-lumina-secondary mb-6">{{rightTitle}}</h3>
-      <ul class="list-disc list-inside space-y-4 text-lumina-text-secondary font-medium">
+    <div class="flex-1 bg-lumina-surface-container-low p-lumina-lg rounded-lumina-lg shadow-lumina-sm border border-lumina-outline-variant">
+      <h3 class="text-lumina-secondary type-headline-md mb-lumina-md">{{rightTitle}}</h3>
+      <ul class="list-disc list-inside space-y-lumina-sm text-lumina-on-surface-variant type-body-md">
         {{#each rightPoints}}<li>{{this}}</li>{{/each}}
       </ul>
     </div>
   </div>
-</div>`
+</div>`,
+    mockData: {
+      title: "Plan Comparison",
+      leftTitle: "Starter Edition",
+      leftPoints: ["Basic Templates", "Export to PDF", "Cloud Sync"],
+      rightTitle: "Enterprise Pro",
+      rightPoints: ["Unlimited Templates", "AI Design Assistant", "Team Collaboration", "Custom Export Formats"]
+    }
   },
   {
     id: "l-divider",
     name: "Section Divider",
     variant: "divider",
-    code: `<div class="flex items-center justify-center h-full w-full bg-lumina-primary text-white p-16 rounded-lumina">
-  <div class="border-t-8 border-lumina-secondary pt-8">
-    <h2 class="uppercase tracking-wider drop-shadow-md">{{section}}</h2>
+    code: `<div class="flex items-center justify-center h-full w-full bg-lumina-primary text-lumina-on-primary p-lumina-xl">
+  <div class="border-t-8 border-lumina-on-primary/30 pt-lumina-lg text-center">
+    <h2 class="type-display-xl uppercase tracking-widest drop-shadow-md">{{section}}</h2>
+    {{#if description}}
+      <p class="type-headline-md mt-lumina-md opacity-80">{{description}}</p>
+    {{/if}}
   </div>
-</div>`
+</div>`,
+    mockData: {
+      section: "Next Phase",
+      description: "A look into our upcoming roadmap and milestones."
+    }
   }
 ];
+
 
 const DEFAULT_SLIDES: SlideData[] = [
   {
@@ -470,39 +504,17 @@ export const useAppStore = create<AppState>()(
       createTemplate: (name, design) => {
         const id = `t-${Date.now()}`;
         set((state) => {
-          // A "clean" start usually means 1-2 basic layouts instead of the full sample set
-          const minimalLayouts: LayoutDef[] = [
-             {
-               id: `l-${Date.now()}-title`,
-               name: "Main Title",
-               variant: "title",
-               code: `<div class="flex flex-col items-center justify-center h-full w-full bg-lumina-bg p-20 text-center rounded-lumina">
-  <h1 class="text-7xl font-black text-lumina-primary mb-6">{{title}}</h1>
-  <div class="w-24 h-2 bg-lumina-secondary mb-8"></div>
-  <h2 class="text-3xl font-medium text-lumina-text-secondary">{{subtitle}}</h2>
-</div>`
-             },
-             {
-               id: `l-${Date.now()}-content`,
-               name: "Standard Content",
-               variant: "content",
-               code: `<div class="flex flex-col h-full w-full bg-lumina-surface p-20 rounded-lumina">
-  <h2 class="text-5xl font-bold text-lumina-text-primary mb-12 flex items-center gap-4">
-    <span class="w-3 h-12 bg-lumina-primary rounded-full"></span>
-    {{title}}
-  </h2>
-  <div class="text-3xl text-lumina-text-secondary leading-relaxed">
-    {{description}}
-  </div>
-</div>`
-             }
-          ];
+          // Initialize new templates with the full set of high-fidelity default layouts
+          const initialLayouts = DEFAULT_LAYOUTS.map(l => ({
+            ...l,
+            id: `${l.id}-${Date.now()}` // Ensure unique IDs for this template instance
+          }));
           
           const newTemplate: SlideTemplate = {
             id,
             name,
             designConfig: { ...DEFAULT_DESIGN, ...design },
-            layouts: minimalLayouts
+            layouts: initialLayouts
           };
           return { templates: [...state.templates, newTemplate], activeTemplateId: id };
         });
