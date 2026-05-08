@@ -383,21 +383,12 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
                }
                if (document.fonts) await document.fonts.ready;
                
-               // Ensure all images are loaded before capture
-               const images = Array.from(document.querySelectorAll('img'));
-               await Promise.all(images.map(img => {
-                 if (img.complete) return Promise.resolve();
-                 return new Promise(resolve => {
-                   img.onload = resolve;
-                   img.onerror = resolve;
-                 });
-               }));
-
                const element = document.getElementById('slide-root') || document.body;
                return await htmlToImage.toJpeg(element, { 
-                  quality: 0.95, 
+                  quality: 1, 
                   pixelRatio: 2,
-                  backgroundColor: '${designConfig?.background || designConfig?.bg || '#ffffff'}'
+                  backgroundColor: '${designConfig?.background || designConfig?.bg || '#ffffff'}',
+                  cacheBust: true,
                });
             };
 
@@ -415,29 +406,14 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
                     tailwind.config = window.tailwindConfig;
                   }
 
-                  // Fix any empty/broken images in the new content
-                  fixImages();
-
                   // Send ready signal after update
                   window.parent.postMessage({ type: 'SLIDE_READY' }, '*');
                 }
               }
             });
 
-            const fixImages = () => {
-              document.querySelectorAll('img').forEach(img => {
-                if (!img.src || img.src === window.location.href || img.getAttribute('src') === "") {
-                  img.src = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='20' fill='%239ca3af'%3EImage Missing%3C/text%3E%3C/svg%3E";
-                }
-                img.onerror = () => {
-                  img.src = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='20' fill='%239ca3af'%3EImage Error%3C/text%3E%3C/svg%3E";
-                };
-              });
-            };
-
             const init = () => {
               if (!document.body) return;
-              fixImages();
               document.body.addEventListener('click', (e) => {
                  const target = e.target.closest('[data-image-key]');
                  if(target) {
@@ -465,9 +441,6 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
             } else {
               init();
             }
-
-            // Also check images periodically or on mutations if needed, but for now just wait a bit
-            setTimeout(fixImages, 500);
 
             // Signal that we are ready
             window.parent.postMessage({ type: 'SLIDE_READY' }, '*');
