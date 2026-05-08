@@ -60,10 +60,13 @@ import { useAppStore } from "./store";
 
 export default function App() {
   const loadDefaultTemplates = useAppStore(state => state.loadDefaultTemplatesFromAssets);
+  const _hasHydrated = useAppStore(state => state._hasHydrated);
 
   useEffect(() => {
-    loadDefaultTemplates();
-  }, [loadDefaultTemplates]);
+    if (_hasHydrated) {
+      loadDefaultTemplates();
+    }
+  }, [_hasHydrated, loadDefaultTemplates]);
 
   return (
     <BrowserRouter>

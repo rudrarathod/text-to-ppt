@@ -11,6 +11,8 @@ import { PageHeader } from "../components/layout/PageHeader";
 import { PreviewCard } from "../components/layout/PreviewCard";
 import { GalleryLayout } from "../components/layout/GalleryLayout";
 import { FullScreenModal } from "../components/layout/FullScreenModal";
+import { ConfirmationModal } from "../components/ConfirmationModal";
+
 
 export function PresentationGallery() {
   const { 
@@ -381,38 +383,25 @@ export function PresentationGallery() {
       )}
 
       {/* Delete Confirmation Modal */}
-      {presentationToDelete && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200">
-          <div className="bg-[#1a1a1c] border border-white/10 rounded-2xl p-6 w-full max-w-sm flex flex-col items-center text-center shadow-2xl">
-            <div className="w-12 h-12 rounded-full bg-[#D62828]/20 text-[#D62828] flex items-center justify-center mb-4">
-              <Trash2 size={24} />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-2">Delete Presentation?</h3>
-            <p className="text-gray-400 mb-6 font-medium text-sm">
-              Are you sure you want to delete <span className="text-white font-bold">"{presentationToDelete.name}"</span>? This action cannot be undone.
-            </p>
-            <div className="flex gap-3 w-full">
-              <Button 
-                variant="secondary" 
-                onClick={() => setPresentationToDelete(null)}
-                className="flex-1 bg-white/5 hover:bg-white/10 text-white font-bold"
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={() => {
-                  deletePresentation(presentationToDelete.id);
-                  addToast(`Presentation "${presentationToDelete.name}" deleted.`, "success");
-                  setPresentationToDelete(null);
-                }}
-                className="flex-1 bg-[#D62828] hover:bg-[#b20112] text-white font-bold"
-              >
-                Delete
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationModal 
+        isOpen={!!presentationToDelete}
+        title="Delete Presentation?"
+        message={
+          <>
+            Are you sure you want to delete <span className="text-white font-bold">"{presentationToDelete?.name}"</span>? This action cannot be undone.
+          </>
+        }
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (presentationToDelete) {
+            deletePresentation(presentationToDelete.id);
+            addToast(`Presentation "${presentationToDelete.name}" deleted.`, "success");
+            setPresentationToDelete(null);
+          }
+        }}
+        onCancel={() => setPresentationToDelete(null)}
+        variant="danger"
+      />
     </>
   );
 }

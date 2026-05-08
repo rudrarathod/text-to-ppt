@@ -220,7 +220,11 @@ interface AppState {
   toasts: Toast[];
   addToast: (message: string, type?: 'success' | 'error' | 'info') => void;
   removeToast: (id: string) => void;
+  
+  _hasHydrated: boolean;
+  setHasHydrated: (state: boolean) => void;
 }
+
 
 const DEFAULT_LAYOUTS: LayoutDef[] = [
   {
@@ -798,11 +802,23 @@ export const useAppStore = create<AppState>()(
       }),
       removeToast: (id) => set((state) => ({
         toasts: state.toasts.filter(t => t.id !== id)
-      }))
+      })),
+
+      _hasHydrated: false,
+      setHasHydrated: (state) => set({ _hasHydrated: state })
     }),
+
     {
       name: 'domino-storage',
       storage: createJSONStorage(() => storage),
+      onRehydrateStorage: (state) => {
+        return () => state.setHasHydrated(true);
+      },
+      partialize: (state) => {
+        const { _hasHydrated, setHasHydrated, ...rest } = state;
+        return rest;
+      },
     }
+
   )
 );
