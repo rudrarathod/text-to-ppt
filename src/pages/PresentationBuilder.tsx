@@ -48,7 +48,7 @@ import { useParams, useNavigate } from "react-router-dom";
 export function PresentationBuilder() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { templates, presentations, activePresentationId, setSlides, addSlide, removeSlide, updateSlideContent, updateSlideLayout, setActiveTemplate, setPresentationTemplate, setActivePresentation, updateSlideThumbnail, addToast } = useAppStore();
+  const { templates, presentations, activePresentationId, setSlides, addSlide, removeSlide, updateSlideContent, updateSlideLayout, updateLayoutInTemplate, setActiveTemplate, setPresentationTemplate, setActivePresentation, updateSlideThumbnail, addToast } = useAppStore();
   const [isCapturing, setIsCapturing] = useState(false);
   
   useEffect(() => {
@@ -895,8 +895,8 @@ export function PresentationBuilder() {
                       <div className="flex items-center gap-2">
                         <Button 
                           onClick={() => {
-                            if (activeLayout) {
-                              (useAppStore.getState() as any).updateLayoutInActiveTemplate(activeLayout.id, { code: layoutEditCode });
+                            if (activeLayout && activeTemplateId) {
+                              updateLayoutInTemplate(activeTemplateId, activeLayout.id, { code: layoutEditCode });
                               if (tempJsonInput) {
                                 try {
                                   const parsed = JSON.parse(tempJsonInput);
@@ -906,6 +906,7 @@ export function PresentationBuilder() {
                               }
                               setIsEditingLayoutCode(false);
                               setTempJsonInput(null);
+                              addToast("Layout updated successfully!", "success");
                             }
                           }}
                           className="h-7 text-[10px] px-4 bg-[#D62828] hover:bg-[#b20112] text-white font-bold"

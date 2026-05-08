@@ -13,6 +13,22 @@ Handlebars.registerHelper('each_limit', function(context, limit, options) {
     return ret;
 });
 
+Handlebars.registerHelper('inc', function(value) {
+    return parseInt(value) + 1;
+});
+
+Handlebars.registerHelper('dec', function(value) {
+    return parseInt(value) - 1;
+});
+
+Handlebars.registerHelper('eq', function(v1, v2) {
+    return v1 === v2;
+});
+
+Handlebars.registerHelper('not', function(value) {
+    return !value;
+});
+
 const useResolvedData = (data: Record<string, any>) => {
   const [resolved, setResolved] = useState(data);
 

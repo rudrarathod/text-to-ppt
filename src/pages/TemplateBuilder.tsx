@@ -137,6 +137,51 @@ export function TemplateBuilder() {
     }
   };
   
+  const handleApplyLayoutAiResponse = () => {
+    try {
+      const response = aiResponse.trim();
+      let code = "";
+      let json = "";
+
+      // 1. Try to extract from <slide> or <code> tags
+      const slideMatch = response.match(/<slide>([\s\S]*?)<\/slide>/i) || response.match(/<code>([\s\S]*?)<\/code>/i);
+      if (slideMatch) {
+        code = slideMatch[1].trim();
+        // Remove any markdown code block wrappers if they exist
+        code = code.replace(/```[a-z]*\n?/gi, '').replace(/```/g, '').trim();
+      }
+
+      // 2. Try to extract from <json> or <data> tags
+      const dataMatch = response.match(/<json>([\s\S]*?)<\/json>/i) || response.match(/<data>([\s\S]*?)<\/data>/i) || response.match(/```json\n([\s\S]*?)```/i);
+      if (dataMatch) {
+        json = dataMatch[1].trim();
+      }
+
+      // 3. Fallback: If no tags, try to parse the whole thing as a JSON object with {code, json}
+      if (!code && !json) {
+        try {
+          const parsed = JSON.parse(response);
+          if (parsed.code) code = parsed.code;
+          if (parsed.json) json = typeof parsed.json === 'string' ? parsed.json : JSON.stringify(parsed.json, null, 2);
+        } catch (e) {
+          // Not a JSON object, just take the raw response as code if it looks like HTML
+          if (response.includes('<')) code = response;
+        }
+      }
+
+      if (code) setWorkingCode(code);
+      if (json) setWorkingJson(json);
+      
+      if (code || json) {
+        setAiResponse("");
+      } else {
+        alert("Could not find any valid code or JSON in the response.");
+      }
+    } catch (err) {
+      alert("Error applying AI response: " + err);
+    }
+  };
+
   const [showPromptSettings, setShowPromptSettings] = useState(false);
   const [promptSettings, setPromptSettings] = useState<PromptSettings>({
     mood: "",
@@ -582,7 +627,20 @@ export function TemplateBuilder() {
 
                       <div className={cn("absolute bottom-4 left-4 right-4 z-20 lg:w-[450px] transition-all duration-300 lg:block", showAiOnMobile ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0 pointer-events-none lg:translate-y-0 lg:opacity-100 lg:pointer-events-auto")}>
                          <AIAssistantPanel 
-                           promptValue={aiPrompt} onPromptChange={setAiPrompt} onGenerate={handleAiGenerate} isGenerating={isAiLoading} showPromptSettings={true} promptSettings={promptSettings} onPromptSettingsChange={setPromptSettings} placeholder="e.g., Add a dark overlay..." defaultMode={aiMode} onModeChange={(mode) => setAiMode(mode as 'ai' | 'prompt')} systemPromptBuilder={(p) => buildLayoutPrompt(p, workingCode, workingJson, promptSettings)}
+                           promptValue={aiPrompt} 
+                           onPromptChange={setAiPrompt} 
+                           onGenerate={handleAiGenerate} 
+                           isGenerating={isAiLoading} 
+                           showPromptSettings={true} 
+                           promptSettings={promptSettings} 
+                           onPromptSettingsChange={setPromptSettings} 
+                           placeholder="e.g., Add a dark overlay..." 
+                           defaultMode={aiMode} 
+                           onModeChange={(mode) => setAiMode(mode as 'ai' | 'prompt')} 
+                           systemPromptBuilder={(p) => buildLayoutPrompt(p, workingCode, workingJson, promptSettings)}
+                           responseValue={aiResponse}
+                           onResponseChange={setAiResponse}
+                           onApplyResponse={handleApplyLayoutAiResponse}
                          />
                       </div>
                    </div>

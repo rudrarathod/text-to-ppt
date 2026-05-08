@@ -188,6 +188,7 @@ interface AppState {
   updateActiveTemplateDesign: (config: Partial<DesignConfig>) => void;
   addLayoutToActiveTemplate: (layout: LayoutDef) => void;
   updateLayoutInActiveTemplate: (layoutId: string, updates: Partial<LayoutDef>) => void;
+  updateLayoutInTemplate: (templateId: string, layoutId: string, updates: Partial<LayoutDef>) => void;
   renameLayoutInActiveTemplate: (layoutId: string, name: string) => void;
   removeLayoutFromActiveTemplate: (layoutId: string) => void;
 
@@ -562,6 +563,14 @@ export const useAppStore = create<AppState>()(
       updateLayoutInActiveTemplate: (layoutId, updates) => set((state) => ({
         templates: state.templates.map(t =>
           t.id === state.activeTemplateId
+            ? { ...t, layouts: t.layouts.map(l => l.id === layoutId ? { ...l, ...updates } : l) }
+            : t
+        )
+      })),
+      
+      updateLayoutInTemplate: (templateId, layoutId, updates) => set((state) => ({
+        templates: state.templates.map(t =>
+          t.id === templateId
             ? { ...t, layouts: t.layouts.map(l => l.id === layoutId ? { ...l, ...updates } : l) }
             : t
         )
