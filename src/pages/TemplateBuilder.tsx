@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
+import { Reorder, useDragControls } from "motion/react";
 import Editor from "../components/LazyEditor";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAppStore, LayoutDef, LayoutVariant, SlideTemplate, DEFAULT_DESIGN } from "../store";
@@ -6,6 +7,7 @@ import { SlidePreview } from "../components/SlidePreview";
 import { Button, Input, Textarea } from "../components/ui";
 import { 
   Plus, 
+  GripVertical,
   Trash2, 
   Download, 
   Palette, 
@@ -52,10 +54,88 @@ const SAMPLE_DATA: Record<LayoutVariant, any> = {
   divider: { section: "Financials" }
 };
 
+
+const ReorderableLayout = ({ l, selectedLayoutId, setSelectedLayoutId, setMobileTab, editingLayoutId, editingLayoutName, setEditingLayoutName, renameLayoutInActiveTemplate, setEditingLayoutId, workingCode, duplicateLayoutInActiveTemplate, removeLayoutFromActiveTemplate, layouts }: any) => {
+  const controls = useDragControls();
+  
+  return (
+    <Reorder.Item 
+      value={l}
+      dragListener={false}
+      dragControls={controls}
+      transition={{ type: "spring", stiffness: 400, damping: 40 }}
+      whileDrag={{ 
+        scale: 1.05, 
+        boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.5)",
+        zIndex: 50,
+      }}
+      onClick={() => {
+        setSelectedLayoutId(l.id);
+        if (window.innerWidth < 768) setMobileTab('preview');
+      }}
+      className={cn(
+        "px-4 py-3 text-sm rounded-xl cursor-pointer border flex items-center justify-between group select-none",
+        selectedLayoutId === l.id 
+          ? "bg-[#D62828]/10 border-[#D62828] text-white font-bold" 
+          : "bg-transparent border-transparent text-[#85858b] hover:bg-[#2d2d30]/50 hover:text-white"
+      )}
+    >
+      {editingLayoutId === l.id ? (
+        <input
+          autoFocus
+          value={editingLayoutName}
+          onChange={(e) => setEditingLayoutName(e.target.value)}
+          onBlur={() => {
+             if (editingLayoutName.trim() && editingLayoutName !== l.name) {
+               renameLayoutInActiveTemplate(l.id, editingLayoutName.trim());
+             }
+             setEditingLayoutId(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+               if (editingLayoutName.trim() && editingLayoutName !== l.name) {
+                 renameLayoutInActiveTemplate(l.id, editingLayoutName.trim());
+               }
+               setEditingLayoutId(null);
+            } else if (e.key === 'Escape') {
+               setEditingLayoutId(null);
+            }
+          }}
+          className="bg-transparent border-none outline-none text-white w-full"
+          onClick={(e) => e.stopPropagation()}
+        />
+      ) : (
+        <>
+          <div className="flex items-center gap-2 truncate">
+            <div 
+              onPointerDown={(e) => { e.preventDefault(); controls.start(e); }}
+              className="p-1.5 -ml-1.5 cursor-grab active:cursor-grabbing text-gray-500 hover:text-white hover:bg-white/10 rounded-md transition-all flex items-center justify-center shrink-0"
+              title="Drag to reorder"
+            >
+              <GripVertical size={14} />
+            </div>
+            <span className="truncate">{l.name}</span>
+          </div>
+          <div className="flex items-center gap-0.5">
+            {selectedLayoutId === l.id && workingCode !== l.code && <div className="w-2 h-2 rounded-full bg-[#fe6247] mr-1" />}
+            <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onClick={(e) => { e.stopPropagation(); duplicateLayoutInActiveTemplate(l.id); }} className="p-1 hover:text-white" title="Duplicate"><Copy size={12} /></button>
+              <button onClick={(e) => { e.stopPropagation(); setEditingLayoutId(l.id); setEditingLayoutName(l.name); }} className="p-1 hover:text-white" title="Rename"><Edit2 size={12} /></button>
+              {layouts.length > 1 && (
+                <button onClick={(e) => { e.stopPropagation(); if (window.confirm("Delete layout?")) removeLayoutFromActiveTemplate(l.id); }} className="p-1 hover:text-[#D62828]" title="Delete"><Trash2 size={12} /></button>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </Reorder.Item>
+  );
+};
+
 export function TemplateBuilder() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { templates, addLayoutToActiveTemplate, updateLayoutInActiveTemplate, renameLayoutInActiveTemplate, setActiveTemplate, removeLayoutFromActiveTemplate, updateActiveTemplateDesign, renameTemplate } = useAppStore();
+  const { templates, addLayoutToActiveTemplate, updateLayoutInActiveTemplate, renameLayoutInActiveTemplate, setActiveTemplate, removeLayoutFromActiveTemplate, updateActiveTemplateDesign, renameTemplate, duplicateLayoutInActiveTemplate, moveLayoutInActiveTemplate, reorderLayoutsInActiveTemplate } = useAppStore();
   
   const activeTemplate = useMemo(() => templates.find(t => t.id === id), [templates, id]);
 
@@ -531,61 +611,32 @@ export function TemplateBuilder() {
                   <Plus size={16} />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto p-3 space-y-1">
+              <Reorder.Group 
+                axis="y" 
+                values={layouts} 
+                onReorder={reorderLayoutsInActiveTemplate}
+                className="flex-1 overflow-y-auto p-3 space-y-1"
+              >
                 {layouts.map(l => (
-                   <div 
+                   <ReorderableLayout 
                      key={l.id}
-                     onClick={() => {
-                       setSelectedLayoutId(l.id);
-                       if (window.innerWidth < 768) setMobileTab('preview');
-                     }}
-                     className={cn(
-                       "px-4 py-3 text-sm rounded-xl cursor-pointer transition-all border flex items-center justify-between group",
-                       selectedLayoutId === l.id 
-                         ? "bg-[#D62828]/10 border-[#D62828] text-white font-bold" 
-                         : "bg-transparent border-transparent text-[#85858b] hover:bg-[#2d2d30]/50 hover:text-white"
-                     )}
-                   >
-                     {editingLayoutId === l.id ? (
-                       <input
-                         autoFocus
-                         value={editingLayoutName}
-                         onChange={(e) => setEditingLayoutName(e.target.value)}
-                         onBlur={() => {
-                            if (editingLayoutName.trim() && editingLayoutName !== l.name) {
-                              renameLayoutInActiveTemplate(l.id, editingLayoutName.trim());
-                            }
-                            setEditingLayoutId(null);
-                         }}
-                         onKeyDown={(e) => {
-                           if (e.key === 'Enter') {
-                              if (editingLayoutName.trim() && editingLayoutName !== l.name) {
-                                renameLayoutInActiveTemplate(l.id, editingLayoutName.trim());
-                              }
-                              setEditingLayoutId(null);
-                           } else if (e.key === 'Escape') {
-                              setEditingLayoutId(null);
-                           }
-                         }}
-                         className="bg-transparent border-none outline-none text-white w-full"
-                         onClick={(e) => e.stopPropagation()}
-                       />
-                     ) : (
-                       <>
-                         <span className="truncate">{l.name}</span>
-                         <div className="flex items-center gap-1">
-                           {selectedLayoutId === l.id && workingCode !== l.code && <div className="w-2 h-2 rounded-full bg-[#fe6247] mr-1" />}
-                           <button onClick={(e) => { e.stopPropagation(); setEditingLayoutId(l.id); setEditingLayoutName(l.name); }} className="opacity-0 group-hover:opacity-100 p-1.5 hover:text-white"><Edit2 size={12} /></button>
-                           {layouts.length > 1 && (
-                             <button onClick={(e) => { e.stopPropagation(); if (window.confirm("Delete layout?")) removeLayoutFromActiveTemplate(l.id); }} className="opacity-0 group-hover:opacity-100 p-1.5 hover:text-[#D62828]"><Trash2 size={12} /></button>
-                           )}
-                         </div>
-                       </>
-                     )}
-                   </div>
+                     l={l}
+                     selectedLayoutId={selectedLayoutId}
+                     setSelectedLayoutId={setSelectedLayoutId}
+                     setMobileTab={setMobileTab}
+                     editingLayoutId={editingLayoutId}
+                     editingLayoutName={editingLayoutName}
+                     setEditingLayoutName={setEditingLayoutName}
+                     renameLayoutInActiveTemplate={renameLayoutInActiveTemplate}
+                     setEditingLayoutId={setEditingLayoutId}
+                     workingCode={workingCode}
+                     duplicateLayoutInActiveTemplate={duplicateLayoutInActiveTemplate}
+                     removeLayoutFromActiveTemplate={removeLayoutFromActiveTemplate}
+                     layouts={layouts}
+                   />
                 ))}
+              </Reorder.Group>
               </div>
-            </div>
 
             <div className="flex-1 flex flex-col bg-[#111111] relative overflow-hidden">
               <div className="md:hidden flex border-b border-[#2d2d30] bg-[#161618]">
@@ -765,9 +816,11 @@ export function TemplateBuilder() {
                          </div>
                          <div className="p-3 border-t border-[#2d2d30] flex items-center justify-between bg-[#1e1e1e]">
                            <span className="text-sm font-medium text-gray-200 truncate pr-2" title={l.name}>{l.name}</span>
-                           <div className="flex gap-2 shrink-0">
-                              <button onClick={() => { setSelectedLayoutId(l.id); setBuilderMode('individual'); }} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors"><Edit2 size={14} /></button>
-                              <button onClick={() => { if (window.confirm("Delete layout?")) removeLayoutFromActiveTemplate(l.id); }} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors"><Trash2 size={14} /></button>
+                           <div className="flex gap-2 shrink-0">                               <button onClick={() => moveLayoutInActiveTemplate(l.id, 'up')} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Move Up"><ChevronUp size={14} /></button>
+                               <button onClick={() => moveLayoutInActiveTemplate(l.id, 'down')} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Move Down"><ChevronDown size={14} /></button>
+                               <button onClick={() => duplicateLayoutInActiveTemplate(l.id)} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Duplicate"><Copy size={14} /></button>
+                               <button onClick={() => { setSelectedLayoutId(l.id); setBuilderMode('individual'); }} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Edit"><Edit2 size={14} /></button>
+                               <button onClick={() => { if (window.confirm("Delete layout?")) removeLayoutFromActiveTemplate(l.id); }} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Delete"><Trash2 size={14} /></button>
                            </div>
                          </div>
                       </div>

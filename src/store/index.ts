@@ -191,6 +191,9 @@ interface AppState {
   updateLayoutInTemplate: (templateId: string, layoutId: string, updates: Partial<LayoutDef>) => void;
   renameLayoutInActiveTemplate: (layoutId: string, name: string) => void;
   removeLayoutFromActiveTemplate: (layoutId: string) => void;
+  duplicateLayoutInActiveTemplate: (layoutId: string) => void;
+  moveLayoutInActiveTemplate: (layoutId: string, direction: 'up' | 'down') => void;
+  reorderLayoutsInActiveTemplate: (layouts: LayoutDef[]) => void;
 
   createPresentation: (name: string, templateId: string) => string;
   deletePresentation: (id: string) => void;
@@ -206,6 +209,8 @@ interface AppState {
   updateSlideLayout: (slideId: string, layoutId: string) => void;
   addSlide: (slide: SlideData) => void;
   removeSlide: (slideId: string) => void;
+  duplicateSlideInActivePresentation: (slideId: string) => void;
+  moveSlideInActivePresentation: (slideId: string, direction: 'up' | 'down') => void;
   updateTemplateDesign: (templateId: string, config: Partial<DesignConfig>) => void;
   updateSlideThumbnail: (slideId: string, thumbnail: string) => void;
   
@@ -592,6 +597,42 @@ export const useAppStore = create<AppState>()(
         )
       })),
 
+      duplicateLayoutInActiveTemplate: (layoutId) => set((state) => ({
+        templates: state.templates.map(t => {
+          if (t.id !== state.activeTemplateId) return t;
+          const layoutIndex = t.layouts.findIndex(l => l.id === layoutId);
+          if (layoutIndex === -1) return t;
+          const layout = t.layouts[layoutIndex];
+          const newLayout: LayoutDef = {
+            ...layout,
+            id: `l-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+            name: `${layout.name} (Copy)`
+          };
+          const newLayouts = [...t.layouts];
+          newLayouts.splice(layoutIndex + 1, 0, newLayout);
+          return { ...t, layouts: newLayouts };
+        })
+      })),
+
+      moveLayoutInActiveTemplate: (layoutId, direction) => set((state) => ({
+        templates: state.templates.map(t => {
+          if (t.id !== state.activeTemplateId) return t;
+          const layoutIndex = t.layouts.findIndex(l => l.id === layoutId);
+          if (layoutIndex === -1) return t;
+          const newLayouts = [...t.layouts];
+          const targetIndex = direction === 'up' ? layoutIndex - 1 : layoutIndex + 1;
+          if (targetIndex < 0 || targetIndex >= newLayouts.length) return t;
+          [newLayouts[layoutIndex], newLayouts[targetIndex]] = [newLayouts[targetIndex], newLayouts[layoutIndex]];
+          return { ...t, layouts: newLayouts };
+        })
+      })),
+
+      reorderLayoutsInActiveTemplate: (layouts) => set((state) => ({
+        templates: state.templates.map(t =>
+          t.id === state.activeTemplateId ? { ...t, layouts } : t
+        )
+      })),
+
       createPresentation: (name, templateId) => {
         const id = `p-${Date.now()}`;
         set((state) => {
@@ -672,6 +713,33 @@ export const useAppStore = create<AppState>()(
         presentations: state.presentations.map(p => 
           p.id === state.activePresentationId ? { ...p, slides: p.slides.filter(s => s.id !== id), updatedAt: Date.now() } : p
         )
+      })),
+      duplicateSlideInActivePresentation: (slideId) => set((state) => ({
+        presentations: state.presentations.map(p => {
+          if (p.id !== state.activePresentationId) return p;
+          const slideIndex = p.slides.findIndex(s => s.id === slideId);
+          if (slideIndex === -1) return p;
+          const slide = p.slides[slideIndex];
+          const newSlide: SlideData = {
+            ...slide,
+            id: `s-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`
+          };
+          const newSlides = [...p.slides];
+          newSlides.splice(slideIndex + 1, 0, newSlide);
+          return { ...p, slides: newSlides, updatedAt: Date.now() };
+        })
+      })),
+      moveSlideInActivePresentation: (slideId, direction) => set((state) => ({
+        presentations: state.presentations.map(p => {
+          if (p.id !== state.activePresentationId) return p;
+          const slideIndex = p.slides.findIndex(s => s.id === slideId);
+          if (slideIndex === -1) return p;
+          const newSlides = [...p.slides];
+          const targetIndex = direction === 'up' ? slideIndex - 1 : slideIndex + 1;
+          if (targetIndex < 0 || targetIndex >= newSlides.length) return p;
+          [newSlides[slideIndex], newSlides[targetIndex]] = [newSlides[targetIndex], newSlides[slideIndex]];
+          return { ...p, slides: newSlides, updatedAt: Date.now() };
+        })
       })),
       updateTemplateDesign: (templateId: string, config) => set((state) => ({
         templates: state.templates.map(t => 

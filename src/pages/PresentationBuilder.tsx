@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
+import { Reorder, useDragControls } from "motion/react";
 import { useAppStore, SlideData } from "../store";
 import Editor from "../components/LazyEditor";
 import { SlidePreview, SlideStatic, SlidePreviewRef } from "../components/SlidePreview";
 import { Button, Textarea } from "../components/ui";
-import { Download, Plus, Trash2, LayoutTemplate, Sparkles, X, Copy, Check, Settings2, Save, Loader2, Palette, Code2, Presentation as PresentationIcon, Layout as LayoutIcon, ArrowLeft, Play, ChevronLeft, ChevronRight, Edit2 } from "lucide-react";
+import { Download, Plus, Trash2, LayoutTemplate, Sparkles, X, Copy, Check, Settings2, Save, Loader2, Palette, Code2, Presentation as PresentationIcon, Layout as LayoutIcon, ArrowLeft, Play, ChevronLeft, ChevronRight, Edit2, GripVertical } from "lucide-react";
 import jsPDF from "jspdf";
 import { cn, copyToClipboard } from "../lib/utils";
 import { askAiForSlideContent, buildSlideContentPrompt, askAiForFullPresentation, buildPresentationPrompt, PromptSettings, askAiForLayoutCode, buildLayoutPrompt } from "../lib/gemini";
@@ -45,10 +46,97 @@ const extractDefaultContent = (layoutCode: string, existingContent: Record<strin
 
 import { useParams, useNavigate } from "react-router-dom";
 
+
+const ReorderableSlide = ({ s, idx, selectedSlideId, setSelectedSlideId, layouts, designConfig, duplicateSlideInActivePresentation, removeSlide }: any) => {
+  const controls = useDragControls();
+  const l = layouts.find((x: any) => x.id === s.layoutId);
+  
+  return (
+    <Reorder.Item 
+      value={s}
+      dragListener={false}
+      dragControls={controls}
+      transition={{ type: "spring", stiffness: 400, damping: 40 }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileDrag={{ 
+        scale: 1.02, 
+        boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.5)",
+        zIndex: 50,
+        cursor: "grabbing"
+      }}
+      onClick={() => setSelectedSlideId(s.id)}
+      className={cn(
+        "relative group cursor-pointer border-2 rounded-xl aspect-video w-full lg:w-full flex-shrink-0 flex flex-col bg-[#1e1e1e] overflow-hidden select-none",
+        selectedSlideId === s.id ? "border-[#D62828] shadow-lg shadow-[#D62828]/20 ring-1 ring-[#D62828]/20" : "border-[#2d2d30] hover:border-[#3d3d40]"
+      )}
+    >
+      {/* Visual Preview Area */}
+      <div 
+        className="flex-1 flex items-center justify-center overflow-hidden pointer-events-none"
+        style={{ backgroundColor: designConfig.bg }}
+      >
+         {s.thumbnail ? (
+           <img src={s.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
+         ) : (
+           <div className="p-2 text-center">
+              <div 
+                className="line-clamp-2 text-[10px] font-bold leading-tight"
+                style={{ color: designConfig.primary }}
+              >
+                {s.content.title || "Untitled Slide"}
+              </div>
+           </div>
+         )}
+      </div>
+
+      {/* Footer with meta info */}
+      <div className="h-7 border-t border-[#2d2d30] px-2 flex items-center justify-between bg-[#161618]">
+         <div className="flex items-center gap-1">
+            <div 
+              onPointerDown={(e) => { e.preventDefault(); controls.start(e); }}
+              className="p-1.5 -ml-1.5 cursor-grab active:cursor-grabbing text-gray-500 hover:text-white hover:bg-white/10 rounded-md transition-all flex items-center justify-center"
+              title="Drag to reorder"
+            >
+              <GripVertical size={14} />
+            </div>
+           <span className="text-[9px] font-bold text-gray-500">{idx + 1}</span>
+         </div>
+         <span className="text-[8px] text-gray-500 uppercase tracking-tighter opacity-70 truncate max-w-[60px]">{l?.variant || "Slide"}</span>
+      </div>
+
+      {/* Actions Overlay */}
+      <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-20">
+        <button 
+          onClick={(e) => { e.stopPropagation(); duplicateSlideInActivePresentation(s.id); }}
+          className="h-7 w-7 flex items-center justify-center bg-black/60 hover:bg-[#D62828] text-white rounded-lg backdrop-blur-md shadow-lg border border-white/10"
+          title="Duplicate Slide"
+        >
+          <Copy size={14} />
+        </button>
+        <button 
+          onClick={(e) => { 
+            e.stopPropagation(); 
+            if (window.confirm("Delete this slide?")) {
+              removeSlide(s.id); 
+            }
+          }}
+          className="h-7 w-7 flex items-center justify-center bg-black/60 hover:bg-[#b20112] text-white rounded-lg backdrop-blur-md shadow-lg border border-white/10"
+          title="Delete Slide"
+        >
+          <Trash2 size={14} />
+        </button>
+      </div>
+    </Reorder.Item>
+  );
+};
+
+
+
 export function PresentationBuilder() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { templates, presentations, activePresentationId, setSlides, addSlide, removeSlide, updateSlideContent, updateSlideLayout, updateLayoutInTemplate, setActiveTemplate, setPresentationTemplate, setActivePresentation, updateSlideThumbnail, addToast } = useAppStore();
+  const { templates, presentations, activePresentationId, setSlides, addSlide, removeSlide, updateSlideContent, updateSlideLayout, updateLayoutInTemplate, setActiveTemplate, setPresentationTemplate, setActivePresentation, updateSlideThumbnail, addToast, duplicateSlideInActivePresentation, moveSlideInActivePresentation } = useAppStore();
   const [isCapturing, setIsCapturing] = useState(false);
   
   useEffect(() => {
@@ -468,71 +556,26 @@ export function PresentationBuilder() {
           <h2 className="font-bold text-sm text-white flex items-center gap-2">Slides <span className="bg-[#2d2d30] text-xs px-2 py-0.5 rounded-full">{slides.length}</span></h2>
           <Button onClick={handleAddSlide} variant="ghost" className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-[#2d2d30]" title="Add Slide"><Plus size={16} /></Button>
         </div>
-        <div 
-          ref={sidebarRef}
-          onScroll={handleSidebarScroll}
-          className="flex-1 overflow-y-auto p-3 lg:p-4 grid grid-cols-2 lg:flex lg:flex-col gap-4 content-start"
-        >
-          {/* Top spacer for virtualization */}
-          <div className="hidden lg:block shrink-0" style={{ height: paddingTop }} />
-          
-          {(window.innerWidth < 1024 ? slides : slides.slice(startIndex, endIndex)).map((s, sliceIdx) => {
-            const idx = startIndex + sliceIdx;
-            const l = layouts.find(x => x.id === s.layoutId);
-            return (
-              <div 
+        <Reorder.Group 
+            axis="y" 
+            values={slides} 
+            onReorder={setSlides}
+            className="flex-1 overflow-y-auto p-3 lg:p-4 flex flex-col gap-4 content-start"
+          >
+            {slides.map((s, idx) => (
+              <ReorderableSlide 
                 key={s.id}
-                onClick={() => setSelectedSlideId(s.id)}
-                className={cn(
-                  "relative group cursor-pointer border-2 rounded-xl aspect-video w-full lg:w-full flex-shrink-0 flex flex-col bg-[#1e1e1e] transition-all overflow-hidden",
-                  selectedSlideId === s.id ? "border-[#D62828] shadow-lg shadow-[#D62828]/20 ring-1 ring-[#D62828]/20" : "border-[#2d2d30] hover:border-[#3d3d40]"
-                )}
-              >
-                {/* Visual Preview Area */}
-                <div 
-                  className="flex-1 flex items-center justify-center overflow-hidden"
-                  style={{ backgroundColor: designConfig.bg }}
-                >
-                   {s.thumbnail ? (
-                     <img src={s.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
-                   ) : (
-                     <div className="p-2 text-center">
-                        <div 
-                          className="line-clamp-2 text-[10px] font-bold leading-tight"
-                          style={{ color: designConfig.primary }}
-                        >
-                          {s.content.title || "Untitled Slide"}
-                        </div>
-                     </div>
-                   )}
-                </div>
-
-                {/* Footer with meta info */}
-                <div className="h-7 border-t border-[#2d2d30] px-2 flex items-center justify-between bg-[#161618]">
-                   <span className="text-[9px] font-bold text-gray-500">{idx + 1}</span>
-                   <span className="text-[8px] text-gray-500 uppercase tracking-tighter opacity-70 truncate max-w-[60px]">{l?.variant || "Slide"}</span>
-                </div>
-
-                {/* Delete button */}
-                <button 
-                  onClick={(e) => { 
-                    e.stopPropagation(); 
-                    if (window.confirm("Delete this slide?")) {
-                      removeSlide(s.id); 
-                    }
-                  }}
-                  className="absolute top-1.5 right-1.5 h-7 w-7 flex items-center justify-center bg-black/60 hover:bg-[#b20112] text-white rounded-lg lg:opacity-0 lg:group-hover:opacity-100 transition-all backdrop-blur-md z-20 shadow-lg border border-white/10"
-                  title="Delete Slide"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            );
-          })}
-          
-          {/* Bottom spacer for virtualization */}
-          <div className="hidden lg:block shrink-0" style={{ height: paddingBottom }} />
-        </div>
+                s={s}
+                idx={idx}
+                selectedSlideId={selectedSlideId}
+                setSelectedSlideId={setSelectedSlideId}
+                layouts={layouts}
+                designConfig={designConfig}
+                duplicateSlideInActivePresentation={duplicateSlideInActivePresentation}
+                removeSlide={removeSlide}
+              />
+            ))}
+          </Reorder.Group>
       </div>
 
       {/* Center: Canvas */}
