@@ -319,22 +319,17 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
             applyConfig();
 
             window.captureSlide = async () => {
-               // Wait for DOM and fonts
                if (document.readyState === 'loading') {
                  await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
                }
                if (document.fonts) await document.fonts.ready;
                
-               if (!document.body) {
-                 console.error("SlidePreview: document.body is null during capture");
-                 return null;
-               }
-
-               return await htmlToImage.toJpeg(document.body, { 
-                  quality: 0.98, 
+               const element = document.getElementById('slide-root') || document.body;
+               return await htmlToImage.toJpeg(element, { 
+                  quality: 1, 
                   pixelRatio: 2,
                   backgroundColor: '${designConfig?.background || designConfig?.bg || '#ffffff'}',
-                  skipFonts: true
+                  cacheBust: true,
                });
             };
 

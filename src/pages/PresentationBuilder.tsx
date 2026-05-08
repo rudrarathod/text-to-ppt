@@ -313,49 +313,29 @@ export function PresentationBuilder() {
     if (!activePresentation || slides.length === 0) return;
     
     setExportType('PDF');
-    setIsExporting(true);
-    setExportProgress(10);
-    
     try {
-      setExportProgress(30);
-      const fullHtml = generateFullPresentationHtml(slides, layouts, designConfig);
-      
-      setExportProgress(50);
-      const response = await fetch('/api/export-pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          html: fullHtml,
-          name: activePresentation.name
-        }),
-      });
+      const images = await captureAllSlides();
+      if (images.length > 0) {
+        const pdf = new jsPDF({
+          orientation: 'landscape',
+          unit: 'px',
+          format: [1280, 720]
+        });
 
-      if (!response.ok) {
-        throw new Error(await response.text());
+        images.forEach((img, index) => {
+          if (index > 0) pdf.addPage([1280, 720], 'landscape');
+          pdf.addImage(img, 'JPEG', 0, 0, 1280, 720, undefined, 'FAST');
+        });
+
+        pdf.save(`${activePresentation.name || 'presentation'}.pdf`);
+        addToast('PDF exported successfully!', 'success');
       }
-
-      setExportProgress(80);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${activePresentation.name || 'presentation'}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      setExportProgress(100);
     } catch (e: any) {
       console.error("Export Error:", e);
-      alert("Failed to export PDF: " + e.message);
+      addToast("Failed to export PDF: " + e.message, 'error');
     } finally {
-      setTimeout(() => {
-        setIsExporting(false);
-        setExportProgress(0);
-      }, 1000);
+      setIsExporting(false);
+      setExportProgress(0);
     }
   };
 
@@ -377,7 +357,7 @@ export function PresentationBuilder() {
         });
         
         // Wait for render and fonts
-        await new Promise(resolve => setTimeout(resolve, 1200));
+        await new Promise(resolve => setTimeout(resolve, 1500));
         
         if (captureRef.current) {
           const img = await captureRef.current.capture();
@@ -492,7 +472,10 @@ export function PresentationBuilder() {
       )}
 
       {/* Hidden Capture Area */}
-      <div className="fixed -left-[5000px] top-0 opacity-0 pointer-events-none z-[-1]">
+      <div 
+        className="fixed -left-[5000px] top-0 opacity-0 pointer-events-none z-[-1]"
+        style={{ width: 1280, height: 720 }}
+      >
         {captureSlideData && (
           <SlideStatic 
             ref={captureRef}
