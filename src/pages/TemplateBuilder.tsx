@@ -55,7 +55,7 @@ const SAMPLE_DATA: Record<LayoutVariant, any> = {
 };
 
 
-const ReorderableLayout = ({ l, selectedLayoutId, setSelectedLayoutId, setMobileTab, editingLayoutId, editingLayoutName, setEditingLayoutName, renameLayoutInActiveTemplate, setEditingLayoutId, workingCode, duplicateLayoutInActiveTemplate, removeLayoutFromActiveTemplate, layouts }: any) => {
+const ReorderableLayout = ({ l, selectedLayoutId, setSelectedLayoutId, setMobileTab, editingLayoutId, editingLayoutName, setEditingLayoutName, renameLayoutInActiveTemplate, setEditingLayoutId, workingCode, duplicateLayoutInActiveTemplate, removeLayoutFromActiveTemplate, layouts, isDefaultTemplate }: any) => {
   const controls = useDragControls();
   
   return (
@@ -118,13 +118,15 @@ const ReorderableLayout = ({ l, selectedLayoutId, setSelectedLayoutId, setMobile
           </div>
           <div className="flex items-center gap-0.5">
             {selectedLayoutId === l.id && workingCode !== l.code && <div className="w-2 h-2 rounded-full bg-[#fe6247] mr-1" />}
-            <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <button onClick={(e) => { e.stopPropagation(); duplicateLayoutInActiveTemplate(l.id); }} className="p-1 hover:text-white" title="Duplicate"><Copy size={12} /></button>
-              <button onClick={(e) => { e.stopPropagation(); setEditingLayoutId(l.id); setEditingLayoutName(l.name); }} className="p-1 hover:text-white" title="Rename"><Edit2 size={12} /></button>
-              {layouts.length > 1 && (
-                <button onClick={(e) => { e.stopPropagation(); if (window.confirm("Delete layout?")) removeLayoutFromActiveTemplate(l.id); }} className="p-1 hover:text-[#D62828]" title="Delete"><Trash2 size={12} /></button>
-              )}
-            </div>
+            {!isDefaultTemplate && (
+              <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onClick={(e) => { e.stopPropagation(); duplicateLayoutInActiveTemplate(l.id); }} className="p-1 hover:text-white" title="Duplicate"><Copy size={12} /></button>
+                <button onClick={(e) => { e.stopPropagation(); setEditingLayoutId(l.id); setEditingLayoutName(l.name); }} className="p-1 hover:text-white" title="Rename"><Edit2 size={12} /></button>
+                {layouts.length > 1 && (
+                  <button onClick={(e) => { e.stopPropagation(); if (window.confirm("Delete layout?")) removeLayoutFromActiveTemplate(l.id); }} className="p-1 hover:text-[#D62828]" title="Delete"><Trash2 size={12} /></button>
+                )}
+              </div>
+            )}
           </div>
         </>
       )}
@@ -517,7 +519,7 @@ export function TemplateBuilder() {
         backTo="/templates"
         title={
           <div className="flex items-center min-w-0">
-            {isEditingTemplateName ? (
+            {isEditingTemplateName && !activeTemplate.isDefault ? (
               <input 
                 autoFocus
                 className="bg-transparent border-b border-[#fe6247] outline-none text-white font-bold text-sm md:text-lg w-full max-w-[120px] md:max-w-xs"
@@ -543,11 +545,20 @@ export function TemplateBuilder() {
               />
             ) : (
               <h2 
-                className="font-bold text-white text-sm md:text-lg truncate cursor-pointer hover:text-[#fe6247] transition-colors flex items-center gap-1 group max-w-[100px] sm:max-w-xs overflow-hidden text-ellipsis"
-                onClick={() => setIsEditingTemplateName(true)}
+                className={cn(
+                  "font-bold text-white text-sm md:text-lg truncate flex items-center gap-2 group max-w-[100px] sm:max-w-xs overflow-hidden text-ellipsis",
+                  !activeTemplate.isDefault ? "cursor-pointer hover:text-[#fe6247] transition-colors" : ""
+                )}
+                onClick={() => !activeTemplate.isDefault && setIsEditingTemplateName(true)}
               >
                 {activeTemplate.name}
-                <Edit2 size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                {activeTemplate.isDefault ? (
+                  <span className="px-1.5 py-0.5 bg-[#D62828]/10 text-[#D62828] text-[8px] font-black uppercase tracking-widest rounded-md border border-[#D62828]/20 shrink-0">
+                    System Default
+                  </span>
+                ) : (
+                  <Edit2 size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                )}
               </h2>
             )}
             {builderMode === 'individual' && (
@@ -607,9 +618,11 @@ export function TemplateBuilder() {
             )}>
               <div className="p-4 md:p-6 pb-2 flex items-center justify-between">
                 <span className="text-[11px] font-bold uppercase tracking-widest text-[#85858b]">Layout Library</span>
-                <button onClick={handleAddLayout} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 text-gray-400 hover:text-white transition-colors">
-                  <Plus size={16} />
-                </button>
+                {!activeTemplate.isDefault && (
+                  <button onClick={handleAddLayout} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 text-gray-400 hover:text-white transition-colors">
+                    <Plus size={16} />
+                  </button>
+                )}
               </div>
               <Reorder.Group 
                 axis="y" 
@@ -633,6 +646,7 @@ export function TemplateBuilder() {
                      duplicateLayoutInActiveTemplate={duplicateLayoutInActiveTemplate}
                      removeLayoutFromActiveTemplate={removeLayoutFromActiveTemplate}
                      layouts={layouts}
+                     isDefaultTemplate={activeTemplate?.isDefault}
                    />
                 ))}
               </Reorder.Group>

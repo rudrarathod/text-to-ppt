@@ -4,7 +4,7 @@ import { useAppStore, SlideData } from "../store";
 import Editor from "../components/LazyEditor";
 import { SlidePreview, SlideStatic, SlidePreviewRef } from "../components/SlidePreview";
 import { Button, Textarea } from "../components/ui";
-import { Download, Plus, Trash2, LayoutTemplate, Sparkles, X, Copy, Check, Settings2, Save, Loader2, Palette, Code2, Presentation as PresentationIcon, Layout as LayoutIcon, ArrowLeft, Play, ChevronLeft, ChevronRight, Edit2, GripVertical } from "lucide-react";
+import { Download, Plus, Trash2, LayoutTemplate, Sparkles, X, Copy, Check, Settings2, Save, Loader2, Palette, Code2, Presentation as PresentationIcon, Layout as LayoutIcon, ArrowLeft, Play, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit2, GripVertical } from "lucide-react";
 import jsPDF from "jspdf";
 import { cn, copyToClipboard } from "../lib/utils";
 import { askAiForSlideContent, buildSlideContentPrompt, askAiForFullPresentation, buildPresentationPrompt, PromptSettings, askAiForLayoutCode, buildLayoutPrompt } from "../lib/gemini";
@@ -203,6 +203,7 @@ export function PresentationBuilder() {
   const [isGeneratingPresentation, setIsGeneratingPresentation] = useState(false);
   
   const [showPromptSettings, setShowPromptSettings] = useState(false);
+  const [isLayoutAiCollapsed, setIsLayoutAiCollapsed] = useState(false);
   const [promptSettings, setPromptSettings] = useState<PromptSettings>({
     mood: "",
     length: "",
@@ -998,56 +999,79 @@ export function PresentationBuilder() {
                     </div>
 
                     {/* Layout AI Assistant Panel */}
-                    <div className="absolute bottom-6 left-6 right-6 bg-[#161618] border border-[#2d2d30] rounded-2xl shadow-2xl flex flex-col shrink-0 overflow-hidden z-20">
-                       <div className="flex items-center justify-between px-4 py-3 border-b border-[#2d2d30] bg-[#1c1c1e]">
+                    <div className={cn(
+                      "absolute left-6 right-6 bg-[#161618] border border-[#2d2d30] rounded-2xl shadow-2xl flex flex-col shrink-0 overflow-hidden z-20 transition-all duration-300",
+                      isLayoutAiCollapsed ? "bottom-6" : "bottom-6"
+                    )}>
+                       <div 
+                         className="flex items-center justify-between px-4 py-3 border-b border-[#2d2d30] bg-[#1c1c1e] cursor-pointer"
+                         onClick={() => setIsLayoutAiCollapsed(!isLayoutAiCollapsed)}
+                       >
                          <div className="flex items-center gap-3">
                            <div className="w-6 h-6 rounded-lg bg-[#fe6247]/10 flex items-center justify-center">
-                             <Sparkles size={12} className="text-[#fe6247] animate-pulse" />
+                             <Sparkles size={12} className={cn("text-[#fe6247]", isLayoutAiLoading && "animate-pulse")} />
                            </div>
                            <span className="text-white text-[11px] font-black uppercase tracking-widest">Layout AI</span>
-                           <div className="flex items-center bg-[#111111] rounded-md border border-[#2d2d30] overflow-hidden text-[9px] font-bold text-gray-500 p-0.5">
-                             <button onClick={() => setLayoutAiMode('ai')} className={cn("px-2 py-1 rounded transition-all", layoutAiMode === 'ai' ? "bg-[#252526] text-white shadow-sm" : "hover:text-gray-300")}>Auto</button>
-                             <button onClick={() => setLayoutAiMode('prompt')} className={cn("px-2 py-1 rounded transition-all", layoutAiMode === 'prompt' ? "bg-[#252526] text-white shadow-sm" : "hover:text-gray-300")}>Draft</button>
-                           </div>
+                           {isLayoutAiCollapsed && layoutAiPrompt && (
+                             <span className="text-[10px] text-gray-500 truncate max-w-[200px] font-medium hidden sm:inline">— {layoutAiPrompt}</span>
+                           )}
+                           {!isLayoutAiCollapsed && (
+                             <div className="flex items-center bg-[#111111] rounded-md border border-[#2d2d30] overflow-hidden text-[9px] font-bold text-gray-500 p-0.5" onClick={e => e.stopPropagation()}>
+                               <button onClick={() => setLayoutAiMode('ai')} className={cn("px-2 py-1 rounded transition-all", layoutAiMode === 'ai' ? "bg-[#252526] text-white shadow-sm" : "hover:text-gray-300")}>Auto</button>
+                               <button onClick={() => setLayoutAiMode('prompt')} className={cn("px-2 py-1 rounded transition-all", layoutAiMode === 'prompt' ? "bg-[#252526] text-white shadow-sm" : "hover:text-gray-300")}>Draft</button>
+                             </div>
+                           )}
                          </div>
-                         <button onClick={() => setShowPromptSettings(!showPromptSettings)} title="Prompt Settings" className={cn("text-gray-500 hover:text-white transition-colors", showPromptSettings && "text-[#fe6247]")}>
-                            <Settings2 size={14} />
-                         </button>
+                         <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                            {!isLayoutAiCollapsed && (
+                              <button onClick={() => setShowPromptSettings(!showPromptSettings)} title="Prompt Settings" className={cn("text-gray-500 hover:text-white transition-colors", showPromptSettings && "text-[#fe6247]")}>
+                                 <Settings2 size={14} />
+                              </button>
+                            )}
+                            <button 
+                              onClick={() => setIsLayoutAiCollapsed(!isLayoutAiCollapsed)}
+                              className="p-1 text-gray-500 hover:text-white transition-colors"
+                            >
+                              {isLayoutAiCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                            </button>
+                         </div>
                        </div>
                        
-                       {showPromptSettings && (
-                         <div className="px-3 pb-3 border-b border-[#2d2d30] bg-[#1a1a1a]">
-                           <span className="text-[10px] font-bold text-white uppercase opacity-50 block mt-2">Settings</span>
-                           <PromptSettingsForm settings={promptSettings} setSettings={setPromptSettings} />
-                         </div>
-                       )}
-                       
-                       <div className="p-2 space-y-2">
-                         <div className="relative">
-                           <Textarea 
-                             value={layoutAiPrompt}
-                             onChange={e => setLayoutAiPrompt(e.target.value)}
-                             placeholder="e.g. Add a 3-column feature list with icons..."
-                             className="w-full bg-[#252526] border border-[#333] text-gray-200 text-xs focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-sans resize-none rounded-lg p-2 pr-8 min-h-[50px]"
-                             disabled={isLayoutAiLoading}
-                             onKeyDown={(e) => {
-                               if(e.key === 'Enter' && !e.shiftKey) {
-                                 e.preventDefault();
-                                 if (layoutAiMode === 'ai') {
-                                   handleLayoutAiGenerate();
-                                 } else if (layoutAiPrompt.trim()) {
-                                   const fullPrompt = buildLayoutPrompt(layoutAiPrompt, layoutEditCode, jsonInput, designConfig, promptSettings);
-                                   copyToClipboard(fullPrompt);
-                                   setCopiedPrompt(true);
-                                   setTimeout(() => setCopiedPrompt(false), 2000);
-                                 }
-                               }
-                             }}
-                           />
-                           <button 
-                             onClick={() => {
-                               if (layoutAiMode === 'ai') {
-                                 handleLayoutAiGenerate();
+                       {!isLayoutAiCollapsed && (
+                         <>
+                           {showPromptSettings && (
+                             <div className="px-3 pb-3 border-b border-[#2d2d30] bg-[#1a1a1a]">
+                               <span className="text-[10px] font-bold text-white uppercase opacity-50 block mt-2">Settings</span>
+                               <PromptSettingsForm settings={promptSettings} setSettings={setPromptSettings} />
+                             </div>
+                           )}
+                           
+                           <div className="p-2 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                             <div className="relative">
+                               <Textarea 
+                                 value={layoutAiPrompt}
+                                 onChange={e => setLayoutAiPrompt(e.target.value)}
+                                 placeholder="e.g. Add a 3-column feature list with icons..."
+                                 className="w-full bg-[#252526] border border-[#333] text-gray-200 text-xs focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-sans resize-none rounded-lg p-2 pr-8 min-h-[50px]"
+                                 disabled={isLayoutAiLoading}
+                                 onKeyDown={(e) => {
+                                   if(e.key === 'Enter' && !e.shiftKey) {
+                                     e.preventDefault();
+                                     if (layoutAiMode === 'ai') {
+                                       handleLayoutAiGenerate();
+                                     } else if (layoutAiPrompt.trim()) {
+                                       const fullPrompt = buildLayoutPrompt(layoutAiPrompt, layoutEditCode, jsonInput, designConfig, promptSettings);
+                                       copyToClipboard(fullPrompt);
+                                       setCopiedPrompt(true);
+                                       setTimeout(() => setCopiedPrompt(false), 2000);
+                                     }
+                                   }
+                                 }}
+                               />
+                               <button 
+                                 onClick={() => {
+                                   if (layoutAiMode === 'ai') {
+                                     handleLayoutAiGenerate();
                                } else if (layoutAiPrompt.trim()) {
                                  const fullPrompt = buildLayoutPrompt(layoutAiPrompt, layoutEditCode, jsonInput, designConfig, promptSettings);
                                  copyToClipboard(fullPrompt);
@@ -1097,7 +1121,9 @@ export function PresentationBuilder() {
                              </button>
                            </div>
                          )}
-                       </div>
+                           </div>
+                         </>
+                       )}
                     </div>
                   </div>
                 ) : (

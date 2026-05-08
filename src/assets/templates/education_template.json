@@ -1,0 +1,699 @@
+{
+  "id": "t-1778205279882",
+  "name": "Education",
+  "designConfig": {
+    "surface": "#FCFCFD",
+    "surfaceDim": "#E7EAF0",
+    "surfaceBright": "#FFFFFF",
+    "surfaceContainerLowest": "#FFFFFF",
+    "surfaceContainerLow": "#F6F8FB",
+    "surfaceContainer": "#EEF2F7",
+    "surfaceContainerHigh": "#E6EBF2",
+    "surfaceContainerHighest": "#DDE4EC",
+    "surfaceVariant": "#DCE3EC",
+    "onSurface": "#1B1F24",
+    "onSurfaceVariant": "#4D5B6B",
+    "onBackground": "#171C22",
+    "inverseSurface": "#2A313A",
+    "inverseOnSurface": "#F5F7FA",
+    "primary": "#2563EB",
+    "onPrimary": "#FFFFFF",
+    "primaryContainer": "#DCE8FF",
+    "onPrimaryContainer": "#0B2E78",
+    "primaryFixed": "#D7E4FF",
+    "primaryFixedDim": "#AFC8FF",
+    "onPrimaryFixed": "#041633",
+    "onPrimaryFixedVariant": "#1A4DC0",
+    "inversePrimary": "#9EC1FF",
+    "surfaceTint": "#2563EB",
+    "secondary": "#0F766E",
+    "onSecondary": "#FFFFFF",
+    "secondaryContainer": "#D4F4EF",
+    "onSecondaryContainer": "#044943",
+    "secondaryFixed": "#C9EFE9",
+    "secondaryFixedDim": "#95DDD2",
+    "onSecondaryFixed": "#012523",
+    "onSecondaryFixedVariant": "#0B5E58",
+    "tertiary": "#7C3AED",
+    "onTertiary": "#FFFFFF",
+    "tertiaryContainer": "#ECDDFF",
+    "onTertiaryContainer": "#3D127F",
+    "tertiaryFixed": "#E7D6FF",
+    "tertiaryFixedDim": "#C8A9FF",
+    "onTertiaryFixed": "#1F063D",
+    "onTertiaryFixedVariant": "#6530C4",
+    "error": "#BA1A1A",
+    "onError": "#FFFFFF",
+    "errorContainer": "#FFDAD6",
+    "onErrorContainer": "#410002",
+    "outline": "#748292",
+    "outlineVariant": "#C4CCD6",
+    "background": "#F8FAFC",
+    "typeDisplayXl": {
+      "fontFamily": "Poppins",
+      "fontSize": "64px",
+      "fontWeight": "700",
+      "lineHeight": "72px",
+      "letterSpacing": "-1.2px"
+    },
+    "typeHeadlineLg": {
+      "fontFamily": "Poppins",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "lineHeight": "48px",
+      "letterSpacing": "-0.5px"
+    },
+    "typeHeadlineMd": {
+      "fontFamily": "Poppins",
+      "fontSize": "32px",
+      "fontWeight": "600",
+      "lineHeight": "40px",
+      "letterSpacing": "-0.3px"
+    },
+    "typeBodyLg": {
+      "fontFamily": "Inter",
+      "fontSize": "18px",
+      "fontWeight": "400",
+      "lineHeight": "30px",
+      "letterSpacing": "0px"
+    },
+    "typeBodyMd": {
+      "fontFamily": "Inter",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "lineHeight": "26px",
+      "letterSpacing": "0px"
+    },
+    "typeLabelSm": {
+      "fontFamily": "Inter",
+      "fontSize": "13px",
+      "fontWeight": "600",
+      "lineHeight": "18px",
+      "letterSpacing": "0.4px"
+    },
+    "typeCaption": {
+      "fontFamily": "Inter",
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "lineHeight": "16px",
+      "letterSpacing": "0.3px"
+    },
+    "radiusSm": "4px",
+    "radiusDefault": "8px",
+    "radiusMd": "12px",
+    "radiusLg": "18px",
+    "radiusXl": "28px",
+    "radiusFull": "9999px",
+    "spacingBase": "4px",
+    "spacingXs": "8px",
+    "spacingSm": "12px",
+    "spacingMd": "16px",
+    "spacingLg": "24px",
+    "spacingXl": "32px",
+    "spacingGutter": "24px",
+    "spacingContainerMax": "1280px",
+    "shadowSm": "0 1px 2px rgba(15, 23, 42, 0.06)",
+    "shadowMd": "0 4px 10px rgba(15, 23, 42, 0.08)",
+    "shadowLg": "0 10px 24px rgba(15, 23, 42, 0.10)",
+    "shadowXl": "0 20px 48px rgba(15, 23, 42, 0.14)",
+    "interactionHoverOpacity": 0.92,
+    "interactionFocusGlow": "0 0 0 4px rgba(37, 99, 235, 0.18)",
+    "interactionActiveScale": 0.98,
+    "interactionTransitionTiming": "220ms",
+    "interactionTransitionEasing": "cubic-bezier(0.2, 0, 0, 1)",
+    "primaryHover": "#4f378b",
+    "accent": "#7d5260",
+    "bg": "#fef7ff",
+    "surfaceContrast": "#e6e0e9",
+    "textPrimary": "#1d1b20",
+    "textSecondary": "#49454f",
+    "fontFamily": "Inter",
+    "headingFont": "Inter",
+    "headingWeight": "400",
+    "headingSize": "32px",
+    "bodySize": "16px",
+    "letterSpacing": "0px",
+    "borderRadius": "8px",
+    "buttonRadius": "8px",
+    "cardRadius": "12px",
+    "border": "#79747e",
+    "sectionPadding": "24px",
+    "contentAlignment": "left",
+    "shadowSoft": "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+    "shadowStrong": "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+    "transitionSpeed": "200ms"
+  },
+  "layouts": [
+    {
+      "id": "l-1778205279882-title",
+      "name": "Main Title",
+      "variant": "title",
+      "code": "<div class=\"flex flex-col items-center justify-center h-full w-full bg-lumina-bg p-20 text-center rounded-lumina\">\n  <h1 class=\"text-7xl font-black text-lumina-primary mb-6\">{{title}}</h1>\n  <div class=\"w-24 h-2 bg-lumina-secondary mb-8\"></div>\n  <h2 class=\"text-3xl font-medium text-lumina-text-secondary\">{{subtitle}}</h2>\n</div>"
+    },
+    {
+      "id": "l-1778205279882-content",
+      "name": "Objectives",
+      "variant": "content",
+      "code": "<div class=\"w-full h-full overflow-hidden bg-lumina-surface flex items-center justify-center p-12\">\n  <div class=\"w-full h-full rounded-lg bg-white shadow-xl border border-black/5 flex overflow-hidden\">\n\n<!-- Left Content -->\n<div class=\"w-[62%] h-full flex flex-col justify-center px-16 py-14 overflow-hidden\">\n  \n  <!-- Section Label -->\n  <div class=\"flex items-center gap-3 mb-6\">\n    <span class=\"w-10 h-[3px] bg-lumina-primary rounded-full\"></span>\n    <span class=\"text-sm tracking-[0.3em] uppercase font-bold text-lumina-primary font-body\">\n      Objectives\n    </span>\n  </div>\n\n  <!-- Title -->\n  <h1 class=\"font-display text-5xl leading-tight font-black text-lumina-text-primary mb-10\">\n    {{title}}\n  </h1>\n\n  <!-- Objective Points -->\n  <div class=\"flex flex-col gap-6 overflow-hidden\">\n    {{#each points}}\n    <div class=\"flex items-start gap-5\">\n      \n      <!-- Number Badge -->\n      <div class=\"flex-shrink-0 w-12 h-12 rounded-md bg-lumina-primary/10 flex items-center justify-center\">\n        <span class=\"text-xl font-black text-lumina-primary font-display\">\n          {{inc @index}}\n        </span>\n      </div>\n\n      <!-- Text -->\n      <div class=\"flex-1 overflow-hidden\">\n        <p class=\"font-body text-2xl leading-relaxed text-lumina-text-secondary font-medium\">\n          {{this}}\n        </p>\n      </div>\n    </div>\n    {{/each}}\n  </div>\n</div>\n\n<!-- Right Visual -->\n<div class=\"w-[38%] h-full relative overflow-hidden bg-lumina-primary/5\">\n  \n  <!-- Decorative Background -->\n  <div class=\"absolute inset-0\">\n    <div class=\"absolute top-10 right-10 w-40 h-40 rounded-full bg-lumina-primary/10 blur-3xl\"></div>\n    <div class=\"absolute bottom-0 left-0 w-56 h-56 rounded-full bg-lumina-primary/10 blur-3xl\"></div>\n  </div>\n\n  <!-- Uploadable Image -->\n  <div class=\"relative z-10 w-full h-full p-10\">\n    <div class=\"relative group w-full h-full rounded-lg overflow-hidden border border-white/40 shadow-lg\" data-image-key=\"illustration\">\n      {{#if illustration}}\n        <img \n          src=\"{{illustration}}\" \n          alt=\"Objective Illustration\" \n          class=\"w-full h-full object-cover\"\n        />\n      {{else}}\n        <div class=\"w-full h-full flex flex-col items-center justify-center bg-gray-50 text-gray-400 border-4 border-dashed border-gray-200 rounded-lg group-hover:bg-gray-100 group-hover:border-lumina-primary transition-all cursor-pointer\">\n          <svg class=\"w-12 h-12 mb-2 opacity-30\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\n            <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\"></path>\n          </svg>\n          <span class=\"text-[10px] font-black uppercase tracking-widest\">\n            Click to Upload Image\n          </span>\n        </div>\n      {{/if}}\n    </div>\n  </div>\n</div>\n\n  </div>\n</div>",
+      "mockData": {
+        "title": "Key Learning Objectives",
+        "points": [
+          "Understand the core concepts and practical applications of the topic.",
+          "Identify important processes, workflows, and real-world implementation strategies.",
+          "Develop the ability to analyze, evaluate, and communicate final outcomes effectively."
+        ],
+        "illustration": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1200&auto=format&fit=crop"
+      }
+    },
+    {
+      "id": "l-1778206362069",
+      "name": "Section Divider",
+      "variant": "content",
+      "code": "<div class=\"w-full h-full overflow-hidden p-12 flex items-center justify-center bg-lumina-surface\">\n\n  <div class=\"relative w-full h-full rounded-lg bg-white border border-black/5 shadow-xl overflow-hidden flex\">\n\n<!-- Left Content -->\n<div class=\"w-[60%] h-full flex flex-col justify-center px-20 py-16 overflow-hidden relative z-10\">\n  \n  <!-- Header -->\n  <div class=\"mb-12\">\n    <div class=\"flex items-center gap-4 mb-5\">\n      <div class=\"w-14 h-[4px] rounded-full bg-lumina-primary\"></div>\n      <span class=\"font-body text-sm font-bold uppercase tracking-[0.3em] text-lumina-primary\">\n        {{sectionLabel}}\n      </span>\n    </div>\n\n    <h1 class=\"font-display text-6xl leading-[1.05] font-black text-lumina-text-primary tracking-tight\">\n      {{title}}\n    </h1>\n\n    {{#if description}}\n    <p class=\"mt-6 max-w-2xl font-body text-xl leading-relaxed text-lumina-text-secondary\">\n      {{description}}\n    </p>\n    {{/if}}\n  </div>\n\n  <!-- Topics List -->\n  <div class=\"flex flex-col gap-5 overflow-hidden\">\n    {{#each topics}}\n    <div class=\"group flex items-center gap-5 rounded-md border border-black/5 bg-lumina-surface hover:bg-lumina-primary/5 transition-all duration-300 px-6 py-5 overflow-hidden\">\n      \n      <!-- Number -->\n      <div class=\"flex-shrink-0 w-12 h-12 rounded-md bg-lumina-primary text-white flex items-center justify-center font-display text-xl font-black shadow-sm\">\n        {{inc @index}}\n      </div>\n\n      <!-- Topic -->\n      <div class=\"flex-1 min-w-0\">\n        <h3 class=\"font-display text-2xl font-bold text-lumina-text-primary truncate\">\n          {{this}}\n        </h3>\n      </div>\n\n    </div>\n    {{/each}}\n  </div>\n</div>\n\n<!-- Right Visual Panel -->\n<div class=\"w-[40%] h-full relative overflow-hidden bg-lumina-primary/5\">\n  \n  <!-- Decorative Elements -->\n  <div class=\"absolute inset-0\">\n    <div class=\"absolute top-12 right-12 w-52 h-52 rounded-full bg-lumina-primary/10 blur-3xl\"></div>\n    <div class=\"absolute bottom-0 left-0 w-72 h-72 rounded-full bg-lumina-primary/10 blur-3xl\"></div>\n  </div>\n\n  <!-- Uploadable Image -->\n  <div class=\"relative z-10 w-full h-full p-10\">\n    <div class=\"relative group w-full h-full rounded-lg overflow-hidden border border-white/40 shadow-lg\" data-image-key=\"coverImage\">\n      {{#if coverImage}}\n        <img \n          src=\"{{coverImage}}\" \n          alt=\"Agenda Cover\" \n          class=\"w-full h-full object-cover\"\n        />\n      {{else}}\n        <div class=\"w-full h-full flex flex-col items-center justify-center bg-gray-50 text-gray-400 border-4 border-dashed border-gray-200 rounded-lg group-hover:bg-gray-100 group-hover:border-lumina-primary transition-all cursor-pointer\">\n          <svg class=\"w-12 h-12 mb-2 opacity-30\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\n            <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\"></path>\n          </svg>\n          <span class=\"text-[10px] font-black uppercase tracking-widest\">\n            Click to Upload Image\n          </span>\n        </div>\n      {{/if}}\n    </div>\n  </div>\n</div>\n\n  </div>\n</div>",
+      "mockData": {
+        "sectionLabel": "Section 01",
+        "title": "Understanding Core Learning Objectives",
+        "description": "Explore the foundational concepts, methodologies, and practical insights that shape the next phase of the presentation."
+      }
+    },
+    {
+      "id": "l-1778206500623",
+      "name": "Topics Slide",
+      "variant": "content",
+      "code": "<div class=\"w-full h-full overflow-hidden p-12 flex items-center justify-center bg-lumina-surface\">\n\n  <div class=\"relative w-full h-full rounded-lg bg-white border border-black/5 shadow-xl overflow-hidden flex\">\n\n<!-- Left Content -->\n<div class=\"w-[60%] h-full flex flex-col justify-center px-20 py-16 overflow-hidden relative z-10\">\n  \n  <!-- Header -->\n  <div class=\"mb-12\">\n    <div class=\"flex items-center gap-4 mb-5\">\n      <div class=\"w-14 h-[4px] rounded-full bg-lumina-primary\"></div>\n      <span class=\"font-body text-sm font-bold uppercase tracking-[0.3em] text-lumina-primary\">\n        {{sectionLabel}}\n      </span>\n    </div>\n\n    <h1 class=\"font-display text-6xl leading-[1.05] font-black text-lumina-text-primary tracking-tight\">\n      {{title}}\n    </h1>\n\n    {{#if description}}\n    <p class=\"mt-6 max-w-2xl font-body text-xl leading-relaxed text-lumina-text-secondary\">\n      {{description}}\n    </p>\n    {{/if}}\n  </div>\n\n  <!-- Topics List -->\n  <div class=\"flex flex-col gap-5 overflow-hidden\">\n    {{#each topics}}\n    <div class=\"group flex items-center gap-5 rounded-md border border-black/5 bg-lumina-surface hover:bg-lumina-primary/5 transition-all duration-300 px-6 py-5 overflow-hidden\">\n      \n      <!-- Number -->\n      <div class=\"flex-shrink-0 w-12 h-12 rounded-md bg-lumina-primary text-white flex items-center justify-center font-display text-xl font-black shadow-sm\">\n        {{inc @index}}\n      </div>\n\n      <!-- Topic -->\n      <div class=\"flex-1 min-w-0\">\n        <h3 class=\"font-display   text-lumina-text-primary truncate\">\n          {{this}}\n        </h3>\n      </div>\n\n    </div>\n    {{/each}}\n  </div>\n</div>\n\n<!-- Right Visual Panel -->\n<div class=\"w-[40%] h-full relative overflow-hidden bg-lumina-primary/5\">\n  \n  <!-- Decorative Elements -->\n  <div class=\"absolute inset-0\">\n    <div class=\"absolute top-12 right-12 w-52 h-52 rounded-full bg-lumina-primary/10 blur-3xl\"></div>\n    <div class=\"absolute bottom-0 left-0 w-72 h-72 rounded-full bg-lumina-primary/10 blur-3xl\"></div>\n  </div>\n\n  <!-- Uploadable Image -->\n  <div class=\"relative z-10 w-full h-full p-10\">\n    <div class=\"relative group w-full h-full rounded-lg overflow-hidden border border-white/40 shadow-lg\" data-image-key=\"coverImage\">\n      {{#if coverImage}}\n        <img \n          src=\"{{coverImage}}\" \n          alt=\"Agenda Cover\" \n          class=\"w-full h-full object-cover\"\n        />\n      {{else}}\n        <div class=\"w-full h-full flex flex-col items-center justify-center bg-gray-50 text-gray-400 border-4 border-dashed border-gray-200 rounded-lg group-hover:bg-gray-100 group-hover:border-lumina-primary transition-all cursor-pointer\">\n          <svg class=\"w-12 h-12 mb-2 opacity-30\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\n            <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\"></path>\n          </svg>\n          <span class=\"text-[10px] font-black uppercase tracking-widest\">\n            Click to Upload Image\n          </span>\n        </div>\n      {{/if}}\n    </div>\n  </div>\n</div>\n\n  </div>\n</div>",
+      "mockData": {
+        "sectionLabel": "Presentation Flow",
+        "title": "Agenda & Topics",
+        "description": "An overview of the key chapters and concepts covered throughout this presentation.",
+        "topics": [
+          "Introduction to Artificial Intelligence",
+          "Machine Learning Fundamentals",
+          "Deep Learning & Neural Networks",
+          "Real-World Applications",
+          "Future Trends & Innovations"
+        ],
+        "coverImage": "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=1200&auto=format&fit=crop"
+      }
+    },
+    {
+      "id": "l-1778206589534",
+      "name": "Learning Outcomes",
+      "variant": "content",
+      "code": "<div class=\"w-full h-full overflow-hidden bg-gradient-to-br from-white via-blue-50 to-indigo-100 p-12 flex flex-col justify-center\">\n\n  <!-- Header -->\n\n  <div class=\"mb-10 text-center shrink-0\">\n\n```\n<div class=\"inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 border border-blue-100 shadow-sm mb-4\">\n\n  <div class=\"w-2 h-2 rounded-full bg-[#2563EB]\"></div>\n\n  <span class=\"text-xs font-bold tracking-[0.25em] uppercase text-[#2563EB] font-body\">\n    Learning Outcomes\n  </span>\n\n</div>\n\n<h1 class=\"text-5xl leading-tight font-black text-slate-900 font-display mb-4\">\n  {{title}}\n</h1>\n\n{{#if subtitle}}\n<p class=\"max-w-3xl mx-auto text-lg text-slate-600 font-body leading-relaxed\">\n  {{subtitle}}\n</p>\n{{/if}}\n```\n\n  </div>\n\n  <!-- Centered Cards Wrapper -->\n\n  <div class=\"flex-1 flex items-center justify-center overflow-hidden\">\n\n```\n<!-- Dynamic Grid -->\n<div \n  class=\"grid gap-6 w-full max-w-6xl justify-center\"\n  style=\"\n    grid-template-columns: repeat({{objectives.length}}, minmax(280px, 340px));\n  \"\n>\n\n  {{#each objectives}}\n  <div class=\"bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-white flex flex-col text-center items-center justify-between min-h-[260px] overflow-hidden\">\n\n    <!-- Icon -->\n    <div class=\"w-16 h-16 rounded-2xl bg-blue-100 flex items-center justify-center mb-5 shrink-0 shadow-sm\">\n\n      <span class=\"text-3xl\">\n        {{icon}}\n      </span>\n\n    </div>\n\n    <!-- Content -->\n    <div class=\"flex-1 overflow-hidden flex flex-col items-center\">\n\n      <h3 class=\"text-2xl font-black text-slate-900 font-display mb-3 leading-snug\">\n        {{heading}}\n      </h3>\n\n      <p class=\"text-[15px] leading-relaxed text-slate-600 font-body max-w-[260px]\">\n        {{description}}\n      </p>\n\n    </div>\n\n    <!-- Footer Accent -->\n    <div class=\"mt-6 flex items-center justify-center gap-2\">\n\n      <div class=\"h-1 w-8 rounded-full bg-[#2563EB]\"></div>\n      <div class=\"h-1 w-16 rounded-full bg-blue-200\"></div>\n\n    </div>\n\n  </div>\n  {{/each}}\n\n</div>\n```\n\n  </div>\n\n</div>",
+      "mockData": {
+        "title": "Key Learning Objectives",
+        "subtitle": "Students will develop practical knowledge and skills that support deeper understanding and real-world application of the topic.",
+        "objectives": [
+          {
+            "icon": "🎯",
+            "heading": "Understand Core Concepts",
+            "description": "Learn the fundamental principles, terminology, and ideas that form the foundation of the subject."
+          },
+          {
+            "icon": "🧠",
+            "heading": "Apply Knowledge Practically",
+            "description": "Use learned concepts to solve problems, analyze scenarios, and complete hands-on activities."
+          },
+          {
+            "icon": "🚀",
+            "heading": "Build Critical Thinking",
+            "description": "Develop confidence in evaluating information, making decisions, and presenting logical conclusions."
+          }
+        ]
+      }
+    },
+    {
+      "id": "l-1778231688522",
+      "name": "Text Content",
+      "variant": "content",
+      "code": "<div class=\"w-full h-full overflow-hidden bg-gradient-to-br from-white via-slate-50 to-slate-100 p-12 flex flex-col justify-center items-center\">\n\n  <!-- Decorative Background Elements -->\n\n  <div class=\"absolute top-0 right-0 w-72 h-72 bg-blue-100 rounded-full blur-3xl opacity-40\"></div>\n  <div class=\"absolute bottom-0 left-0 w-64 h-64 bg-indigo-100 rounded-full blur-3xl opacity-40\"></div>\n\n  <!-- Main Content Card -->\n\n  <div class=\"relative z-10 w-full max-w-5xl bg-white/85 backdrop-blur-md border border-white shadow-2xl rounded-3xl px-16 py-14 overflow-hidden\">\n\n<!-- Accent -->\n<div class=\"flex items-center gap-3 mb-6\">\n  <div class=\"w-12 h-1 rounded-full bg-blue-500\"></div>\n  <div class=\"w-24 h-1 rounded-full bg-blue-200\"></div>\n</div>\n\n<!-- Title -->\n<h1 class=\"text-6xl leading-[1.05] font-black text-slate-900 font-display tracking-tight mb-8 max-w-4xl\">\n  {{title}}\n</h1>\n\n<!-- Paragraph Content -->\n<div class=\"overflow-hidden\">\n  <p class=\"text-2xl leading-relaxed text-slate-600 font-body max-w-4xl\">\n    {{content}}\n  </p>\n</div>\n\n<!-- Optional Footer Label -->\n{{#if footer}}\n<div class=\"mt-10 pt-6 border-t border-slate-200 flex items-center justify-between\">\n  <span class=\"text-sm uppercase tracking-[0.3em] font-bold text-slate-400 font-body\">\n    {{footer}}\n  </span>\n\n  <div class=\"flex gap-2\">\n    <div class=\"w-2 h-2 rounded-full bg-blue-500\"></div>\n    <div class=\"w-2 h-2 rounded-full bg-blue-300\"></div>\n    <div class=\"w-2 h-2 rounded-full bg-blue-200\"></div>\n  </div>\n</div>\n{{/if}}\n\n  </div>\n\n</div>",
+      "mockData": {
+        "title": "Introduction to Artificial Intelligence",
+        "content": "Artificial Intelligence is transforming the modern world by enabling machines to simulate human intelligence and perform complex tasks efficiently. From healthcare and education to automation and smart devices, AI technologies are reshaping industries and improving decision-making processes across various domains.",
+        "footer": "Educational Presentation"
+      }
+    },
+    {
+      "id": "l-1778231750840",
+      "name": "Bullet Points",
+      "variant": "content",
+      "code": "<div class=\"w-full h-full overflow-hidden bg-gradient-to-br from-slate-50 via-white to-blue-50 p-10 flex flex-col justify-center\">\n\n  <!-- Background Blur -->\n\n  <div class=\"absolute top-0 right-0 w-72 h-72 bg-blue-100 opacity-30 blur-3xl rounded-full\"></div>\n  <div class=\"absolute bottom-0 left-0 w-64 h-64 bg-indigo-100 opacity-20 blur-3xl rounded-full\"></div>\n\n  <!-- Content Wrapper -->\n\n  <div class=\"relative z-10 w-full max-w-6xl mx-auto h-full flex flex-col justify-center overflow-hidden\">\n\n<!-- Header -->\n<div class=\"mb-7 shrink-0\">\n  \n  <div class=\"flex items-center gap-3 mb-4\">\n    <div class=\"w-12 h-1 rounded-full bg-blue-600\"></div>\n    <div class=\"w-20 h-1 rounded-full bg-blue-200\"></div>\n  </div>\n\n  <h1 class=\"text-5xl leading-tight font-black tracking-tight text-slate-900 font-display max-w-4xl\">\n    {{title}}\n  </h1>\n\n  {{#if subtitle}}\n  <p class=\"mt-3 text-lg leading-relaxed text-slate-600 font-body max-w-3xl\">\n    {{subtitle}}\n  </p>\n  {{/if}}\n\n</div>\n\n<!-- Bullet Point List -->\n<div class=\"flex-1 overflow-hidden\">\n  \n  <div class=\"grid grid-cols-1 gap-4 overflow-hidden\">\n\n    {{#each points}}\n    <div class=\"flex items-start gap-4 bg-white/85 border border-slate-200 rounded-2xl px-5 py-4 shadow-sm overflow-hidden\">\n\n      <!-- Number -->\n      <div class=\"flex-shrink-0 w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center\">\n        <span class=\"text-sm font-black text-blue-700 font-display\">\n          {{inc @index}}\n        </span>\n      </div>\n\n      <!-- Point Text -->\n      <div class=\"flex-1 overflow-hidden\">\n        <p class=\"text-xl leading-relaxed text-slate-700 font-body break-words\">\n          {{this}}\n        </p>\n      </div>\n\n    </div>\n    {{/each}}\n\n  </div>\n\n</div>\n\n<!-- Footer -->\n{{#if footer}}\n<div class=\"mt-5 pt-4 border-t border-slate-200 flex items-center justify-between shrink-0\">\n  \n  <span class=\"text-xs uppercase tracking-[0.3em] font-bold text-slate-400 font-body\">\n    {{footer}}\n  </span>\n\n  <div class=\"flex gap-2\">\n    <div class=\"w-2 h-2 rounded-full bg-blue-500\"></div>\n    <div class=\"w-2 h-2 rounded-full bg-blue-300\"></div>\n    <div class=\"w-2 h-2 rounded-full bg-blue-200\"></div>\n  </div>\n\n</div>\n{{/if}}\n\n  </div>\n</div>",
+      "mockData": {
+        "title": "Key Features of Artificial Intelligence",
+        "subtitle": "Important concepts and capabilities that define modern AI systems.",
+        "points": [
+          "AI systems can analyze large amounts of data quickly and accurately.",
+          "Machine learning enables systems to improve performance through experience.",
+          "Natural language processing allows computers to understand and generate human language.",
+          "Computer vision helps machines recognize images, patterns, and objects.",
+          "Automation powered by AI improves efficiency across industries."
+        ],
+        "footer": "AI Fundamentals"
+      }
+    },
+    {
+      "id": "l-1778231883943",
+      "name": "Two Column Layout",
+      "variant": "content",
+      "code": "<div class=\"w-full h-full overflow-hidden bg-gradient-to-br from-white via-slate-50 to-blue-50 p-10 flex flex-col\">\n\n  <!-- Background Decoration -->\n\n  <div class=\"absolute top-0 right-0 w-72 h-72 bg-blue-100/40 blur-3xl rounded-full\"></div>\n  <div class=\"absolute bottom-0 left-0 w-64 h-64 bg-indigo-100/30 blur-3xl rounded-full\"></div>\n\n  <!-- Header -->\n\n  <div class=\"relative z-10 mb-8 shrink-0\">\n\n<div class=\"flex items-center gap-3 mb-4\">\n  <div class=\"w-12 h-1 rounded-full bg-blue-600\"></div>\n  <div class=\"w-24 h-1 rounded-full bg-blue-200\"></div>\n</div>\n\n<h1 class=\"text-5xl leading-tight font-black text-slate-900 font-display tracking-tight max-w-4xl\">\n  {{title}}\n</h1>\n\n{{#if subtitle}}\n<p class=\"mt-3 text-lg leading-relaxed text-slate-600 font-body max-w-3xl\">\n  {{subtitle}}\n</p>\n{{/if}}\n\n  </div>\n\n  <!-- Two Column Comparison -->\n\n  <div class=\"relative z-10 flex-1 grid grid-cols-2 gap-6 overflow-hidden\">\n\n<!-- Left Column -->\n<div class=\"bg-white/85 backdrop-blur-sm border border-slate-200 rounded-3xl p-7 shadow-sm flex flex-col overflow-hidden\">\n\n  <!-- Left Header -->\n  <div class=\"mb-6 shrink-0\">\n    <div class=\"inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100 mb-4\">\n      <div class=\"w-2 h-2 rounded-full bg-blue-600\"></div>\n      <span class=\"text-xs uppercase tracking-[0.25em] font-bold text-blue-700 font-body\">\n        Concept A\n      </span>\n    </div>\n\n    <h2 class=\"text-3xl font-black text-slate-900 font-display leading-snug\">\n      {{left.title}}\n    </h2>\n\n    {{#if left.description}}\n    <p class=\"mt-3 text-base leading-relaxed text-slate-600 font-body\">\n      {{left.description}}\n    </p>\n    {{/if}}\n  </div>\n\n  <!-- Left Points -->\n  <div class=\"flex-1 space-y-4 overflow-hidden\">\n    {{#each left.points}}\n    <div class=\"flex items-start gap-3\">\n      <div class=\"mt-2 w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0\"></div>\n      <p class=\"text-lg leading-relaxed text-slate-700 font-body\">\n        {{this}}\n      </p>\n    </div>\n    {{/each}}\n  </div>\n\n</div>\n\n<!-- Right Column -->\n<div class=\"bg-white/85 backdrop-blur-sm border border-slate-200 rounded-3xl p-7 shadow-sm flex flex-col overflow-hidden\">\n\n  <!-- Right Header -->\n  <div class=\"mb-6 shrink-0\">\n    <div class=\"inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-100 mb-4\">\n      <div class=\"w-2 h-2 rounded-full bg-indigo-600\"></div>\n      <span class=\"text-xs uppercase tracking-[0.25em] font-bold text-indigo-700 font-body\">\n        Concept B\n      </span>\n    </div>\n\n    <h2 class=\"text-3xl font-black text-slate-900 font-display leading-snug\">\n      {{right.title}}\n    </h2>\n\n    {{#if right.description}}\n    <p class=\"mt-3 text-base leading-relaxed text-slate-600 font-body\">\n      {{right.description}}\n    </p>\n    {{/if}}\n  </div>\n\n  <!-- Right Points -->\n  <div class=\"flex-1 space-y-4 overflow-hidden\">\n    {{#each right.points}}\n    <div class=\"flex items-start gap-3\">\n      <div class=\"mt-2 w-2.5 h-2.5 rounded-full bg-indigo-500 shrink-0\"></div>\n      <p class=\"text-lg leading-relaxed text-slate-700 font-body\">\n        {{this}}\n      </p>\n    </div>\n    {{/each}}\n  </div>\n\n</div>\n\n  </div>\n\n</div>",
+      "mockData": {
+        "title": "Machine Learning vs Deep Learning",
+        "subtitle": "Understanding the key differences between two major branches of Artificial Intelligence.",
+        "left": {
+          "title": "Machine Learning",
+          "description": "Machine learning uses algorithms to analyze data and make predictions with minimal human intervention.",
+          "points": [
+            "Requires structured and labeled data.",
+            "Works well with smaller datasets.",
+            "Training time is generally faster.",
+            "Feature extraction is often manual."
+          ]
+        },
+        "right": {
+          "title": "Deep Learning",
+          "description": "Deep learning uses neural networks with multiple layers to automatically learn complex patterns from data.",
+          "points": [
+            "Handles large and unstructured datasets effectively.",
+            "Requires higher computational power.",
+            "Automatically extracts features from data.",
+            "Commonly used in image and speech recognition."
+          ]
+        }
+      }
+    },
+    {
+      "id": "l-1778232017317",
+      "name": "Image + Text",
+      "variant": "content",
+      "code": "<div class=\"w-full h-full overflow-hidden bg-gradient-to-br from-slate-50 via-white to-blue-50 p-10 flex flex-col justify-center\">\n\n  <!-- Background Decoration -->\n\n  <div class=\"absolute top-0 right-0 w-72 h-72 bg-blue-100/30 blur-3xl rounded-full\"></div>\n  <div class=\"absolute bottom-0 left-0 w-64 h-64 bg-indigo-100/20 blur-3xl rounded-full\"></div>\n\n  <!-- Main Layout -->\n\n  <div class=\"relative z-10 w-full h-full grid grid-cols-2 gap-8 items-center overflow-hidden\">\n\n<!-- Image Section -->\n<div class=\"h-full overflow-hidden\">\n  \n  <div class=\"relative h-full group rounded-3xl overflow-hidden shadow-2xl border border-white/60\" data-image-key=\"image\">\n    {{#if image}}\n      <img \n        src=\"{{image}}\" \n        alt=\"{{title}}\" \n        class=\"w-full h-full object-cover\"\n      />\n      \n      <!-- Gradient Overlay -->\n      <div class=\"absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent\"></div>\n\n    {{else}}\n      <div class=\"w-full h-full flex flex-col items-center justify-center bg-gray-50 text-gray-400 border-4 border-dashed border-gray-200 rounded-3xl group-hover:bg-gray-100 group-hover:border-lumina-primary transition-all cursor-pointer\">\n        <svg class=\"w-14 h-14 mb-3 opacity-30\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\n          <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\"></path>\n        </svg>\n\n        <span class=\"text-[11px] font-black uppercase tracking-widest\">\n          Click to Upload Image\n        </span>\n      </div>\n    {{/if}}\n  </div>\n\n</div>\n\n<!-- Text Content -->\n<div class=\"flex flex-col justify-center overflow-hidden\">\n\n  <!-- Accent -->\n  <div class=\"flex items-center gap-3 mb-5\">\n    <div class=\"w-12 h-1 rounded-full bg-blue-600\"></div>\n    <div class=\"w-24 h-1 rounded-full bg-blue-200\"></div>\n  </div>\n\n  <!-- Title -->\n  <h1 class=\"text-5xl leading-tight font-black tracking-tight text-slate-900 font-display mb-6\">\n    {{title}}\n  </h1>\n\n  <!-- Description -->\n  <div class=\"overflow-hidden\">\n    <p class=\"text-xl leading-relaxed text-slate-600 font-body\">\n      {{description}}\n    </p>\n  </div>\n\n  <!-- Optional Key Points -->\n  {{#if points}}\n  <div class=\"mt-8 space-y-4 overflow-hidden\">\n    \n    {{#each points}}\n    <div class=\"flex items-start gap-3\">\n      \n      <div class=\"mt-2 w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0\"></div>\n\n      <p class=\"text-lg leading-relaxed text-slate-700 font-body\">\n        {{this}}\n      </p>\n\n    </div>\n    {{/each}}\n\n  </div>\n  {{/if}}\n\n</div>\n\n  </div>\n\n</div>",
+      "mockData": {
+        "title": "How Artificial Intelligence Works",
+        "description": "Artificial Intelligence systems process large amounts of data, identify patterns, and make intelligent decisions using algorithms and machine learning models. AI enables automation, prediction, and enhanced problem-solving across various industries.",
+        "image": "https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=1400&auto=format&fit=crop",
+        "points": [
+          "AI systems learn from historical and real-time data.",
+          "Machine learning models improve through continuous training.",
+          "AI powers applications such as chatbots, automation, and computer vision."
+        ]
+      }
+    },
+    {
+      "id": "l-1778232140859",
+      "name": "Full Image / Diagram",
+      "variant": "content",
+      "code": "<div class=\"w-full h-full overflow-hidden bg-slate-950 relative\">\n\n  <!-- Full Background Visual -->\n\n  <div class=\"absolute inset-0 overflow-hidden\">\n\n<div class=\"relative group w-full h-full\" data-image-key=\"image\">\n  {{#if image}}\n    <img \n      src=\"{{image}}\" \n      alt=\"{{title}}\" \n      class=\"w-full h-full object-cover\"\n    />\n\n    <!-- Overlay -->\n    <div class=\"absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20\"></div>\n\n  {{else}}\n    <div class=\"w-full h-full flex flex-col items-center justify-center bg-gray-900 text-gray-400 border-4 border-dashed border-gray-700 group-hover:border-lumina-primary transition-all cursor-pointer\">\n      \n      <svg class=\"w-16 h-16 mb-4 opacity-30\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\n        <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\"></path>\n      </svg>\n\n      <span class=\"text-xs font-black uppercase tracking-[0.3em]\">\n        Click to Upload Diagram or Visual\n      </span>\n\n    </div>\n  {{/if}}\n</div>\n\n  </div>\n\n  <!-- Content Overlay -->\n\n  <div class=\"relative z-10 w-full h-full p-12 flex flex-col justify-between\">\n\n<!-- Top Content -->\n<div class=\"max-w-4xl\">\n\n  <!-- Accent -->\n  <div class=\"flex items-center gap-3 mb-5\">\n    <div class=\"w-14 h-1 rounded-full bg-white\"></div>\n    <div class=\"w-24 h-1 rounded-full bg-white/40\"></div>\n  </div>\n\n  <!-- Title -->\n  <h1 class=\"text-6xl leading-[1.05] font-black tracking-tight text-white font-display drop-shadow-lg\">\n    {{title}}\n  </h1>\n\n  <!-- Subtitle -->\n  {{#if subtitle}}\n  <p class=\"mt-5 text-xl leading-relaxed text-white/85 font-body max-w-3xl\">\n    {{subtitle}}\n  </p>\n  {{/if}}\n\n</div>\n\n<!-- Bottom Caption -->\n{{#if caption}}\n<div class=\"flex justify-end\">\n  \n  <div class=\"max-w-2xl bg-black/45 backdrop-blur-md border border-white/10 rounded-2xl px-6 py-5 overflow-hidden\">\n    \n    <p class=\"text-lg leading-relaxed text-white/90 font-body\">\n      {{caption}}\n    </p>\n\n  </div>\n\n</div>\n{{/if}}\n\n  </div>\n\n</div>",
+      "mockData": {
+        "title": "Artificial Intelligence Workflow",
+        "subtitle": "A high-level process diagram showing how AI systems collect, process, learn, and generate intelligent outputs.",
+        "caption": "The AI workflow begins with data collection and preprocessing, followed by model training and evaluation. Once optimized, the trained model is deployed to make predictions, automate decisions, and continuously improve through feedback loops.",
+        "image": "https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=1600&auto=format&fit=crop"
+      }
+    },
+    {
+      "id": "l-1778232247145",
+      "name": "Process / Steps",
+      "variant": "content",
+      "code": "<div class=\"w-full h-full overflow-hidden bg-gradient-to-br from-slate-50 via-white to-blue-50 p-10 flex flex-col\">\n\n  <!-- Decorative Background -->\n\n  <div class=\"absolute top-0 right-0 w-72 h-72 bg-blue-100/30 blur-3xl rounded-full\"></div>\n  <div class=\"absolute bottom-0 left-0 w-64 h-64 bg-indigo-100/20 blur-3xl rounded-full\"></div>\n\n  <!-- Header -->\n\n  <div class=\"relative z-10 mb-8 shrink-0\">\n\n<div class=\"flex items-center gap-3 mb-4\">\n  <div class=\"w-12 h-1 rounded-full bg-blue-600\"></div>\n  <div class=\"w-24 h-1 rounded-full bg-blue-200\"></div>\n</div>\n\n<h1 class=\"text-5xl leading-tight font-black tracking-tight text-slate-900 font-display max-w-4xl\">\n  {{title}}\n</h1>\n\n{{#if subtitle}}\n<p class=\"mt-3 text-lg leading-relaxed text-slate-600 font-body max-w-3xl\">\n  {{subtitle}}\n</p>\n{{/if}}\n\n  </div>\n\n  <!-- Process Flow -->\n\n  <div class=\"relative z-10 flex-1 overflow-hidden\">\n\n<div class=\"grid grid-cols-4 gap-5 h-full\">\n\n  {{#each steps}}\n  <div class=\"relative flex flex-col overflow-hidden\">\n\n    <!-- Connector Line -->\n    {{#unless @last}}\n    <div class=\"absolute top-10 left-full w-5 h-0.5 bg-blue-200 z-0\"></div>\n    {{/unless}}\n\n    <!-- Step Card -->\n    <div class=\"relative z-10 flex-1 bg-white/90 backdrop-blur-sm border border-slate-200 rounded-3xl p-5 shadow-sm flex flex-col overflow-hidden\">\n\n      <!-- Step Number -->\n      <div class=\"w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl font-black font-display mb-5 shrink-0\">\n        {{number}}\n      </div>\n\n      <!-- Step Title -->\n      <h2 class=\"text-2xl leading-snug font-black text-slate-900 font-display mb-4\">\n        {{title}}\n      </h2>\n\n      <!-- Description -->\n      <div class=\"flex-1 overflow-hidden\">\n        <p class=\"text-base leading-relaxed text-slate-600 font-body\">\n          {{description}}\n        </p>\n      </div>\n\n    </div>\n\n  </div>\n  {{/each}}\n\n</div>\n\n  </div>\n\n</div>",
+      "mockData": {
+        "title": "Machine Learning Workflow",
+        "subtitle": "A step-by-step overview of how machine learning systems are developed and deployed.",
+        "steps": [
+          {
+            "number": "01",
+            "title": "Data Collection",
+            "description": "Gather structured and unstructured data from multiple relevant sources for analysis and training."
+          },
+          {
+            "number": "02",
+            "title": "Data Processing",
+            "description": "Clean, organize, and preprocess the collected data to improve model accuracy and efficiency."
+          },
+          {
+            "number": "03",
+            "title": "Model Training",
+            "description": "Train machine learning algorithms using prepared datasets to identify patterns and make predictions."
+          },
+          {
+            "number": "04",
+            "title": "Deployment",
+            "description": "Deploy the trained model into real-world applications and continuously improve it using feedback."
+          }
+        ]
+      }
+    },
+    {
+      "id": "l-1778232396949",
+      "name": "Timeline Slide",
+      "variant": "content",
+      "code": "<div class=\"w-full h-full overflow-hidden bg-gradient-to-br from-slate-50 via-white to-indigo-50 p-10 flex flex-col\">\n\n  <!-- Decorative Background -->\n\n  <div class=\"absolute top-0 right-0 w-72 h-72 bg-blue-100/30 blur-3xl rounded-full\"></div>\n  <div class=\"absolute bottom-0 left-0 w-64 h-64 bg-indigo-100/20 blur-3xl rounded-full\"></div>\n\n  <!-- Header -->\n\n  <div class=\"relative z-10 mb-8 shrink-0\">\n\n<div class=\"flex items-center gap-3 mb-4\">\n  <div class=\"w-12 h-1 rounded-full bg-indigo-600\"></div>\n  <div class=\"w-24 h-1 rounded-full bg-indigo-200\"></div>\n</div>\n\n<h1 class=\"text-5xl leading-tight font-black tracking-tight text-slate-900 font-display max-w-4xl\">\n  {{title}}\n</h1>\n\n{{#if subtitle}}\n<p class=\"mt-3 text-lg leading-relaxed text-slate-600 font-body max-w-3xl\">\n  {{subtitle}}\n</p>\n{{/if}}\n\n  </div>\n\n  <!-- Timeline -->\n\n  <div class=\"relative z-10 flex-1 overflow-hidden\">\n\n<!-- Main Line -->\n<div class=\"absolute top-24 left-0 right-0 h-1 bg-indigo-100 rounded-full\"></div>\n\n<div class=\"relative grid grid-cols-4 gap-5 h-full\">\n\n  {{#each events}}\n  <div class=\"relative flex flex-col items-center overflow-hidden\">\n\n    <!-- Timeline Point -->\n    <div class=\"relative z-20 w-16 h-16 rounded-full bg-indigo-600 shadow-lg flex items-center justify-center mb-6 shrink-0 border-4 border-white\">\n      <span class=\"text-white text-sm font-black font-display\">\n        {{year}}\n      </span>\n    </div>\n\n    <!-- Event Card -->\n    <div class=\"w-full bg-white/90 backdrop-blur-sm border border-slate-200 rounded-3xl p-5 shadow-sm flex flex-col overflow-hidden\">\n\n      <!-- Event Title -->\n      <h2 class=\"text-xl leading-snug font-black text-slate-900 font-display mb-3\">\n        {{title}}\n      </h2>\n\n      <!-- Description -->\n      <div class=\"flex-1 overflow-hidden\">\n        <p class=\"text-sm leading-relaxed text-slate-600 font-body\">\n          {{description}}\n        </p>\n      </div>\n\n    </div>\n\n  </div>\n  {{/each}}\n\n</div>\n\n  </div>\n\n</div>",
+      "mockData": {
+        "title": "Evolution of Artificial Intelligence",
+        "subtitle": "Major milestones and historical breakthroughs in the development of AI technology.",
+        "events": [
+          {
+            "year": "1950",
+            "title": "Turing Test",
+            "description": "Alan Turing introduced the Turing Test to evaluate a machine's ability to exhibit intelligent behavior."
+          },
+          {
+            "year": "1956",
+            "title": "Birth of AI",
+            "description": "The Dartmouth Conference officially introduced the term 'Artificial Intelligence' as a field of study."
+          },
+          {
+            "year": "1997",
+            "title": "Deep Blue",
+            "description": "IBM’s Deep Blue defeated world chess champion Garry Kasparov, marking a major AI achievement."
+          },
+          {
+            "year": "2022",
+            "title": "Generative AI Boom",
+            "description": "Advanced AI models transformed industries through conversational AI, image generation, and automation."
+          }
+        ]
+      }
+    },
+    {
+      "id": "l-1778232436777",
+      "name": "Table",
+      "variant": "content",
+      "code": "<div class=\"w-full h-full overflow-hidden bg-gradient-to-br from-slate-50 via-white to-blue-50 p-10 flex flex-col\">\n\n  <!-- Decorative Background -->\n\n  <div class=\"absolute top-0 right-0 w-72 h-72 bg-blue-100/30 blur-3xl rounded-full\"></div>\n  <div class=\"absolute bottom-0 left-0 w-64 h-64 bg-indigo-100/20 blur-3xl rounded-full\"></div>\n\n  <!-- Header -->\n\n  <div class=\"relative z-10 mb-7 shrink-0\">\n\n<div class=\"flex items-center gap-3 mb-4\">\n  <div class=\"w-12 h-1 rounded-full bg-blue-600\"></div>\n  <div class=\"w-24 h-1 rounded-full bg-blue-200\"></div>\n</div>\n\n<h1 class=\"text-5xl leading-tight font-black tracking-tight text-slate-900 font-display max-w-4xl\">\n  {{title}}\n</h1>\n\n{{#if subtitle}}\n<p class=\"mt-3 text-lg leading-relaxed text-slate-600 font-body max-w-3xl\">\n  {{subtitle}}\n</p>\n{{/if}}\n\n  </div>\n\n  <!-- Table Container -->\n\n  <div class=\"relative z-10 flex-1 overflow-hidden\">\n\n<div class=\"w-full h-full bg-white/90 backdrop-blur-sm border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col\">\n\n  <!-- Table -->\n  <table class=\"w-full h-full table-fixed border-collapse\">\n\n    <!-- Header -->\n    <thead class=\"bg-blue-600 shrink-0\">\n      <tr>\n        {{#each headers}}\n        <th class=\"px-5 py-4 text-left text-sm uppercase tracking-[0.15em] font-black text-white font-display\">\n          {{this}}\n        </th>\n        {{/each}}\n      </tr>\n    </thead>\n\n    <!-- Body -->\n    <tbody class=\"divide-y divide-slate-200\">\n\n      {{#each rows}}\n      <tr class=\"hover:bg-slate-50 transition-colors\">\n\n        {{#each this}}\n        <td class=\"px-5 py-4 text-base leading-relaxed text-slate-700 font-body align-top break-words\">\n          {{this}}\n        </td>\n        {{/each}}\n\n      </tr>\n      {{/each}}\n\n    </tbody>\n\n  </table>\n\n</div>\n\n  </div>\n\n</div>",
+      "mockData": {
+        "title": "Comparison of AI Technologies",
+        "subtitle": "A structured overview comparing different artificial intelligence approaches and their applications.",
+        "headers": [
+          "Technology",
+          "Description",
+          "Common Applications",
+          "Complexity"
+        ],
+        "rows": [
+          [
+            "Machine Learning",
+            "Algorithms that learn patterns from data and improve over time.",
+            "Recommendation systems, fraud detection",
+            "Medium"
+          ],
+          [
+            "Deep Learning",
+            "Neural network-based learning with multiple hidden layers.",
+            "Image recognition, speech processing",
+            "High"
+          ],
+          [
+            "Natural Language Processing",
+            "AI systems that understand and generate human language.",
+            "Chatbots, translation tools",
+            "Medium"
+          ],
+          [
+            "Computer Vision",
+            "AI focused on image and video interpretation.",
+            "Facial recognition, autonomous vehicles",
+            "High"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "l-1778232476781",
+      "name": "Chart / Graph",
+      "variant": "content",
+      "code": "<div class=\"w-full h-full overflow-hidden bg-gradient-to-br from-slate-50 via-white to-blue-50 p-10 flex flex-col\">\n\n  <!-- Background Decoration -->\n\n  <div class=\"absolute top-0 right-0 w-72 h-72 bg-blue-100/30 blur-3xl rounded-full\"></div>\n  <div class=\"absolute bottom-0 left-0 w-64 h-64 bg-indigo-100/20 blur-3xl rounded-full\"></div>\n\n  <!-- Header -->\n\n  <div class=\"relative z-10 mb-7 shrink-0\">\n\n<div class=\"flex items-center gap-3 mb-4\">\n  <div class=\"w-12 h-1 rounded-full bg-blue-600\"></div>\n  <div class=\"w-24 h-1 rounded-full bg-blue-200\"></div>\n</div>\n\n<h1 class=\"text-5xl leading-tight font-black tracking-tight text-slate-900 font-display max-w-4xl\">\n  {{title}}\n</h1>\n\n{{#if subtitle}}\n<p class=\"mt-3 text-lg leading-relaxed text-slate-600 font-body max-w-3xl\">\n  {{subtitle}}\n</p>\n{{/if}}\n\n  </div>\n\n  <!-- Main Content -->\n\n  <div class=\"relative z-10 flex-1 grid grid-cols-3 gap-6 overflow-hidden\">\n\n<!-- Chart Area -->\n<div class=\"col-span-2 bg-white/90 backdrop-blur-sm border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col overflow-hidden\">\n\n  <!-- Chart Header -->\n  <div class=\"flex items-center justify-between mb-6 shrink-0\">\n    <h2 class=\"text-2xl font-black text-slate-900 font-display\">\n      {{chart.title}}\n    </h2>\n\n    <div class=\"px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 text-xs uppercase tracking-[0.2em] font-bold font-body\">\n      {{chart.type}}\n    </div>\n  </div>\n\n  <!-- Dynamic Chart -->\n  <div class=\"flex-1 flex items-end gap-4 overflow-hidden\">\n\n    {{#each chart.data}}\n    <div class=\"flex-1 flex flex-col items-center justify-end h-full\">\n\n      <!-- Value -->\n      <span class=\"text-sm font-bold text-slate-500 mb-2 font-body\">\n        {{value}}\n      </span>\n\n      <!-- Bar -->\n      <div \n        class=\"w-full rounded-t-2xl bg-gradient-to-t from-blue-600 to-blue-400 min-h-[20px]\"\n        style=\"height: {{height}}%;\"\n      ></div>\n\n      <!-- Label -->\n      <span class=\"mt-3 text-sm text-center leading-snug text-slate-600 font-body\">\n        {{label}}\n      </span>\n\n    </div>\n    {{/each}}\n\n  </div>\n\n</div>\n\n<!-- Statistics Panel -->\n<div class=\"bg-white/90 backdrop-blur-sm border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col overflow-hidden\">\n\n  <!-- Panel Header -->\n  <div class=\"mb-6 shrink-0\">\n    <h2 class=\"text-2xl font-black text-slate-900 font-display mb-2\">\n      Summary\n    </h2>\n\n    <p class=\"text-sm leading-relaxed text-slate-600 font-body\">\n      Key insights and performance metrics based on the chart data.\n    </p>\n  </div>\n\n  <!-- Metrics -->\n  <div class=\"space-y-4 overflow-hidden\">\n\n    {{#each metrics}}\n    <div class=\"bg-slate-50 border border-slate-200 rounded-2xl p-4\">\n\n      <div class=\"text-sm uppercase tracking-[0.15em] text-slate-400 font-bold font-body mb-2\">\n        {{label}}\n      </div>\n\n      <div class=\"text-3xl font-black text-slate-900 font-display\">\n        {{value}}\n      </div>\n\n    </div>\n    {{/each}}\n\n  </div>\n\n</div>\n\n  </div>\n\n</div>",
+      "mockData": {
+        "title": "Student Performance Analysis",
+        "subtitle": "Comparison of average marks scored across different subjects in the final examination.",
+        "chart": {
+          "title": "Average Marks by Subject",
+          "type": "Bar Chart",
+          "data": [
+            {
+              "label": "Mathematics",
+              "value": "92",
+              "height": 92
+            },
+            {
+              "label": "Science",
+              "value": "85",
+              "height": 85
+            },
+            {
+              "label": "English",
+              "value": "78",
+              "height": 78
+            },
+            {
+              "label": "Computer",
+              "value": "96",
+              "height": 96
+            },
+            {
+              "label": "History",
+              "value": "70",
+              "height": 70
+            }
+          ]
+        },
+        "metrics": [
+          {
+            "label": "Highest Score",
+            "value": "96%"
+          },
+          {
+            "label": "Average Score",
+            "value": "84%"
+          },
+          {
+            "label": "Total Students",
+            "value": "120"
+          }
+        ]
+      }
+    },
+    {
+      "id": "l-1778232579729",
+      "name": "Formula / Equation",
+      "variant": "content",
+      "code": "<div class=\"w-full h-full overflow-hidden bg-gradient-to-br from-slate-100 via-white to-sky-50 p-10 flex flex-col relative\">\n\n  <!-- Soft Background Accents -->\n\n  <div class=\"absolute top-0 right-0 w-96 h-96 bg-sky-200/30 blur-3xl rounded-full\"></div>\n  <div class=\"absolute bottom-0 left-0 w-80 h-80 bg-indigo-200/20 blur-3xl rounded-full\"></div>\n\n  <!-- Header -->\n\n  <div class=\"relative z-10 mb-7 shrink-0\">\n\n<div class=\"flex items-center gap-3 mb-4\">\n  <div class=\"w-14 h-1 rounded-full bg-sky-600\"></div>\n  <div class=\"w-24 h-1 rounded-full bg-sky-200\"></div>\n</div>\n\n<h1 class=\"text-5xl leading-tight font-black tracking-tight text-slate-900 font-display max-w-4xl\">\n  {{title}}\n</h1>\n\n{{#if subtitle}}\n<p class=\"mt-3 text-lg leading-relaxed text-slate-600 font-body max-w-3xl\">\n  {{subtitle}}\n</p>\n{{/if}}\n\n  </div>\n\n  <!-- Main Content -->\n\n  <div class=\"relative z-10 flex-1 grid grid-cols-2 gap-8 overflow-hidden\">\n\n<!-- Formula Card -->\n<div class=\"bg-gradient-to-br from-sky-600 to-indigo-700 rounded-3xl p-8 shadow-2xl flex flex-col justify-center overflow-hidden text-white relative\">\n\n  <!-- Glow -->\n  <div class=\"absolute inset-0 bg-white/5\"></div>\n\n  <!-- Label -->\n  <div class=\"relative z-10 mb-6\">\n    <span class=\"px-4 py-1.5 rounded-full bg-white/15 border border-white/10 text-sky-100 text-xs uppercase tracking-[0.25em] font-bold font-body\">\n      Scientific Formula\n    </span>\n  </div>\n\n  <!-- Formula -->\n  <div class=\"relative z-10 flex-1 flex items-center justify-center overflow-hidden\">\n\n    <div class=\"w-full bg-white/10 backdrop-blur-md border border-white/10 rounded-3xl px-8 py-12 text-center overflow-hidden\">\n\n      <p class=\"text-6xl leading-none font-black text-white font-display tracking-tight break-words\">\n        {{formula}}\n      </p>\n\n    </div>\n\n  </div>\n\n  <!-- Variables -->\n  {{#if variables}}\n  <div class=\"relative z-10 mt-8 grid grid-cols-1 gap-3 overflow-hidden\">\n\n    {{#each variables}}\n    <div class=\"bg-white/10 border border-white/10 rounded-2xl px-5 py-4 flex items-start gap-4\">\n\n      <div class=\"w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0\">\n        <span class=\"text-lg font-black text-white font-display\">\n          {{symbol}}\n        </span>\n      </div>\n\n      <div>\n        <p class=\"text-base leading-relaxed text-sky-50 font-body\">\n          {{meaning}}\n        </p>\n      </div>\n\n    </div>\n    {{/each}}\n\n  </div>\n  {{/if}}\n\n</div>\n\n<!-- Explanation Card -->\n<div class=\"bg-white border border-slate-200 rounded-3xl p-8 shadow-xl flex flex-col overflow-hidden\">\n\n  <!-- Heading -->\n  <div class=\"mb-6 shrink-0\">\n\n    <div class=\"flex items-center gap-3 mb-4\">\n      <div class=\"w-10 h-1 rounded-full bg-indigo-600\"></div>\n      <div class=\"w-20 h-1 rounded-full bg-indigo-200\"></div>\n    </div>\n\n    <h2 class=\"text-3xl font-black text-slate-900 font-display\">\n      Explanation\n    </h2>\n\n  </div>\n\n  <!-- Content -->\n  <div class=\"flex-1 overflow-hidden\">\n\n    <p class=\"text-lg leading-relaxed text-slate-600 font-body\">\n      {{description}}\n    </p>\n\n    {{#if notes}}\n    <div class=\"mt-8 bg-slate-50 border border-slate-200 rounded-2xl p-5 overflow-hidden\">\n\n      <h3 class=\"text-sm uppercase tracking-[0.2em] text-indigo-500 font-black font-body mb-4\">\n        Key Points\n      </h3>\n\n      <div class=\"space-y-4\">\n\n        {{#each notes}}\n        <div class=\"flex items-start gap-3\">\n\n          <div class=\"mt-2 w-2.5 h-2.5 rounded-full bg-indigo-500 shrink-0\"></div>\n\n          <p class=\"text-base leading-relaxed text-slate-700 font-body\">\n            {{this}}\n          </p>\n\n        </div>\n        {{/each}}\n\n      </div>\n\n    </div>\n    {{/if}}\n\n  </div>\n\n</div>\n\n  </div>\n\n</div>",
+      "mockData": {
+        "title": "Einstein’s Mass–Energy Equivalence",
+        "subtitle": "A revolutionary physics equation explaining the relationship between mass and energy.",
+        "formula": "E = mc²",
+        "description": "Albert Einstein’s equation demonstrates that mass can be converted into energy and vice versa. Because the speed of light squared is an enormous value, even a small amount of mass can release an extraordinary amount of energy.",
+        "variables": [
+          {
+            "symbol": "E",
+            "meaning": "Represents energy"
+          },
+          {
+            "symbol": "m",
+            "meaning": "Represents mass"
+          },
+          {
+            "symbol": "c",
+            "meaning": "Represents the speed of light"
+          }
+        ],
+        "notes": [
+          "The equation is a foundation of modern nuclear physics.",
+          "Energy and mass are interchangeable forms of the same entity.",
+          "The speed of light is approximately 3 × 10⁸ meters per second."
+        ]
+      }
+    },
+    {
+      "id": "l-1778234234145",
+      "name": "Code Example",
+      "variant": "content",
+      "code": "<div class=\"w-full h-full overflow-hidden bg-gradient-to-br from-slate-100 via-white to-slate-50 p-10 flex flex-col relative\">\n\n  <!-- Background Decoration -->\n\n  <div class=\"absolute top-0 right-0 w-96 h-96 bg-blue-100/40 blur-3xl rounded-full\"></div>\n  <div class=\"absolute bottom-0 left-0 w-80 h-80 bg-indigo-100/30 blur-3xl rounded-full\"></div>\n\n  <!-- Header -->\n\n  <div class=\"relative z-10 mb-7 shrink-0\">\n\n<div class=\"flex items-center gap-3 mb-4\">\n  <div class=\"w-14 h-1 rounded-full bg-slate-900\"></div>\n  <div class=\"w-24 h-1 rounded-full bg-slate-300\"></div>\n</div>\n\n<h1 class=\"text-5xl leading-tight font-black tracking-tight text-slate-900 font-display max-w-4xl\">\n  {{title}}\n</h1>\n\n{{#if subtitle}}\n<p class=\"mt-3 text-lg leading-relaxed text-slate-600 font-body max-w-3xl\">\n  {{subtitle}}\n</p>\n{{/if}}\n\n  </div>\n\n  <!-- Main Layout -->\n\n  <div class=\"relative z-10 flex-1 grid grid-cols-2 gap-8 overflow-hidden\">\n\n<!-- Code Block -->\n<div class=\"bg-[#0F172A] rounded-3xl shadow-2xl overflow-hidden border border-slate-800 flex flex-col\">\n\n  <!-- Code Header -->\n  <div class=\"flex items-center justify-between px-6 py-4 border-b border-slate-700 shrink-0\">\n\n    <div class=\"flex items-center gap-2\">\n      <div class=\"w-3 h-3 rounded-full bg-red-400\"></div>\n      <div class=\"w-3 h-3 rounded-full bg-yellow-400\"></div>\n      <div class=\"w-3 h-3 rounded-full bg-green-400\"></div>\n    </div>\n\n    <div class=\"px-3 py-1 rounded-full bg-slate-800 text-slate-300 text-xs uppercase tracking-[0.2em] font-bold font-body\">\n      {{language}}\n    </div>\n\n  </div>\n\n  <!-- Code Content -->\n  <div class=\"flex-1 overflow-hidden p-6\">\n\n    <pre class=\"text-[15px] leading-relaxed text-slate-200 font-mono whitespace-pre-wrap break-words overflow-hidden\">{{code}}</pre>\n\n  </div>\n\n</div>\n\n<!-- Explanation Panel -->\n<div class=\"bg-white border border-slate-200 rounded-3xl shadow-xl p-8 flex flex-col overflow-hidden\">\n\n  <!-- Explanation Header -->\n  <div class=\"mb-6 shrink-0\">\n\n    <div class=\"flex items-center gap-3 mb-4\">\n      <div class=\"w-10 h-1 rounded-full bg-blue-600\"></div>\n      <div class=\"w-20 h-1 rounded-full bg-blue-200\"></div>\n    </div>\n\n    <h2 class=\"text-3xl font-black text-slate-900 font-display\">\n      Explanation\n    </h2>\n\n  </div>\n\n  <!-- Main Description -->\n  <div class=\"overflow-hidden\">\n\n    <p class=\"text-lg leading-relaxed text-slate-600 font-body\">\n      {{description}}\n    </p>\n\n  </div>\n\n  <!-- Key Highlights -->\n  {{#if points}}\n  <div class=\"mt-8 flex-1 overflow-hidden\">\n\n    <div class=\"bg-slate-50 border border-slate-200 rounded-2xl p-5 overflow-hidden\">\n\n      <h3 class=\"text-sm uppercase tracking-[0.2em] text-slate-500 font-black font-body mb-4\">\n        Key Highlights\n      </h3>\n\n      <div class=\"space-y-4\">\n\n        {{#each points}}\n        <div class=\"flex items-start gap-3\">\n\n          <div class=\"mt-2 w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0\"></div>\n\n          <p class=\"text-base leading-relaxed text-slate-700 font-body\">\n            {{this}}\n          </p>\n\n        </div>\n        {{/each}}\n\n      </div>\n\n    </div>\n\n  </div>\n  {{/if}}\n\n</div>\n\n  </div>\n\n</div>",
+      "mockData": {
+        "title": "Python Function Example",
+        "subtitle": "A simple Python function demonstrating how reusable code blocks work.",
+        "language": "Python",
+        "code": "def calculate_square(number):\n    result = number * number\n    return result\n\nvalue = calculate_square(5)\nprint(\"Square:\", value)",
+        "description": "This Python example defines a reusable function named calculate_square() that accepts a number as input, multiplies it by itself, and returns the squared value. The function is then called with the value 5, and the result is displayed in the console.",
+        "points": [
+          "Functions help organize and reuse code efficiently.",
+          "Parameters allow values to be passed into functions dynamically.",
+          "The return statement sends the result back to the caller.",
+          "Readable code structure improves maintainability."
+        ]
+      }
+    },
+    {
+      "id": "l-1778234395752",
+      "name": "Example / Case Study",
+      "variant": "content",
+      "code": "<div class=\"w-full h-full overflow-hidden bg-gradient-to-br from-slate-100 via-white to-blue-50 p-10 flex flex-col relative\">\n\n  <!-- Background Decorations -->\n\n  <div class=\"absolute top-0 right-0 w-96 h-96 bg-blue-100/40 blur-3xl rounded-full\"></div>\n  <div class=\"absolute bottom-0 left-0 w-80 h-80 bg-indigo-100/30 blur-3xl rounded-full\"></div>\n\n  <!-- Header -->\n\n  <div class=\"relative z-10 mb-7 shrink-0\">\n\n<div class=\"flex items-center gap-3 mb-4\">\n  <div class=\"w-14 h-1 rounded-full bg-blue-600\"></div>\n  <div class=\"w-24 h-1 rounded-full bg-blue-200\"></div>\n</div>\n\n<h1 class=\"text-5xl leading-tight font-black tracking-tight text-slate-900 font-display max-w-4xl\">\n  {{title}}\n</h1>\n\n{{#if subtitle}}\n<p class=\"mt-3 text-lg leading-relaxed text-slate-600 font-body max-w-3xl\">\n  {{subtitle}}\n</p>\n{{/if}}\n\n  </div>\n\n  <!-- Main Content -->\n\n  <div class=\"relative z-10 flex-1 grid grid-cols-2 gap-8 overflow-hidden\">\n\n<!-- Image Section -->\n<div class=\"relative overflow-hidden\">\n\n  <div class=\"relative group w-full h-full rounded-3xl overflow-hidden shadow-2xl border border-white/60\" data-image-key=\"image\">\n    \n    {{#if image}}\n      <img \n        src=\"{{image}}\" \n        alt=\"{{title}}\" \n        class=\"w-full h-full object-cover\"\n      />\n\n      <!-- Overlay -->\n      <div class=\"absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent\"></div>\n\n      <!-- Floating Label -->\n      <div class=\"absolute bottom-6 left-6 right-6\">\n\n        <div class=\"bg-white/15 backdrop-blur-md border border-white/10 rounded-2xl px-5 py-4\">\n\n          <div class=\"text-xs uppercase tracking-[0.25em] text-blue-100 font-bold font-body mb-2\">\n            Real World Application\n          </div>\n\n          <h2 class=\"text-2xl leading-snug font-black text-white font-display\">\n            {{caseTitle}}\n          </h2>\n\n        </div>\n\n      </div>\n\n    {{else}}\n      <div class=\"w-full h-full flex flex-col items-center justify-center bg-gray-50 text-gray-400 border-4 border-dashed border-gray-200 rounded-3xl group-hover:bg-gray-100 group-hover:border-lumina-primary transition-all cursor-pointer\">\n        \n        <svg class=\"w-14 h-14 mb-3 opacity-30\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\n          <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z\"></path>\n        </svg>\n\n        <span class=\"text-[11px] font-black uppercase tracking-widest\">\n          Click to Upload Image\n        </span>\n\n      </div>\n    {{/if}}\n\n  </div>\n\n</div>\n\n<!-- Content Section -->\n<div class=\"bg-white border border-slate-200 rounded-3xl shadow-xl p-8 flex flex-col overflow-hidden\">\n\n  <!-- Description -->\n  <div class=\"mb-8 overflow-hidden\">\n\n    <div class=\"flex items-center gap-3 mb-4\">\n      <div class=\"w-10 h-1 rounded-full bg-indigo-600\"></div>\n      <div class=\"w-20 h-1 rounded-full bg-indigo-200\"></div>\n    </div>\n\n    <h2 class=\"text-3xl font-black text-slate-900 font-display mb-5\">\n      Case Study Overview\n    </h2>\n\n    <p class=\"text-lg leading-relaxed text-slate-600 font-body\">\n      {{description}}\n    </p>\n\n  </div>\n\n  <!-- Key Insights -->\n  {{#if insights}}\n  <div class=\"flex-1 overflow-hidden\">\n\n    <div class=\"bg-slate-50 border border-slate-200 rounded-2xl p-5 h-full overflow-hidden\">\n\n      <h3 class=\"text-sm uppercase tracking-[0.2em] text-slate-500 font-black font-body mb-5\">\n        Key Insights\n      </h3>\n\n      <div class=\"space-y-5\">\n\n        {{#each insights}}\n        <div class=\"flex items-start gap-4\">\n\n          <div class=\"w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0\">\n            <div class=\"w-2.5 h-2.5 rounded-full bg-blue-600\"></div>\n          </div>\n\n          <div class=\"overflow-hidden\">\n            <h4 class=\"text-lg font-black text-slate-900 font-display mb-1\">\n              {{title}}\n            </h4>\n\n            <p class=\"text-base leading-relaxed text-slate-600 font-body\">\n              {{description}}\n            </p>\n          </div>\n\n        </div>\n        {{/each}}\n\n      </div>\n\n    </div>\n\n  </div>\n  {{/if}}\n\n</div>\n\n  </div>\n\n</div>",
+      "mockData": {
+        "title": "AI in Healthcare",
+        "subtitle": "A real-world case study showing how artificial intelligence improves medical diagnosis and patient care.",
+        "caseTitle": "AI-Powered Disease Detection",
+        "description": "Hospitals and healthcare organizations are using artificial intelligence systems to analyze medical images, predict diseases, and assist doctors in making faster and more accurate decisions. AI-driven tools reduce diagnostic errors, improve efficiency, and enhance patient outcomes.",
+        "image": "https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=1400&auto=format&fit=crop",
+        "insights": [
+          {
+            "title": "Faster Diagnosis",
+            "description": "AI systems can analyze X-rays, MRI scans, and CT images within seconds, helping doctors identify diseases more quickly."
+          },
+          {
+            "title": "Improved Accuracy",
+            "description": "Machine learning models assist in detecting patterns that may be difficult for humans to notice, reducing diagnostic errors."
+          },
+          {
+            "title": "Better Patient Care",
+            "description": "AI-powered healthcare systems enable personalized treatments and improve patient monitoring in hospitals."
+          }
+        ]
+      }
+    },
+    {
+      "id": "l-1778234470017",
+      "name": "Quiz / MCQ",
+      "variant": "content",
+      "code": "<div class=\"w-full h-full overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-blue-50 p-10 flex flex-col relative\">\n\n  <!-- Decorative Background -->\n\n  <div class=\"absolute top-0 right-0 w-96 h-96 bg-blue-100/40 blur-3xl rounded-full\"></div>\n  <div class=\"absolute bottom-0 left-0 w-80 h-80 bg-indigo-100/30 blur-3xl rounded-full\"></div>\n\n  <!-- Header -->\n\n  <div class=\"relative z-10 mb-6 shrink-0\">\n\n<div class=\"flex items-center gap-3 mb-4\">\n  <div class=\"w-14 h-1 rounded-full bg-indigo-600\"></div>\n  <div class=\"w-24 h-1 rounded-full bg-indigo-200\"></div>\n</div>\n\n<div class=\"flex items-start justify-between gap-6\">\n\n  <div>\n    <h1 class=\"text-5xl leading-tight font-black tracking-tight text-slate-900 font-display max-w-4xl\">\n      {{title}}\n    </h1>\n\n    {{#if subtitle}}\n    <p class=\"mt-3 text-lg leading-relaxed text-slate-600 font-body max-w-3xl\">\n      {{subtitle}}\n    </p>\n    {{/if}}\n  </div>\n\n  <!-- Quiz Badge -->\n  <div class=\"shrink-0 px-5 py-3 rounded-2xl bg-indigo-600 text-white shadow-lg\">\n    <div class=\"text-xs uppercase tracking-[0.25em] font-bold font-body opacity-80\">\n      Quiz\n    </div>\n\n    <div class=\"text-2xl font-black font-display mt-1\">\n      {{questionNumber}}\n    </div>\n  </div>\n\n</div>\n\n  </div>\n\n  <!-- Quiz Layout -->\n\n  <div class=\"relative z-10 flex-1 grid grid-cols-2 gap-8 overflow-hidden\">\n\n<!-- Question Panel -->\n<div class=\"bg-gradient-to-br from-indigo-600 to-blue-700 rounded-3xl shadow-2xl p-8 flex flex-col overflow-hidden text-white relative\">\n\n  <!-- Overlay -->\n  <div class=\"absolute inset-0 bg-white/5\"></div>\n\n  <!-- Question Type -->\n  <div class=\"relative z-10 mb-6\">\n    <span class=\"px-4 py-1.5 rounded-full bg-white/15 border border-white/10 text-indigo-100 text-xs uppercase tracking-[0.25em] font-bold font-body\">\n      Interactive MCQ\n    </span>\n  </div>\n\n  <!-- Question -->\n  <div class=\"relative z-10 flex-1 flex items-center overflow-hidden\">\n\n    <h2 class=\"text-4xl leading-tight font-black font-display\">\n      {{question}}\n    </h2>\n\n  </div>\n\n  <!-- Difficulty & Timer -->\n  <div class=\"relative z-10 mt-6 flex items-center justify-between\">\n\n    {{#if difficulty}}\n    <div class=\"px-4 py-2 rounded-xl bg-white/10 border border-white/10 text-sm uppercase tracking-[0.15em] font-bold font-body\">\n      {{difficulty}}\n    </div>\n    {{/if}}\n\n    {{#if time}}\n    <div class=\"text-sm text-indigo-100 font-body\">\n      ⏱ {{time}}\n    </div>\n    {{/if}}\n\n  </div>\n\n</div>\n\n<!-- Options Panel -->\n<div class=\"bg-white border border-slate-200 rounded-3xl shadow-xl p-8 flex flex-col overflow-hidden\">\n\n  <!-- Header -->\n  <div class=\"mb-6 shrink-0\">\n\n    <div class=\"flex items-center gap-3 mb-4\">\n      <div class=\"w-10 h-1 rounded-full bg-blue-600\"></div>\n      <div class=\"w-20 h-1 rounded-full bg-blue-200\"></div>\n    </div>\n\n    <h2 class=\"text-3xl font-black text-slate-900 font-display\">\n      Select an Option\n    </h2>\n\n  </div>\n\n  <!-- Options -->\n  <div class=\"flex-1 grid grid-cols-1 gap-4 overflow-hidden\">\n\n    {{#each options}}\n    <button \n      class=\"group flex items-center justify-between gap-5 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-2xl px-5 py-4 transition-all overflow-hidden text-left\"\n    >\n\n      <!-- Left Content -->\n      <div class=\"flex items-center gap-5 overflow-hidden\">\n\n        <!-- Option Label -->\n        <div class=\"w-12 h-12 rounded-xl bg-white border border-slate-200 group-hover:border-blue-300 flex items-center justify-center shrink-0\">\n\n          <span class=\"text-lg font-black text-slate-700 group-hover:text-blue-700 font-display\">\n            {{label}}\n          </span>\n\n        </div>\n\n        <!-- Option Text -->\n        <div class=\"overflow-hidden\">\n\n          <p class=\"text-lg leading-relaxed text-slate-700 font-body\">\n            {{text}}\n          </p>\n\n        </div>\n\n      </div>\n\n      <!-- Reveal Answer -->\n      {{#if isCorrect}}\n      <div class=\"opacity-0 group-focus:opacity-100 group-hover:opacity-100 transition-opacity duration-300 shrink-0\">\n\n        <div class=\"px-3 py-1.5 rounded-full bg-green-100 border border-green-200 text-green-700 text-xs uppercase tracking-[0.15em] font-black font-body\">\n          Correct\n        </div>\n\n      </div>\n      {{else}}\n      <div class=\"opacity-0 group-focus:opacity-100 transition-opacity duration-300 shrink-0\">\n\n        <div class=\"px-3 py-1.5 rounded-full bg-red-100 border border-red-200 text-red-600 text-xs uppercase tracking-[0.15em] font-black font-body\">\n          Wrong\n        </div>\n\n      </div>\n      {{/if}}\n\n    </button>\n    {{/each}}\n\n  </div>\n\n  <!-- Answer Explanation -->\n  {{#if explanation}}\n  <div class=\"mt-6 bg-emerald-50 border border-emerald-100 rounded-2xl px-5 py-4 overflow-hidden\">\n\n    <div class=\"text-sm uppercase tracking-[0.2em] text-emerald-600 font-black font-body mb-2\">\n      Explanation\n    </div>\n\n    <p class=\"text-base leading-relaxed text-slate-700 font-body\">\n      {{explanation}}\n    </p>\n\n  </div>\n  {{/if}}\n\n</div>\n\n  </div>\n\n</div>",
+      "mockData": {
+        "title": "Artificial Intelligence Quiz",
+        "subtitle": "Select the correct answer to reveal instant feedback and explanation.",
+        "questionNumber": "01",
+        "question": "Which branch of Artificial Intelligence focuses on enabling computers to understand and process human language?",
+        "difficulty": "Intermediate",
+        "time": "30 Seconds",
+        "options": [
+          {
+            "label": "A",
+            "text": "Computer Vision",
+            "isCorrect": false
+          },
+          {
+            "label": "B",
+            "text": "Natural Language Processing",
+            "isCorrect": true
+          },
+          {
+            "label": "C",
+            "text": "Reinforcement Learning",
+            "isCorrect": false
+          },
+          {
+            "label": "D",
+            "text": "Robotics",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Natural Language Processing (NLP) is the branch of AI that enables machines to understand, interpret, and generate human language. It powers applications such as chatbots, translators, and virtual assistants."
+      }
+    },
+    {
+      "id": "l-1778235040914",
+      "name": "Activity / Exercise",
+      "variant": "content",
+      "code": "<div class=\"w-full h-full overflow-hidden bg-gradient-to-br from-amber-50 via-white to-orange-50 p-10 flex flex-col relative\">\n\n  <!-- Background Decorations -->\n\n  <div class=\"absolute top-0 right-0 w-96 h-96 bg-orange-100/40 blur-3xl rounded-full\"></div>\n  <div class=\"absolute bottom-0 left-0 w-80 h-80 bg-amber-100/30 blur-3xl rounded-full\"></div>\n\n  <!-- Header -->\n\n  <div class=\"relative z-10 mb-6 shrink-0\">\n\n<div class=\"flex items-center gap-3 mb-4\">\n  <div class=\"w-14 h-1 rounded-full bg-orange-600\"></div>\n  <div class=\"w-24 h-1 rounded-full bg-orange-200\"></div>\n</div>\n\n<div class=\"flex items-start justify-between gap-6\">\n\n  <div>\n    <h1 class=\"text-5xl leading-tight font-black tracking-tight text-slate-900 font-display max-w-4xl\">\n      {{title}}\n    </h1>\n\n    {{#if subtitle}}\n    <p class=\"mt-3 text-lg leading-relaxed text-slate-600 font-body max-w-3xl\">\n      {{subtitle}}\n    </p>\n    {{/if}}\n  </div>\n\n  <!-- Activity Badge -->\n  <div class=\"shrink-0 px-5 py-3 rounded-2xl bg-orange-600 text-white shadow-lg\">\n    <div class=\"text-xs uppercase tracking-[0.25em] font-bold font-body opacity-80\">\n      Activity\n    </div>\n\n    <div class=\"text-2xl font-black font-display mt-1\">\n      {{activityNumber}}\n    </div>\n  </div>\n\n</div>\n\n  </div>\n\n  <!-- Main Layout -->\n\n  <div class=\"relative z-10 flex-1 grid grid-cols-2 gap-8 overflow-hidden\">\n\n<!-- Left Panel -->\n<div class=\"bg-gradient-to-br from-orange-500 to-amber-500 rounded-3xl shadow-2xl overflow-hidden relative\">\n\n  <!-- Image -->\n  <div class=\"relative group h-full w-full\" data-image-key=\"image\">\n\n    {{#if image}}\n    <img \n      src=\"{{image}}\" \n      alt=\"{{title}}\" \n      class=\"w-full h-full object-cover\"\n    />\n\n    <!-- Overlay -->\n    <div class=\"absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent\"></div>\n\n    <!-- Content -->\n    <div class=\"absolute inset-0 p-8 flex flex-col justify-end text-white overflow-hidden\">\n\n      <div class=\"mb-4\">\n        <span class=\"px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/10 text-xs uppercase tracking-[0.25em] font-bold font-body\">\n          Practice Exercise\n        </span>\n      </div>\n\n      <h2 class=\"text-4xl leading-tight font-black font-display mb-4\">\n        {{taskTitle}}\n      </h2>\n\n      <p class=\"text-lg leading-relaxed text-orange-50 font-body\">\n        {{taskDescription}}\n      </p>\n\n    </div>\n\n    {{else}}\n    <div class=\"w-full h-full flex flex-col items-center justify-center bg-gray-50 text-gray-400 border-4 border-dashed border-gray-200 rounded-3xl group-hover:bg-gray-100 group-hover:border-orange-400 transition-all cursor-pointer\">\n\n      <svg class=\"w-14 h-14 mb-3 opacity-30\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\n        <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\"></path>\n      </svg>\n\n      <span class=\"text-[11px] font-black uppercase tracking-widest\">\n        Click to Upload Image\n      </span>\n\n    </div>\n    {{/if}}\n\n  </div>\n\n</div>\n\n<!-- Right Panel -->\n<div class=\"bg-white border border-slate-200 rounded-3xl shadow-xl p-8 flex flex-col overflow-hidden\">\n\n  <!-- Instructions -->\n  <div class=\"mb-6 shrink-0\">\n\n    <div class=\"flex items-center gap-3 mb-4\">\n      <div class=\"w-10 h-1 rounded-full bg-orange-600\"></div>\n      <div class=\"w-20 h-1 rounded-full bg-orange-200\"></div>\n    </div>\n\n    <h2 class=\"text-3xl font-black text-slate-900 font-display mb-4\">\n      Instructions\n    </h2>\n\n    <p class=\"text-lg leading-relaxed text-slate-600 font-body\">\n      {{instructions}}\n    </p>\n\n  </div>\n\n  <!-- Tasks -->\n  <div class=\"flex-1 overflow-hidden\">\n\n    <div class=\"space-y-4\">\n\n      {{#each tasks}}\n      <div class=\"flex items-start gap-4 bg-slate-50 border border-slate-200 rounded-2xl p-5 overflow-hidden\">\n\n        <!-- Number -->\n        <div class=\"w-12 h-12 rounded-xl bg-orange-500 text-white flex items-center justify-center shrink-0\">\n\n          <span class=\"text-lg font-black font-display\">\n            {{number}}\n          </span>\n\n        </div>\n\n        <!-- Content -->\n        <div class=\"overflow-hidden\">\n\n          <h3 class=\"text-xl font-black text-slate-900 font-display mb-2\">\n            {{title}}\n          </h3>\n\n          <p class=\"text-base leading-relaxed text-slate-600 font-body\">\n            {{description}}\n          </p>\n\n        </div>\n\n      </div>\n      {{/each}}\n\n    </div>\n\n  </div>\n\n  <!-- Footer -->\n  {{#if footerNote}}\n  <div class=\"mt-6 bg-orange-50 border border-orange-100 rounded-2xl px-5 py-4 overflow-hidden\">\n\n    <div class=\"text-sm uppercase tracking-[0.2em] text-orange-600 font-black font-body mb-2\">\n      Reminder\n    </div>\n\n    <p class=\"text-base leading-relaxed text-slate-700 font-body\">\n      {{footerNote}}\n    </p>\n\n  </div>\n  {{/if}}\n\n</div>\n\n  </div>\n\n</div>",
+      "mockData": {
+        "title": "Machine Learning Practice Activity",
+        "subtitle": "Apply your understanding of supervised learning through a hands-on exercise.",
+        "activityNumber": "03",
+        "taskTitle": "Build a Simple Prediction Model",
+        "taskDescription": "Work individually or in groups to design a basic machine learning workflow using sample datasets.",
+        "instructions": "Complete the following tasks to understand how machine learning models are trained, tested, and evaluated in real-world scenarios.",
+        "image": "https://images.unsplash.com/photo-1555949963-aa79dcee981c?q=80&w=1400&auto=format&fit=crop",
+        "tasks": [
+          {
+            "number": "1",
+            "title": "Collect Dataset",
+            "description": "Choose a small dataset related to student marks, weather, or sales prediction."
+          },
+          {
+            "number": "2",
+            "title": "Train the Model",
+            "description": "Use a supervised learning algorithm such as Linear Regression or Decision Tree."
+          },
+          {
+            "number": "3",
+            "title": "Evaluate Results",
+            "description": "Compare predicted outputs with actual results and identify model accuracy."
+          }
+        ],
+        "footerNote": "Submit your final observations and screenshots before the next class discussion."
+      }
+    },
+    {
+      "id": "l-1778235139853",
+      "name": "Summary / Key Takeaways",
+      "variant": "content",
+      "code": "<div class=\"w-full h-full overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-teal-50 p-10 flex flex-col relative\">\n\n  <!-- Decorative Background -->\n\n  <div class=\"absolute top-0 right-0 w-96 h-96 bg-emerald-100/40 blur-3xl rounded-full\"></div>\n  <div class=\"absolute bottom-0 left-0 w-80 h-80 bg-teal-100/30 blur-3xl rounded-full\"></div>\n\n  <!-- Header -->\n\n  <div class=\"relative z-10 mb-7 shrink-0\">\n\n<div class=\"flex items-center gap-3 mb-4\">\n  <div class=\"w-14 h-1 rounded-full bg-emerald-600\"></div>\n  <div class=\"w-24 h-1 rounded-full bg-emerald-200\"></div>\n</div>\n\n<div class=\"flex items-start justify-between gap-6\">\n\n  <div>\n    <h1 class=\"text-5xl leading-tight font-black tracking-tight text-slate-900 font-display max-w-4xl\">\n      {{title}}\n    </h1>\n\n    {{#if subtitle}}\n    <p class=\"mt-3 text-lg leading-relaxed text-slate-600 font-body max-w-3xl\">\n      {{subtitle}}\n    </p>\n    {{/if}}\n  </div>\n\n  <!-- Summary Badge -->\n  <div class=\"shrink-0 px-5 py-3 rounded-2xl bg-emerald-600 text-white shadow-lg\">\n\n    <div class=\"text-xs uppercase tracking-[0.25em] font-bold font-body opacity-80\">\n      Recap\n    </div>\n\n    <div class=\"text-2xl font-black font-display mt-1\">\n      {{summaryCount}}\n    </div>\n\n  </div>\n\n</div>\n\n  </div>\n\n  <!-- Main Layout -->\n\n  <div class=\"relative z-10 flex-1 grid grid-cols-2 gap-8 overflow-hidden\">\n\n<!-- Left Section -->\n<div class=\"bg-gradient-to-br from-emerald-600 to-teal-600 rounded-3xl shadow-2xl overflow-hidden relative\">\n\n  <!-- Glow -->\n  <div class=\"absolute inset-0 bg-white/5\"></div>\n\n  <!-- Content -->\n  <div class=\"relative z-10 h-full p-8 flex flex-col justify-between overflow-hidden text-white\">\n\n    <!-- Top -->\n    <div>\n\n      <div class=\"mb-5\">\n        <span class=\"px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/10 text-xs uppercase tracking-[0.25em] font-bold font-body\">\n          Key Learnings\n        </span>\n      </div>\n\n      <h2 class=\"text-4xl leading-tight font-black font-display mb-5\">\n        {{highlightTitle}}\n      </h2>\n\n      <p class=\"text-lg leading-relaxed text-emerald-50 font-body\">\n        {{highlightDescription}}\n      </p>\n\n    </div>\n\n    <!-- Quote / Bottom Note -->\n    {{#if quote}}\n    <div class=\"mt-8 bg-white/10 border border-white/10 rounded-2xl p-5 overflow-hidden\">\n\n      <div class=\"text-sm uppercase tracking-[0.2em] text-emerald-100 font-black font-body mb-3\">\n        Final Thought\n      </div>\n\n      <p class=\"text-xl leading-relaxed font-display font-bold text-white\">\n        “{{quote}}”\n      </p>\n\n    </div>\n    {{/if}}\n\n  </div>\n\n</div>\n\n<!-- Right Section -->\n<div class=\"bg-white border border-slate-200 rounded-3xl shadow-xl p-8 flex flex-col overflow-hidden\">\n\n  <!-- Header -->\n  <div class=\"mb-6 shrink-0\">\n\n    <div class=\"flex items-center gap-3 mb-4\">\n      <div class=\"w-10 h-1 rounded-full bg-emerald-600\"></div>\n      <div class=\"w-20 h-1 rounded-full bg-emerald-200\"></div>\n    </div>\n\n    <h2 class=\"text-3xl font-black text-slate-900 font-display\">\n      Summary Points\n    </h2>\n\n  </div>\n\n  <!-- Takeaways -->\n  <div class=\"flex-1 overflow-hidden\">\n\n    <div class=\"space-y-4\">\n\n      {{#each takeaways}}\n      <div class=\"flex items-start gap-4 bg-slate-50 border border-slate-200 rounded-2xl p-5 overflow-hidden\">\n\n        <!-- Icon -->\n        <div class=\"w-12 h-12 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm\">\n\n          <span class=\"text-xl font-black font-display\">\n            ✓\n          </span>\n\n        </div>\n\n        <!-- Content -->\n        <div class=\"overflow-hidden\">\n\n          <h3 class=\"text-xl font-black text-slate-900 font-display mb-2\">\n            {{title}}\n          </h3>\n\n          <p class=\"text-base leading-relaxed text-slate-600 font-body\">\n            {{description}}\n          </p>\n\n        </div>\n\n      </div>\n      {{/each}}\n\n    </div>\n\n  </div>\n\n  <!-- Footer -->\n  {{#if footerNote}}\n  <div class=\"mt-6 bg-emerald-50 border border-emerald-100 rounded-2xl px-5 py-4 overflow-hidden\">\n\n    <div class=\"text-sm uppercase tracking-[0.2em] text-emerald-600 font-black font-body mb-2\">\n      Conclusion\n    </div>\n\n    <p class=\"text-base leading-relaxed text-slate-700 font-body\">\n      {{footerNote}}\n    </p>\n\n  </div>\n  {{/if}}\n\n</div>\n\n  </div>\n\n</div>",
+      "mockData": {
+        "title": "Summary & Key Takeaways",
+        "subtitle": "A quick recap of the most important concepts covered in this session.",
+        "summaryCount": "05",
+        "highlightTitle": "Understanding Artificial Intelligence",
+        "highlightDescription": "Artificial Intelligence enables machines to simulate human intelligence through learning, reasoning, and decision-making. It is transforming industries through automation, prediction, and intelligent systems.",
+        "quote": "AI is not replacing humans — it is enhancing human potential.",
+        "takeaways": [
+          {
+            "title": "Machine Learning",
+            "description": "Machines can learn patterns from data and improve performance without explicit programming."
+          },
+          {
+            "title": "Natural Language Processing",
+            "description": "AI systems can understand, analyze, and generate human language for communication tasks."
+          },
+          {
+            "title": "Computer Vision",
+            "description": "AI can interpret and analyze images and videos for recognition and detection tasks."
+          },
+          {
+            "title": "Real-World Applications",
+            "description": "AI is widely used in healthcare, finance, education, transportation, and automation."
+          },
+          {
+            "title": "Future Impact",
+            "description": "Artificial Intelligence will continue shaping innovation, productivity, and digital transformation."
+          }
+        ],
+        "footerNote": "Continue practicing and exploring AI concepts to build stronger problem-solving and analytical skills."
+      }
+    },
+    {
+      "id": "l-1778235278880",
+      "name": "Q&A",
+      "variant": "content",
+      "code": "<div class=\"w-full h-full overflow-hidden bg-gradient-to-br from-slate-50 via-white to-sky-50 p-10 flex flex-col relative\">\n\n  <!-- Background Glow -->\n\n  <div class=\"absolute top-0 right-0 w-[420px] h-[420px] bg-sky-100/50 blur-3xl rounded-full\"></div>\n  <div class=\"absolute bottom-0 left-0 w-[320px] h-[320px] bg-indigo-100/40 blur-3xl rounded-full\"></div>\n\n  <!-- Header -->\n\n  <div class=\"relative z-10 mb-8 shrink-0\">\n\n<div class=\"flex items-center gap-3 mb-5\">\n  <div class=\"w-14 h-1 rounded-full bg-sky-600\"></div>\n  <div class=\"w-24 h-1 rounded-full bg-sky-200\"></div>\n</div>\n\n<div class=\"flex items-start justify-between gap-6\">\n\n  <div>\n    <h1 class=\"text-6xl leading-none font-black tracking-tight text-slate-900 font-display\">\n      {{title}}\n    </h1>\n\n    {{#if subtitle}}\n    <p class=\"mt-4 text-xl leading-relaxed text-slate-600 font-body max-w-3xl\">\n      {{subtitle}}\n    </p>\n    {{/if}}\n  </div>\n\n  <!-- Badge -->\n  <div class=\"shrink-0 bg-sky-600 text-white rounded-2xl px-6 py-4 shadow-lg\">\n\n    <div class=\"text-xs uppercase tracking-[0.25em] font-bold opacity-80 font-body\">\n      Session\n    </div>\n\n    <div class=\"text-3xl font-black font-display mt-1\">\n      Q&A\n    </div>\n\n  </div>\n\n</div>\n\n  </div>\n\n  <!-- Main Layout -->\n\n  <div class=\"relative z-10 flex-1 grid grid-cols-2 gap-8 overflow-hidden\">\n\n<!-- Left Side -->\n<div class=\"relative overflow-hidden rounded-3xl shadow-2xl border border-white/60\">\n\n  <div class=\"relative group w-full h-full\" data-image-key=\"image\">\n\n    {{#if image}}\n    <img \n      src=\"{{image}}\" \n      alt=\"{{title}}\" \n      class=\"w-full h-full object-cover\"\n    />\n\n    <!-- Overlay -->\n    <div class=\"absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-900/35 to-transparent\"></div>\n\n    <!-- Content -->\n    <div class=\"absolute inset-0 p-8 flex flex-col justify-between text-white overflow-hidden\">\n\n      <!-- Top -->\n      <div>\n        <div class=\"inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 backdrop-blur-md border border-white/10\">\n\n          <div class=\"w-2.5 h-2.5 rounded-full bg-emerald-400\"></div>\n\n          <span class=\"text-xs uppercase tracking-[0.25em] font-bold font-body\">\n            Open Discussion\n          </span>\n\n        </div>\n      </div>\n\n      <!-- Bottom -->\n      <div>\n\n        <h2 class=\"text-5xl leading-tight font-black font-display mb-5\">\n          {{discussionTitle}}\n        </h2>\n\n        <p class=\"text-xl leading-relaxed text-slate-100 font-body max-w-xl\">\n          {{discussionDescription}}\n        </p>\n\n      </div>\n\n    </div>\n\n    {{else}}\n    <div class=\"w-full h-full flex flex-col items-center justify-center bg-gray-50 text-gray-400 border-4 border-dashed border-gray-200 rounded-3xl group-hover:bg-gray-100 group-hover:border-sky-400 transition-all cursor-pointer\">\n\n      <svg class=\"w-14 h-14 mb-3 opacity-30\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\n        <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z\"></path>\n      </svg>\n\n      <span class=\"text-[11px] font-black uppercase tracking-widest\">\n        Click to Upload Image\n      </span>\n\n    </div>\n    {{/if}}\n\n  </div>\n\n</div>\n\n<!-- Right Panel -->\n<div class=\"bg-white border border-slate-200 rounded-3xl shadow-xl p-8 flex flex-col overflow-hidden\">\n\n  <!-- Header -->\n  <div class=\"mb-6 shrink-0\">\n\n    <div class=\"flex items-center gap-3 mb-4\">\n      <div class=\"w-10 h-1 rounded-full bg-indigo-600\"></div>\n      <div class=\"w-20 h-1 rounded-full bg-indigo-200\"></div>\n    </div>\n\n    <h2 class=\"text-3xl font-black text-slate-900 font-display\">\n      Discussion Topics\n    </h2>\n\n  </div>\n\n  <!-- Questions -->\n  <div class=\"flex-1 overflow-hidden\">\n\n    <div class=\"space-y-4\">\n\n      {{#each questions}}\n      <div class=\"bg-slate-50 border border-slate-200 rounded-2xl p-5 flex items-start gap-4 overflow-hidden hover:border-sky-300 transition-all\">\n\n        <!-- Icon -->\n        <div class=\"w-12 h-12 rounded-xl bg-sky-600 text-white flex items-center justify-center shrink-0 shadow-sm\">\n\n          <span class=\"text-2xl font-black font-display\">\n            ?\n          </span>\n\n        </div>\n\n        <!-- Text -->\n        <div class=\"overflow-hidden\">\n\n          <h3 class=\"text-xl leading-snug font-black text-slate-900 font-display mb-2\">\n            {{title}}\n          </h3>\n\n          <p class=\"text-base leading-relaxed text-slate-600 font-body\">\n            {{description}}\n          </p>\n\n        </div>\n\n      </div>\n      {{/each}}\n\n    </div>\n\n  </div>\n\n</div>\n\n  </div>\n\n</div>\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "mockData": {
+        "title": "Questions & Answers",
+        "subtitle": "Open floor discussion and interactive Q&A session.",
+        "discussionTitle": "Let’s Discuss & Explore",
+        "discussionDescription": "Feel free to ask questions, share ideas, or discuss real-world applications related to today’s topic.",
+        "image": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1400&auto=format&fit=crop",
+        "questions": [
+          {
+            "title": "Understanding Core Concepts",
+            "description": "Clarify doubts related to the fundamentals and working principles discussed in the presentation."
+          },
+          {
+            "title": "Real-World Applications",
+            "description": "Discuss how these concepts are applied in industries such as healthcare, finance, and automation."
+          }
+        ]
+      }
+    },
+    {
+      "id": "l-1778235674677",
+      "name": "Thank You / Closing",
+      "variant": "content",
+      "code": "<div class=\"w-full h-full overflow-hidden bg-gradient-to-br from-white via-slate-50 to-blue-50 p-10 flex flex-col relative\">\n\n  <!-- Soft Background Shapes -->\n\n  <div class=\"absolute top-0 right-0 w-[420px] h-[420px] bg-blue-200/30 blur-3xl rounded-full\"></div>\n  <div class=\"absolute bottom-0 left-0 w-[360px] h-[360px] bg-indigo-200/20 blur-3xl rounded-full\"></div>\n\n  <!-- Main Content -->\n\n  <div class=\"relative z-10 flex-1 flex items-center justify-center overflow-hidden\">\n\n<div class=\"w-full max-w-6xl grid grid-cols-[1.1fr_0.9fr] gap-8 items-center overflow-hidden\">\n\n  <!-- Left Section -->\n  <div class=\"overflow-hidden\">\n\n    <!-- Badge -->\n    <div class=\"inline-flex items-center gap-3 px-5 py-2 rounded-full bg-blue-100 border border-blue-200 mb-8\">\n\n      <div class=\"w-3 h-3 rounded-full bg-emerald-500\"></div>\n\n      <span class=\"text-sm uppercase tracking-[0.25em] text-blue-700 font-black font-body\">\n        Presentation Complete\n      </span>\n\n    </div>\n\n    <!-- Main Heading -->\n    <h1 class=\"text-[76px] leading-[0.95] font-black tracking-tight text-slate-900 font-display mb-8 max-w-3xl\">\n      {{title}}\n    </h1>\n\n    <!-- Message -->\n    <p class=\"text-2xl leading-relaxed text-slate-600 font-body max-w-2xl mb-10\">\n      {{message}}\n    </p>\n\n    <!-- Contact Cards -->\n    <div class=\"flex flex-wrap gap-4 overflow-hidden\">\n\n      {{#if contact.email}}\n      <div class=\"px-5 py-4 rounded-2xl bg-white border border-slate-200 shadow-sm min-w-[220px]\">\n\n        <div class=\"text-xs uppercase tracking-[0.2em] text-slate-400 font-black font-body mb-2\">\n          Email\n        </div>\n\n        <div class=\"text-lg font-semibold text-slate-800 font-body break-words\">\n          {{contact.email}}\n        </div>\n\n      </div>\n      {{/if}}\n\n      {{#if contact.phone}}\n      <div class=\"px-5 py-4 rounded-2xl bg-white border border-slate-200 shadow-sm min-w-[220px]\">\n\n        <div class=\"text-xs uppercase tracking-[0.2em] text-slate-400 font-black font-body mb-2\">\n          Phone\n        </div>\n\n        <div class=\"text-lg font-semibold text-slate-800 font-body\">\n          {{contact.phone}}\n        </div>\n\n      </div>\n      {{/if}}\n\n      {{#if contact.website}}\n      <div class=\"px-5 py-4 rounded-2xl bg-white border border-slate-200 shadow-sm min-w-[220px]\">\n\n        <div class=\"text-xs uppercase tracking-[0.2em] text-slate-400 font-black font-body mb-2\">\n          Website\n        </div>\n\n        <div class=\"text-lg font-semibold text-slate-800 font-body break-words\">\n          {{contact.website}}\n        </div>\n\n      </div>\n      {{/if}}\n\n    </div>\n\n  </div>\n\n  <!-- Right Section -->\n  <div class=\"relative overflow-hidden\">\n\n    <div class=\"bg-white border border-slate-200 rounded-[36px] p-7 shadow-2xl overflow-hidden\">\n\n      <!-- Image -->\n      <div class=\"relative group w-full h-[300px] rounded-3xl overflow-hidden mb-6\" data-image-key=\"image\">\n\n        {{#if image}}\n          <img \n            src=\"{{image}}\" \n            alt=\"{{title}}\" \n            class=\"w-full h-full object-cover\"\n          />\n\n          <div class=\"absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent\"></div>\n\n        {{else}}\n          <div class=\"w-full h-full flex flex-col items-center justify-center bg-gray-50 text-gray-400 border-4 border-dashed border-gray-200 rounded-3xl group-hover:bg-gray-100 group-hover:border-blue-400 transition-all cursor-pointer\">\n\n            <svg class=\"w-14 h-14 mb-3 opacity-30\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\n              <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\"></path>\n            </svg>\n\n            <span class=\"text-[11px] font-black uppercase tracking-widest\">\n              Click to Upload Image\n            </span>\n\n          </div>\n        {{/if}}\n\n      </div>\n\n      <!-- Presenter -->\n      <div class=\"overflow-hidden\">\n\n        <div class=\"text-sm uppercase tracking-[0.2em] text-blue-600 font-black font-body mb-3\">\n          Presented By\n        </div>\n\n        <h2 class=\"text-3xl font-black text-slate-900 font-display mb-2\">\n          {{presenter}}\n        </h2>\n\n        <p class=\"text-lg text-slate-500 font-body leading-relaxed\">\n          Thank you for being part of this session.\n        </p>\n\n      </div>\n\n    </div>\n\n  </div>\n\n</div>\n\n  </div>\n\n  <!-- Footer -->\n\n{{#if footer}}\n\n  <div class=\"relative z-10 pt-6 shrink-0\">\n\n<div class=\"w-full h-px bg-slate-200 mb-5\"></div>\n\n<div class=\"flex items-center justify-between gap-6 overflow-hidden\">\n\n  <p class=\"text-base text-slate-500 font-body\">\n    {{footer}}\n  </p>\n\n  <div class=\"text-sm uppercase tracking-[0.2em] text-slate-400 font-black font-body\">\n    End of Presentation\n  </div>\n\n</div>\n\n  </div>\n  {{/if}}\n\n</div>",
+      "mockData": {
+        "title": "Thank You!",
+        "message": "Thank you for your time and attention. We appreciate your participation and hope this presentation provided valuable insights and learning.",
+        "image": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1400&auto=format&fit=crop",
+        "contact": {
+          "email": "rudra@example.com",
+          "phone": "+91 98765 43210",
+          "website": "www.example.com"
+        },
+        "presenter": "Rudra Rathod",
+        "footer": "Feel free to connect for further discussions, collaborations, or questions."
+      }
+    }
+  ]
+}

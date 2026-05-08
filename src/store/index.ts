@@ -164,6 +164,7 @@ export interface SlideTemplate {
   name: string;
   designConfig: DesignConfig;
   layouts: LayoutDef[];
+  isDefault?: boolean;
 }
 
 export interface Toast {
@@ -213,6 +214,7 @@ interface AppState {
   moveSlideInActivePresentation: (slideId: string, direction: 'up' | 'down') => void;
   updateTemplateDesign: (templateId: string, config: Partial<DesignConfig>) => void;
   updateSlideThumbnail: (slideId: string, thumbnail: string) => void;
+  loadDefaultTemplatesFromAssets: () => void;
   
   toasts: Toast[];
   addToast: (message: string, type?: 'success' | 'error' | 'info') => void;
@@ -459,28 +461,11 @@ const storage = {
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
-      templates: [
-        {
-          id: "t-default",
-          name: "Lumina Velocity",
-          designConfig: DEFAULT_DESIGN,
-          layouts: DEFAULT_LAYOUTS
-        }
-      ],
-      activeTemplateId: "t-default",
+      templates: [],
+      activeTemplateId: "",
       
-      presentations: [
-        {
-          id: "p-default",
-          name: "My First Presentation",
-          templateId: "t-default",
-
-          slides: DEFAULT_SLIDES,
-          createdAt: Date.now(),
-          updatedAt: Date.now()
-        }
-      ],
-      activePresentationId: "p-default",
+      presentations: [],
+      activePresentationId: null,
       
       createTemplate: (name, design) => {
         const id = `t-${Date.now()}`;
@@ -525,6 +510,11 @@ export const useAppStore = create<AppState>()(
       },
       
       deleteTemplate: (id) => set((state) => {
+        const template = state.templates.find(t => t.id === id);
+        if (template?.isDefault) {
+          state.addToast("Default templates cannot be deleted.", "error");
+          return state;
+        }
         const newTemplates = state.templates.filter(t => t.id !== id);
         const newActiveId = state.activeTemplateId === id 
           ? (newTemplates.length > 0 ? newTemplates[0].id : "") 
@@ -532,9 +522,13 @@ export const useAppStore = create<AppState>()(
         return { templates: newTemplates, activeTemplateId: newActiveId };
       }),
       
-      renameTemplate: (id, name) => set((state) => ({
-        templates: state.templates.map(t => t.id === id ? { ...t, name } : t)
-      })),
+      renameTemplate: (id, name) => set((state) => {
+        const template = state.templates.find(t => t.id === id);
+        if (template?.isDefault) return state;
+        return {
+          templates: state.templates.map(t => t.id === id ? { ...t, name } : t)
+        };
+      }),
 
       duplicateTemplate: (id) => set((state) => {
         const template = state.templates.find(t => t.id === id);
@@ -753,6 +747,25 @@ export const useAppStore = create<AppState>()(
             : p
         )
       })),
+
+      loadDefaultTemplatesFromAssets: () => {
+        try {
+          const assetTemplates = import.meta.glob('../assets/templates/*.json', { eager: true });
+          const loadedTemplates: SlideTemplate[] = Object.values(assetTemplates).map((module: any) => ({
+            ...(module.default || module),
+            isDefault: true
+          }));
+
+          set((state) => {
+            const existingIds = new Set(state.templates.map(t => t.id));
+            const newTemplates = loadedTemplates.filter(t => !existingIds.has(t.id));
+            if (newTemplates.length === 0) return state;
+            return { templates: [...state.templates, ...newTemplates] };
+          });
+        } catch (e) {
+          console.error("Failed to load default templates from assets:", e);
+        }
+      },
 
       toasts: [],
       addToast: (message, type = 'info') => set((state) => {

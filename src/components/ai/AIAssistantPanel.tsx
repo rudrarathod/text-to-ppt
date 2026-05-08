@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Sparkles, Copy, Check, Loader2, Wand2 } from "lucide-react";
+import { Sparkles, Copy, Check, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { Textarea } from "../ui";
 import { PromptSettingsForm } from "../PromptSettingsUI";
@@ -25,6 +25,9 @@ interface AIAssistantPanelProps {
   responseValue?: string;
   onResponseChange?: (value: string) => void;
   onApplyResponse?: () => void;
+  
+  // Collapse state
+  defaultCollapsed?: boolean;
 }
 
 import { copyToClipboard } from "../../lib/utils";
@@ -49,11 +52,13 @@ export function AIAssistantPanel({
   systemPromptBuilder = buildDesignConfigPrompt,
   responseValue,
   onResponseChange,
-  onApplyResponse
+  onApplyResponse,
+  defaultCollapsed = false
 }: AIAssistantPanelProps) {
   const [activeMode, setActiveMode] = useState(defaultMode);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [showSettingsLocal, setShowSettingsLocal] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
 
   const handleModeSwitch = (mode: string) => {
     setActiveMode(mode);
@@ -71,99 +76,117 @@ export function AIAssistantPanel({
   };
 
   return (
-    <div className={cn("bg-[#1e1e1e] border border-[#2d2d30] rounded-xl shadow-2xl flex flex-col shrink-0 overflow-hidden w-full", className)}>
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#2d2d30] bg-[#1a1a1a]">
+    <div className={cn("bg-[#1e1e1e] border border-[#2d2d30] rounded-xl shadow-2xl flex flex-col shrink-0 overflow-hidden w-full transition-all duration-300", className)}>
+      <div 
+        className="flex items-center justify-between px-4 py-3 border-b border-[#2d2d30] bg-[#1a1a1a] cursor-pointer"
+        onClick={() => setIsCollapsed(!isCollapsed)}
+      >
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-[#D62828] animate-pulse"></div>
+          <div className={cn("w-2 h-2 rounded-full", isGenerating ? "bg-[#D62828] animate-pulse" : "bg-gray-600")}></div>
           <span className="text-white text-xs font-bold flex items-center gap-2 tracking-tight">AI Assistant</span>
+          {isCollapsed && promptValue && (
+            <span className="text-[10px] text-gray-500 truncate max-w-[150px] font-medium hidden sm:inline">— {promptValue}</span>
+          )}
         </div>
-        <div className="flex items-center gap-2">
-          {showPromptSettings && (
-             <button 
-               onClick={() => setShowSettingsLocal(!showSettingsLocal)} 
-               className={cn("text-[9px] font-bold px-2 py-1 rounded transition-colors", showSettingsLocal ? "bg-[#D62828] text-white" : "bg-[#252526] text-gray-400 hover:text-white border border-[#333]")}
-             >
-               Settings
-             </button>
+        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          {!isCollapsed && (
+            <>
+              {showPromptSettings && (
+                 <button 
+                   onClick={() => setShowSettingsLocal(!showSettingsLocal)} 
+                   className={cn("text-[9px] font-bold px-2 py-1 rounded transition-colors", showSettingsLocal ? "bg-[#D62828] text-white" : "bg-[#252526] text-gray-400 hover:text-white border border-[#333]")}
+                 >
+                   Settings
+                 </button>
+              )}
+              {modes.length > 0 && (
+                <div className="flex items-center bg-[#252526] rounded-md border border-[#333] overflow-hidden text-[9px] font-bold text-gray-400 p-0.5">
+                  {modes.map(mode => (
+                    <button 
+                      key={mode.value}
+                      onClick={() => handleModeSwitch(mode.value)} 
+                      className={cn("px-2.5 py-1 rounded transition-colors", activeMode === mode.value ? "bg-[#2d2d30] text-white" : "hover:text-gray-200")}
+                    >{mode.label}</button>
+                  ))}
+                </div>
+              )}
+            </>
           )}
-          {modes.length > 0 && (
-            <div className="flex items-center bg-[#252526] rounded-md border border-[#333] overflow-hidden text-[9px] font-bold text-gray-400 p-0.5">
-              {modes.map(mode => (
-                <button 
-                  key={mode.value}
-                  onClick={() => handleModeSwitch(mode.value)} 
-                  className={cn("px-2.5 py-1 rounded transition-colors", activeMode === mode.value ? "bg-[#2d2d30] text-white" : "hover:text-gray-200")}
-                >{mode.label}</button>
-              ))}
-            </div>
-          )}
+          <button 
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-1 text-gray-500 hover:text-white transition-colors"
+          >
+            {isCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+          </button>
         </div>
       </div>
       
-      <div className="p-4 space-y-4">
-        {showSettingsLocal && showPromptSettings && promptSettings && onPromptSettingsChange && (
-           <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-             <PromptSettingsForm settings={promptSettings} setSettings={onPromptSettingsChange} />
-             <div className="h-px bg-[#2d2d30] my-4 w-full"></div>
-           </div>
-        )}
-        
-        <div className="relative">
-          <Textarea 
-            value={promptValue}
-            onChange={e => onPromptChange(e.target.value)}
-            placeholder={placeholder}
-            className="w-full bg-[#252526] border border-[#333] text-gray-200 text-sm focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-sans resize-none rounded-lg p-3 pr-12 min-h-[100px]"
-            disabled={isGenerating}
-            onKeyDown={(e) => {
-              if(e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
+      {!isCollapsed && (
+        <div className="p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+          {showSettingsLocal && showPromptSettings && promptSettings && onPromptSettingsChange && (
+             <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+               <PromptSettingsForm settings={promptSettings} setSettings={onPromptSettingsChange} />
+               <div className="h-px bg-[#2d2d30] my-4 w-full"></div>
+             </div>
+          )}
+          
+          <div className="relative">
+            <Textarea 
+              value={promptValue}
+              onChange={e => onPromptChange(e.target.value)}
+              placeholder={placeholder}
+              className="w-full bg-[#252526] border border-[#333] text-gray-200 text-sm focus-visible:ring-1 focus-visible:ring-[#2d2d30] font-sans resize-none rounded-lg p-3 pr-12 min-h-[100px]"
+              disabled={isGenerating}
+              onKeyDown={(e) => {
+                if(e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  if (activeMode === 'ai' || !showSystemPromptCopy) {
+                    onGenerate();
+                  } else if (promptValue.trim()) {
+                    handleCopySystemPrompt();
+                  }
+                }
+              }}
+            />
+            <button 
+              onClick={() => {
                 if (activeMode === 'ai' || !showSystemPromptCopy) {
                   onGenerate();
                 } else if (promptValue.trim()) {
                   handleCopySystemPrompt();
                 }
-              }
-            }}
-          />
-          <button 
-            onClick={() => {
-              if (activeMode === 'ai' || !showSystemPromptCopy) {
-                onGenerate();
-              } else if (promptValue.trim()) {
-                handleCopySystemPrompt();
-              }
-            }}
-            disabled={isGenerating || !promptValue.trim()}
-            className="absolute right-3 bottom-3 text-[#5c403d] hover:text-[#D62828] disabled:opacity-50 transition-colors bg-[#1e1e1e] p-1.5 rounded-lg border border-white/5"
-            title={activeMode === 'ai' || !showSystemPromptCopy ? "Generate" : "Copy System Prompt"}
-          >
-            {isGenerating ? <Loader2 size={16} className="animate-spin" /> : (activeMode === 'ai' || !showSystemPromptCopy ? <Sparkles size={16} /> : (copiedPrompt ? <Check size={16} className="text-green-500" /> : <Copy size={16} />))}
-          </button>
-        </div>
-
-        {activeMode === 'prompt' && onResponseChange && (
-          <div className="space-y-3 pt-4 border-t border-[#2d2d30] animate-in slide-in-from-top-2 duration-300">
-             <div className="flex items-center gap-2">
-                <div className="w-1 h-3 bg-blue-500 rounded-full"></div>
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Paste AI Result</span>
-             </div>
-             <Textarea 
-               value={responseValue}
-               onChange={e => onResponseChange(e.target.value)}
-               placeholder="Paste the JSON response here..."
-               className="w-full bg-[#1a1a1a] border border-[#333] text-[11px] font-mono text-gray-300 rounded-lg p-3 min-h-[120px] focus:border-blue-500/50 outline-none transition-all"
-             />
-             <button 
-               onClick={onApplyResponse}
-               disabled={!responseValue?.trim()}
-               className="w-full py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-[10px] font-black uppercase tracking-widest rounded-lg transition-all active:scale-[0.98] shadow-lg shadow-blue-900/20"
-             >
-               Apply Configuration
-             </button>
+              }}
+              disabled={isGenerating || !promptValue.trim()}
+              className="absolute right-3 bottom-3 text-[#5c403d] hover:text-[#D62828] disabled:opacity-50 transition-colors bg-[#1e1e1e] p-1.5 rounded-lg border border-white/5"
+              title={activeMode === 'ai' || !showSystemPromptCopy ? "Generate" : "Copy System Prompt"}
+            >
+              {isGenerating ? <Loader2 size={16} className="animate-spin" /> : (activeMode === 'ai' || !showSystemPromptCopy ? <Sparkles size={16} /> : (copiedPrompt ? <Check size={16} className="text-green-500" /> : <Copy size={16} />))}
+            </button>
           </div>
-        )}
-      </div>
+
+          {activeMode === 'prompt' && onResponseChange && (
+            <div className="space-y-3 pt-4 border-t border-[#2d2d30] animate-in slide-in-from-top-2 duration-300">
+               <div className="flex items-center gap-2">
+                  <div className="w-1 h-3 bg-blue-500 rounded-full"></div>
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Paste AI Result</span>
+               </div>
+               <Textarea 
+                 value={responseValue}
+                 onChange={e => onResponseChange(e.target.value)}
+                 placeholder="Paste the JSON response here..."
+                 className="w-full bg-[#1a1a1a] border border-[#333] text-[11px] font-mono text-gray-300 rounded-lg p-3 min-h-[120px] focus:border-blue-500/50 outline-none transition-all"
+               />
+               <button 
+                 onClick={onApplyResponse}
+                 disabled={!responseValue?.trim()}
+                 className="w-full py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-[10px] font-black uppercase tracking-widest rounded-lg transition-all active:scale-[0.98] shadow-lg shadow-blue-900/20"
+               >
+                 Apply Configuration
+               </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

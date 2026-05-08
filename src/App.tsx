@@ -55,7 +55,16 @@ function AppLayout() {
   );
 }
 
+import { useEffect } from "react";
+import { useAppStore } from "./store";
+
 export default function App() {
+  const loadDefaultTemplates = useAppStore(state => state.loadDefaultTemplatesFromAssets);
+
+  useEffect(() => {
+    loadDefaultTemplates();
+  }, [loadDefaultTemplates]);
+
   return (
     <BrowserRouter>
       <AppLayout />

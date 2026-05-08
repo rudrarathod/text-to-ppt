@@ -229,14 +229,21 @@ export function TemplateGallery() {
           key={template.id}
           title={template.name}
           badge={
-            <span className="text-[10px] text-gray-500 font-medium">
-              {template.layouts.length} layouts
-            </span>
+            <div className="flex items-center gap-2">
+              {template.isDefault && (
+                <span className="px-1.5 py-0.5 bg-[#D62828]/10 text-[#D62828] text-[8px] font-black uppercase tracking-widest rounded-md border border-[#D62828]/20">
+                  Default
+                </span>
+              )}
+              <span className="text-[10px] text-gray-500 font-medium">
+                {template.layouts.length} layouts
+              </span>
+            </div>
           }
           footer={
             <>
               <LayoutTemplate size={12} className="text-gray-600" />
-              <span>Custom Engine</span>
+              <span>{template.isDefault ? "System Core" : "Custom Engine"}</span>
             </>
           }
           onClick={() => handleEdit(template.id)}
@@ -265,10 +272,10 @@ export function TemplateGallery() {
               
               <div className="bg-[#161618]/20 backdrop-blur-md rounded-lg p-3 border border-white/5 flex items-center justify-between">
                  <div className="flex gap-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#D62828] animate-pulse"></div>
+                    <div className={cn("w-1.5 h-1.5 rounded-full", template.isDefault ? "bg-amber-500" : "bg-[#D62828] animate-pulse")}></div>
                     <div className="w-1.5 h-1.5 rounded-full bg-white/20"></div>
                  </div>
-                 <span className="text-[8px] font-mono text-gray-500 uppercase tracking-widest">{template.designConfig.headingFont} System</span>
+                 <span className="text-[8px] font-mono text-gray-500 uppercase tracking-widest">{template.isDefault ? "System" : "Custom"} {template.designConfig.headingFont}</span>
               </div>
             </div>
           }
@@ -291,13 +298,13 @@ export function TemplateGallery() {
               icon: <Download size={14} />,
               onClick: (e) => handleExport(e, template)
             },
-            {
+            !template.isDefault ? {
               label: 'Delete',
               icon: <Trash2 size={14} />,
               danger: true,
               onClick: (e) => handleDelete(e, template.id, template.name)
-            }
-          ]}
+            } : null
+          ].filter(Boolean) as any}
         />
       ))}
 
