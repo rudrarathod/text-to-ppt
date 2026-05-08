@@ -691,7 +691,7 @@ export const useAppStore = create<AppState>()(
       }))
     }),
     {
-      name: 'pitchgen-storage',
+      name: 'domino-storage',
       storage: createJSONStorage(() => storage),
     }
   )

@@ -85,12 +85,12 @@ export function Navigation() {
           "flex items-center gap-3 px-2 mb-12 transition-all",
           !isExpanded && "justify-center"
         )}>
-          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shrink-0">
-            <span className="text-black font-black text-lg select-none">P</span>
+          <div className="w-9 h-9 flex items-center justify-center shrink-0">
+            <img src="/logo.svg" alt="DOMINO Logo" className="w-full h-full object-contain" />
           </div>
           {isExpanded && (
             <div className="flex flex-col animate-in fade-in duration-300">
-              <span className="font-bold text-white text-base tracking-tight leading-none">PitchGen</span>
+              <span className="font-bold text-white text-base tracking-tight leading-none">DOMINO</span>
               <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider mt-1">Creator Suite</span>
             </div>
           )}
