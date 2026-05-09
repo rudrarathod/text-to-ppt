@@ -78,20 +78,32 @@ Handlebars.registerHelper('max', function(...args) {
 });
 
 const useResolvedData = (data: Record<string, any>) => {
-  const [resolved, setResolved] = useState(data);
+  const [resolved, setResolved] = useState(() => {
+    const initial = { ...data };
+    for (const k in initial) {
+      if (isIdbImage(initial[k])) initial[k] = ""; 
+    }
+    return initial;
+  });
 
   useEffect(() => {
     let active = true;
     const blobUrls: string[] = [];
 
     const resolveImages = async () => {
-      // Check if there are any IDB images to resolve
+      // 1. Immediately set a safe version of the new data to avoid leaking raw protocols
+      const safeData = { ...data };
+      for (const k in safeData) {
+        if (isIdbImage(safeData[k])) safeData[k] = "";
+      }
+      if (active) setResolved(safeData);
+
+      // 2. Check if there are any IDB images to resolve
       const needsResolution = Object.values(data).some(v => 
         typeof v === 'string' && (isIdbImage(v) || (v.startsWith('http') && !v.startsWith(window.location.origin)))
       );
       
       if (!needsResolution) {
-        if (active) setResolved(data);
         return;
       }
 
@@ -590,18 +602,23 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
   const [isInternalLoading, setIsInternalLoading] = useState(true);
   const isInitialMount = useRef(true);
 
+  const onImageUploadRef = useRef(onImageUpload);
+  useEffect(() => {
+    onImageUploadRef.current = onImageUpload;
+  }, [onImageUpload]);
+
   useEffect(() => {
     const handleMessage = async (e: MessageEvent) => {
       if (e.data?.type === 'SLIDE_READY') {
         setIsInternalLoading(false);
       }
-      if (e.data?.type === 'IMAGE_UPLOAD' && onImageUpload) {
+      if (e.data?.type === 'IMAGE_UPLOAD' && onImageUploadRef.current) {
         const { key, data: base64 } = e.data;
         try {
           const res = await fetch(base64);
           const blob = await res.blob();
           const path = await saveImage(`img-${Date.now()}`, blob);
-          onImageUpload(key, path);
+          onImageUploadRef.current(key, path);
         } catch (err) {
           console.error("Failed to save image to IDB:", err);
         }
@@ -609,7 +626,7 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [onImageUpload]);
+  }, []);
 
   const html = useMemo(
     () => generateSlideHtml(templateCode, resolvedData, designConfig, interactive),
@@ -639,7 +656,10 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
 
   useEffect(() => {
     setIsInternalLoading(true);
-  }, [templateCode, JSON.stringify(designConfig)]);
+    // Safety timeout: if SLIDE_READY doesn't arrive in 5s, hide skeleton anyway
+    const timer = setTimeout(() => setIsInternalLoading(false), 5000);
+    return () => clearTimeout(timer);
+  }, [templateCode, JSON.stringify(designConfig), JSON.stringify(resolvedData)]);
 
   useEffect(() => {
     if (!containerRef.current) return;
