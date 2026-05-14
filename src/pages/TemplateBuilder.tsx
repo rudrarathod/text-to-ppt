@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from "react";
 import { Reorder, useDragControls } from "motion/react";
 import Editor from "../components/LazyEditor";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useAppStore, LayoutDef, LayoutVariant, SlideTemplate, DEFAULT_DESIGN } from "../store";
+import { useAppStore, useEditorStore, LayoutDef, LayoutVariant, SlideTemplate, DEFAULT_DESIGN } from "../store";
 import { SlidePreview } from "../components/SlidePreview";
 import { Button, Input, Textarea } from "../components/ui";
 import { 
@@ -147,7 +147,7 @@ const ReorderableLayout = ({ l, selectedLayoutId, setSelectedLayoutId, setMobile
             <span className="truncate">{l.name}</span>
           </div>
              <div className="flex items-center gap-0.5">
-               {selectedLayoutId === l.id && localCode !== l.code && <div className="w-2 h-2 rounded-full bg-[#fe6247] mr-1" />}
+               {selectedLayoutId === l.id && workingCode !== l.code && <div className="w-2 h-2 rounded-full bg-[#fe6247] mr-1" />}
                {!isDefaultTemplate && (
               <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <button onClick={(e) => { e.stopPropagation(); duplicateLayoutInActiveTemplate(l.id); }} className="p-1 hover:text-white" title="Duplicate"><Copy size={12} /></button>

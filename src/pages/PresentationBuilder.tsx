@@ -1260,7 +1260,7 @@ export function PresentationBuilder() {
                                    
                                    const jsonMatch = layoutAiResponse.match(/<json>([\s\S]*?)<\/json>/i);
                                    if (jsonMatch && jsonMatch[1]) {
-                                      setTempJsonInput(jsonMatch[1].trim());
+                                      setEditorJson(jsonMatch[1].trim());
                                    }
                                    
                                    setLayoutEditCode(code);
