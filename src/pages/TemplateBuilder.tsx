@@ -244,22 +244,22 @@ export function TemplateBuilder() {
         if (e.shiftKey) {
           if (isInput) return;
           e.preventDefault();
-          editorRedo();
+          useEditorStore.temporal.getState().redo();
         } else {
           if (isInput) return;
           e.preventDefault();
-          editorUndo();
+          useEditorStore.temporal.getState().undo();
         }
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
         if (isInput) return;
         e.preventDefault();
-        editorRedo();
+        useEditorStore.temporal.getState().redo();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo, editorUndo, editorRedo]);
+  }, []);
 
   React.useEffect(() => {
     if (id && activeTemplate) {

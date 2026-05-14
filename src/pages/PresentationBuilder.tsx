@@ -150,6 +150,11 @@ export function PresentationBuilder() {
   } = useEditorStore();
   const { undo: editorUndo, redo: editorRedo, pastStates: editorPast, futureStates: editorFuture } = useStore(useEditorStore.temporal, (state) => state);
   const [isEditingLayoutCode, setIsEditingLayoutCode] = useState(false);
+  const isEditingRef = useRef(isEditingLayoutCode);
+
+  useEffect(() => {
+    isEditingRef.current = isEditingLayoutCode;
+  }, [isEditingLayoutCode]);
 
   const [isCapturing, setIsCapturing] = useState(false);
   
@@ -191,25 +196,25 @@ export function PresentationBuilder() {
         if (e.shiftKey) {
           if (isInput) return; // Let the editor handle its own redo
           e.preventDefault();
-          if (isEditingLayoutCode) editorRedo();
-          else redo();
+          if (isEditingRef.current) useEditorStore.temporal.getState().redo();
+          else useAppStore.temporal.getState().redo();
         } else {
           if (isInput) return; // Let the editor handle its own undo
           e.preventDefault();
-          if (isEditingLayoutCode) editorUndo();
-          else undo();
+          if (isEditingRef.current) useEditorStore.temporal.getState().undo();
+          else useAppStore.temporal.getState().undo();
         }
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
         if (isInput) return; // Let the editor handle its own redo
         e.preventDefault();
-        if (isEditingLayoutCode) editorRedo();
-        else redo();
+        if (isEditingRef.current) useEditorStore.temporal.getState().redo();
+        else useAppStore.temporal.getState().redo();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo, editorUndo, editorRedo, isEditingLayoutCode]);
+  }, []);
 
   const activePresentation = presentations.find(p => p.id === (id || activePresentationId));
   const slides = activePresentation?.slides || [];
@@ -1097,6 +1102,7 @@ export function PresentationBuilder() {
                               setIsEditingLayoutCode(false);
                               useEditorStore.temporal.getState().clear();
                               useEditorStore.temporal.getState().pause();
+                              window.focus(); // Ensure shortcuts work instantly
                               addToast("Layout updated successfully!", "success");
                             }
                           }}
