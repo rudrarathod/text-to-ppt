@@ -4,7 +4,7 @@ import { useAppStore, SlideData } from "../store";
 import Editor from "../components/LazyEditor";
 import { SlidePreview, SlideStatic, SlidePreviewRef } from "../components/SlidePreview";
 import { Button, Textarea } from "../components/ui";
-import { Download, Plus, Trash2, LayoutTemplate, Sparkles, X, Copy, Check, Settings2, Save, Loader2, Palette, Code2, Presentation as PresentationIcon, Layout as LayoutIcon, ArrowLeft, Play, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit2, GripVertical } from "lucide-react";
+import { Download, Plus, Trash2, LayoutTemplate, Sparkles, X, Copy, Check, Settings2, Save, Loader2, Palette, Code2, Presentation as PresentationIcon, Layout as LayoutIcon, ArrowLeft, Play, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit2, GripVertical, Undo2, Redo2 } from "lucide-react";
 import jsPDF from "jspdf";
 import { cn, copyToClipboard } from "../lib/utils";
 import { askAiForSlideContent, buildSlideContentPrompt, askAiForFullPresentation, buildPresentationPrompt, PromptSettings, askAiForLayoutCode, buildLayoutPrompt } from "../lib/gemini";
@@ -16,6 +16,7 @@ const IMAGE_PLACEHOLDER = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http:/
 import { PromptSettingsForm, MOOD_OPTIONS, LANGUAGE_OPTIONS, LENGTH_OPTIONS, STYLE_OPTIONS, PRESET_PROMPTS, SINGLE_SLIDE_PROMPTS, DETAIL_OPTIONS, SelectOrCustom } from "../components/PromptSettingsUI";
 import { AIAssistantPanel } from "../components/ai/AIAssistantPanel";
 import { ConfirmationModal } from "../components/ConfirmationModal";
+import { useStore } from 'zustand';
 
 
 const extractDefaultContent = (layoutCode: string, existingContent: Record<string, any> = {}) => {
@@ -139,6 +140,7 @@ export function PresentationBuilder() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { templates, presentations, activePresentationId, setSlides, addSlide, removeSlide, updateSlideContent, updateSlideLayout, updateLayoutInTemplate, setActiveTemplate, setPresentationTemplate, setActivePresentation, updateSlideThumbnail, updateSlideCode, addToast, duplicateSlideInActivePresentation, moveSlideInActivePresentation } = useAppStore();
+  const { undo, redo, pastStates, futureStates } = useStore(useAppStore.temporal, (state) => state);
   const [isCapturing, setIsCapturing] = useState(false);
   
   useEffect(() => {
@@ -152,6 +154,27 @@ export function PresentationBuilder() {
       navigate(`/builder/${activePresentationId}`);
     }
   }, [id, activePresentationId, presentations, setActivePresentation, navigate]);
+
+  // Keyboard Shortcuts for Undo/Redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        if (e.shiftKey) {
+          e.preventDefault();
+          redo();
+        } else {
+          e.preventDefault();
+          undo();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        redo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo]);
 
   const activePresentation = presentations.find(p => p.id === (id || activePresentationId));
   const slides = activePresentation?.slides || [];
@@ -294,7 +317,9 @@ export function PresentationBuilder() {
        if (previewRef.current) {
          const thumb = await previewRef.current.capture();
          if (thumb) {
+           useAppStore.temporal.getState().pause();
            updateSlideThumbnail(selectedSlideId, thumb);
+           useAppStore.temporal.getState().resume();
          }
        }
     }, 1500); 
@@ -616,6 +641,24 @@ export function PresentationBuilder() {
             </select>
           </div>
           <div className="flex items-center gap-2 ml-4">
+            <div className="flex items-center mr-2 border border-[#333] rounded-lg overflow-hidden bg-[#1c1c1e]">
+               <button 
+                 onClick={() => undo()} 
+                 disabled={pastStates.length === 0}
+                 className="p-2 h-8 lg:h-10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#2d2d30] disabled:opacity-30 disabled:hover:bg-transparent transition-colors border-r border-[#333]"
+                 title="Undo"
+               >
+                 <Undo2 size={16} />
+               </button>
+               <button 
+                 onClick={() => redo()} 
+                 disabled={futureStates.length === 0}
+                 className="p-2 h-8 lg:h-10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#2d2d30] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                 title="Redo"
+               >
+                 <Redo2 size={16} />
+               </button>
+            </div>
             <Button 
               onClick={handleSave} 
               variant="outline"

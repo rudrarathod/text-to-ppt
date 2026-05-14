@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import * as idb from 'idb-keyval';
+import { temporal } from 'zundo';
 
 export type LayoutVariant = "title" | "content" | "image-text" | "comparison" | "divider";
 
@@ -498,8 +499,9 @@ const storage = {
 };
 
 export const useAppStore = create<AppState>()(
-  persist(
-    (set) => ({
+  temporal(
+    persist(
+      (set) => ({
       templates: [],
       activeTemplateId: "",
       
@@ -819,6 +821,12 @@ export const useAppStore = create<AppState>()(
         return rest;
       },
     }
-
+    ),
+    {
+      partialize: (state) => {
+        const { _hasHydrated, setHasHydrated, toasts, ...rest } = state;
+        return rest;
+      }
+    }
   )
 );
