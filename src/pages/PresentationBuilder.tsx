@@ -1020,9 +1020,10 @@ export function PresentationBuilder() {
                       <div className="flex items-center gap-2">
                          <button 
                            onClick={() => {
-                           setIsEditingLayoutCode(false);
-                           setTempJsonInput(null);
-                         }}
+                             setIsEditingLayoutCode(false);
+                             useEditorStore.temporal.getState().clear();
+                             useEditorStore.temporal.getState().pause();
+                           }}
                            className="p-1.5 hover:bg-[#252526] rounded-lg text-gray-400 hover:text-white transition-colors"
                          >
                            <ArrowLeft size={14} />
@@ -1073,6 +1074,7 @@ export function PresentationBuilder() {
                                 } catch(e) {}
                               }
                               setIsEditingLayoutCode(false);
+                              useEditorStore.temporal.getState().clear();
                               useEditorStore.temporal.getState().pause();
                               addToast("Layout updated successfully!", "success");
                             }
