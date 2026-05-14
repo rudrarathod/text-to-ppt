@@ -873,8 +873,27 @@ export const useEditorStore = create<EditorState>()(
   }), { limit: 30 })
 );
 
+export interface ThemeState {
+  config: DesignConfig;
+  setConfig: (config: DesignConfig) => void;
+  updateConfig: (updates: Partial<DesignConfig>) => void;
+  reset: (config: DesignConfig) => void;
+}
+
+export const useThemeStore = create<ThemeState>()(
+  temporal((set) => ({
+    config: DEFAULT_DESIGN,
+    setConfig: (config) => set({ config }),
+    updateConfig: (updates) => set((state) => ({ 
+      config: { ...state.config, ...updates } 
+    })),
+    reset: (config) => set({ config }),
+  }), { limit: 30 })
+);
+
 // Start with history tracking paused (only enable in Builder components)
 if (typeof window !== 'undefined') {
   useAppStore.temporal.getState().pause();
   useEditorStore.temporal.getState().pause();
+  useThemeStore.temporal.getState().pause();
 }

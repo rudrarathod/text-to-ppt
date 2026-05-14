@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from "react";
 import { Reorder, useDragControls } from "motion/react";
 import Editor from "../components/LazyEditor";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useAppStore, useEditorStore, LayoutDef, LayoutVariant, SlideTemplate, DEFAULT_DESIGN } from "../store";
+import { useAppStore, useEditorStore, useThemeStore, LayoutDef, LayoutVariant, SlideTemplate, DEFAULT_DESIGN } from "../store";
 import { SlidePreview } from "../components/SlidePreview";
 import { Button, Input, Textarea } from "../components/ui";
 import { 
@@ -177,12 +177,56 @@ export function TemplateBuilder() {
     reset: resetEditor 
   } = useEditorStore();
   const { undo: editorUndo, redo: editorRedo, pastStates: editorPast, futureStates: editorFuture } = useStore(useEditorStore.temporal, (state) => state);
+  
+  const { config: themeConfig, setConfig: setThemeConfig, updateConfig: updateThemeConfig, reset: resetTheme } = useThemeStore();
+  const { undo: themeUndo, redo: themeRedo, pastStates: themePast, futureStates: themeFuture } = useStore(useThemeStore.temporal, (state) => state);
+
+  const activeTemplate = useMemo(() => templates.find(t => t.id === id), [templates, id]);
+  const layouts = activeTemplate?.layouts || [];
+  const designConfig = activeTemplate?.designConfig || (templates.length > 0 ? templates[0].designConfig : DEFAULT_DESIGN);
 
   const [localCode, setLocalCode] = useState(workingCode);
   const [localJson, setLocalJson] = useState(workingJson);
   const codeDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const jsonDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const lastActionRef = useRef<'app' | 'editor'>('editor');
+  
+  const [isEditingTemplateName, setIsEditingTemplateName] = useState(false);
+  const [templateName, setTemplateName] = useState(activeTemplate?.name || "");
+  const [selectedLayoutId, setSelectedLayoutId] = useState<string | null>(layouts[0]?.id || null);
+  const [activeTab, setActiveTab] = useState<'hbs' | 'json'>('hbs');
+  const [showThemeEditor, setShowThemeEditor] = useState<boolean>(false);
+  const [editingLayoutId, setEditingLayoutId] = useState<string | null>(null);
+  const [editingLayoutName, setEditingLayoutName] = useState<string>("");
+  const [builderMode, setBuilderMode] = useState<'individual' | 'full'>('individual');
+  const [aiMode, setAiMode] = useState<'ai' | 'prompt'>('ai');
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiResponse, setAiResponse] = useState("");
+  const [fullPrompt, setFullPrompt] = useState("");
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const [themeEntryMode, setThemeEntryMode] = useState<'ai' | 'manual'>('manual');
+  const [themeAiPrompt, setThemeAiPrompt] = useState("");
+  const [themeAiResponse, setThemeAiResponse] = useState("");
+  const [isGeneratingTheme, setIsGeneratingTheme] = useState(false);
+  const [layoutToDelete, setLayoutToDelete] = useState<string | null>(null);
+  const [showPromptSettings, setShowPromptSettings] = useState(false);
+  const [promptSettings, setPromptSettings] = useState<PromptSettings>({
+    mood: "",
+    length: "",
+    language: "",
+    style: "",
+    detail: ""
+  });
+  const [themeSidebarWidth, setThemeSidebarWidth] = useState(450);
+  const [showAiOnMobile, setShowAiOnMobile] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'layouts' | 'preview' | 'code'>('preview');
+  const [parseError, setParseError] = useState<string | null>(null);
+  const [isSwitchingLayout, setIsSwitchingLayout] = useState(false);
+  const isResizingThemeSidebar = useRef(false);
+  const touchStart = useRef<number | null>(null);
+  const touchEnd = useRef<number | null>(null);
+  const previewRef = useRef<any>(null);
 
   const handleAppAction = (action: () => void) => {
     lastActionRef.current = 'app';
@@ -225,16 +269,6 @@ export function TemplateBuilder() {
     }
   };
 
-  useEffect(() => {
-    setLocalCode(workingCode);
-    if (codeDebounceRef.current) clearTimeout(codeDebounceRef.current);
-  }, [workingCode]);
-
-  useEffect(() => {
-    setLocalJson(workingJson);
-    if (jsonDebounceRef.current) clearTimeout(jsonDebounceRef.current);
-  }, [workingJson]);
-
   const handleEditorCodeChange = (val: string) => {
     setLocalCode(val);
     lastActionRef.current = 'editor';
@@ -252,19 +286,24 @@ export function TemplateBuilder() {
       setWorkingJson(val);
     }, 1000);
   };
-  
-  const activeTemplate = useMemo(() => templates.find(t => t.id === id), [templates, id]);
 
-  const [isEditingTemplateName, setIsEditingTemplateName] = useState(false);
-  const [templateName, setTemplateName] = useState(activeTemplate?.name || "");
-  
-  React.useEffect(() => {
+  useEffect(() => {
     if (activeTemplate) {
       setTemplateName(activeTemplate.name);
     }
   }, [activeTemplate?.name]);
   
-  React.useEffect(() => {
+  useEffect(() => {
+    setLocalCode(workingCode);
+    if (codeDebounceRef.current) clearTimeout(codeDebounceRef.current);
+  }, [workingCode]);
+
+  useEffect(() => {
+    setLocalJson(workingJson);
+    if (jsonDebounceRef.current) clearTimeout(jsonDebounceRef.current);
+  }, [workingJson]);
+
+  useEffect(() => {
     // Resume history tracking when entering the template builder
     useAppStore.temporal.getState().resume();
     // Clear history so we start fresh for this specific template
@@ -276,7 +315,25 @@ export function TemplateBuilder() {
     };
   }, [id]);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    if (showThemeEditor && activeTemplate) {
+      // Sync template design to theme store when opening
+      resetTheme(activeTemplate.designConfig);
+      useThemeStore.temporal.getState().clear();
+      useThemeStore.temporal.getState().resume();
+      
+      // Pause other histories to avoid cross-contamination
+      useAppStore.temporal.getState().pause();
+      useEditorStore.temporal.getState().pause();
+    } else if (!showThemeEditor) {
+      useThemeStore.temporal.getState().pause();
+      // Resume app history when closing theme editor
+      useAppStore.temporal.getState().resume();
+      useEditorStore.temporal.getState().resume();
+    }
+  }, [showThemeEditor, activeTemplate, resetTheme]);
+
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       const isInput = target.tagName === 'INPUT' || 
@@ -288,60 +345,37 @@ export function TemplateBuilder() {
         if (e.shiftKey) {
           if (isInput) return;
           e.preventDefault();
-          handleRedo();
+          if (showThemeEditor) themeRedo();
+          else handleRedo();
         } else {
           if (isInput) return;
           e.preventDefault();
-          handleUndo();
+          if (showThemeEditor) themeUndo();
+          else handleUndo();
         }
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
         if (isInput) return;
         e.preventDefault();
-        handleRedo();
+        if (showThemeEditor) themeRedo();
+        else handleRedo();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleUndo, handleRedo]);
+  }, [handleUndo, handleRedo, showThemeEditor, themeUndo, themeRedo]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (id && activeTemplate) {
       setActiveTemplate(id);
     }
   }, [id, activeTemplate, setActiveTemplate]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!activeTemplate) {
        navigate("/templates");
     }
   }, [activeTemplate, navigate]);
-
-  const layouts = activeTemplate?.layouts || [];
-  const designConfig = activeTemplate?.designConfig || (templates.length > 0 ? templates[0].designConfig : DEFAULT_DESIGN);
-
-  const [selectedLayoutId, setSelectedLayoutId] = useState<string | null>(layouts[0]?.id || null);
-  
-  const [activeTab, setActiveTab] = useState<'hbs' | 'json'>('hbs');
-  const [showThemeEditor, setShowThemeEditor] = useState<boolean>(false);
-  const [editingLayoutId, setEditingLayoutId] = useState<string | null>(null);
-  const [editingLayoutName, setEditingLayoutName] = useState<string>("");
-  
-  // AI assistant state
-  const [builderMode, setBuilderMode] = useState<'individual' | 'full'>('individual');
-  const [aiMode, setAiMode] = useState<'ai' | 'prompt'>('ai');
-  const [aiPrompt, setAiPrompt] = useState("");
-  const [aiResponse, setAiResponse] = useState("");
-  const [fullPrompt, setFullPrompt] = useState("");
-  const [isAiLoading, setIsAiLoading] = useState(false);
-  const [copiedPrompt, setCopiedPrompt] = useState(false);
-  
-  // Theme Engine AI state
-  const [themeEntryMode, setThemeEntryMode] = useState<'ai' | 'manual'>('manual');
-  const [themeAiPrompt, setThemeAiPrompt] = useState("");
-  const [themeAiResponse, setThemeAiResponse] = useState("");
-  const [isGeneratingTheme, setIsGeneratingTheme] = useState(false);
-  const [layoutToDelete, setLayoutToDelete] = useState<string | null>(null);
 
 
   const handleThemeAiGenerate = async () => {
@@ -350,7 +384,7 @@ export function TemplateBuilder() {
     try {
       const config = await askAiForDesignConfig(themeAiPrompt);
       if (config) {
-        handleAppAction(() => updateActiveTemplateDesign(config));
+        updateThemeConfig(config);
       }
     } catch (err) {
       console.error(err);
@@ -365,7 +399,7 @@ export function TemplateBuilder() {
       const jsonStr = jsonMatch ? jsonMatch[1].trim() : themeAiResponse.trim();
       const config = JSON.parse(jsonStr);
       if (config) {
-        handleAppAction(() => updateActiveTemplateDesign(config));
+        updateThemeConfig(config);
         setThemeAiResponse("");
       }
     } catch (err) {
@@ -418,23 +452,6 @@ export function TemplateBuilder() {
     }
   };
 
-  const [showPromptSettings, setShowPromptSettings] = useState(false);
-  const [promptSettings, setPromptSettings] = useState<PromptSettings>({
-    mood: "",
-    length: "",
-    language: "",
-    style: "",
-    detailLevel: ""
-  });
-  
-  const [parseError, setParseError] = useState<string | null>(null);
-  const [themeSidebarWidth, setThemeSidebarWidth] = useState(400);
-  const isResizingThemeSidebar = useRef(false);
-  const [showAiOnMobile, setShowAiOnMobile] = useState(false);
-  const [isSwitchingLayout, setIsSwitchingLayout] = useState(false);
-  const touchStart = useRef<number | null>(null);
-  const touchEnd = useRef<number | null>(null);
-  const previewRef = useRef<any>(null);
 
   const minSwipeDistance = 50;
 
@@ -673,7 +690,6 @@ export function TemplateBuilder() {
 
 
 
-  const [mobileTab, setMobileTab] = useState<'layouts' | 'preview' | 'code'>('preview');
 
   if (!activeTemplate || !activeLayout) {
      return <div className="p-8">Loading...</div>;
@@ -1041,10 +1057,43 @@ export function TemplateBuilder() {
         )}
       </div>
 
-      <FullScreenModal isOpen={showThemeEditor} onClose={() => setShowThemeEditor(false)} title={<div className="flex items-center gap-3"><Palette size={20} className="text-[#D62828]" /><span className="font-black uppercase tracking-widest text-sm">Theme Engine</span></div>}>
+      <FullScreenModal 
+        isOpen={showThemeEditor} 
+        onClose={() => {
+          // Final sync to app store on close
+          handleAppAction(() => updateActiveTemplateDesign(themeConfig));
+          setShowThemeEditor(false);
+        }} 
+        title={
+          <div className="flex items-center gap-3">
+            <Palette size={20} className="text-[#D62828]" />
+            <span className="font-black uppercase tracking-widest text-xs md:text-sm">Theme Engine</span>
+          </div>
+        }
+        headerActions={
+          <div className="flex items-center border border-[#333] rounded-lg overflow-hidden bg-[#1c1c1e]">
+             <button 
+               onClick={() => themeUndo()} 
+               disabled={themePast.length === 0}
+               className="p-1.5 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#2d2d30] disabled:opacity-30 disabled:hover:bg-transparent transition-colors border-r border-[#333]"
+               title="Undo Theme (Ctrl+Z)"
+             >
+               <Undo2 size={14} />
+             </button>
+             <button 
+               onClick={() => themeRedo()} 
+               disabled={themeFuture.length === 0}
+               className="p-1.5 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#2d2d30] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+               title="Redo Theme (Ctrl+Y)"
+             >
+               <Redo2 size={14} />
+             </button>
+          </div>
+        }
+      >
         <div className="flex flex-col lg:flex-row h-full overflow-y-auto lg:overflow-hidden bg-[#0f0f10]">
            <div className="order-first lg:order-last lg:flex-1 bg-[#0f0f10] flex items-center justify-center p-4 md:p-8 lg:p-10 shrink-0">
-             <ThemePreviewCanvas className="w-full h-auto"><ThemeShowcase config={designConfig} /></ThemePreviewCanvas>
+             <ThemePreviewCanvas className="w-full h-auto"><ThemeShowcase config={themeConfig} /></ThemePreviewCanvas>
            </div>
            <div style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1024 ? themeSidebarWidth : undefined }} className="w-full lg:border-r border-t lg:border-t-0 border-white/5 bg-[#0c0c0e] flex flex-col lg:overflow-hidden relative group/sidebar shrink-0">
               <div onMouseDown={startResizingTheme} className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#D62828]/50 transition-colors z-30 hidden lg:block" />
@@ -1064,7 +1113,7 @@ export function TemplateBuilder() {
                    </div>
                 ) : (
                    <div className="animate-in fade-in slide-in-from-left-4 duration-300 h-full">
-                     <ThemeSettingsPanel config={designConfig} onChange={(updates) => handleAppAction(() => updateActiveTemplateDesign(updates))} layout="sidebar" width={themeSidebarWidth} />
+                     <ThemeSettingsPanel config={themeConfig} onChange={(updates) => updateThemeConfig(updates)} layout="sidebar" width={themeSidebarWidth} />
                    </div>
                 )}
               </div>
