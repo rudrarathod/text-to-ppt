@@ -722,8 +722,13 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
     if (!iframe) return;
 
     if (isInternalUpdate.current) {
+      isInternalUpdate.current = false;
       return;
     }
+
+    setIsInternalLoading(true);
+    // Safety timeout: if SLIDE_READY doesn't arrive in 5s, hide skeleton anyway
+    const timer = setTimeout(() => setIsInternalLoading(false), 5000);
 
     // Always do a full write to ensure Tailwind CDN processes all classes
     const doc = iframe.contentWindow?.document;
@@ -732,28 +737,16 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
       doc.write(html);
       doc.close();
     }
-  }, [html, loading]);
 
-  // Reset loading state when critical dependencies change
+    return () => clearTimeout(timer);
+  }, [html]);
+
+  // Reset loading state when loading prop changes
   useEffect(() => {
     if (loading) {
       setIsInternalLoading(true);
     }
   }, [loading]);
-
-  useEffect(() => {
-    if (isInternalUpdate.current) return;
-
-    setIsInternalLoading(true);
-    // Safety timeout: if SLIDE_READY doesn't arrive in 5s, hide skeleton anyway
-    const timer = setTimeout(() => setIsInternalLoading(false), 5000);
-    return () => clearTimeout(timer);
-  }, [templateCode, JSON.stringify(designConfig), JSON.stringify(resolvedData)]);
-
-  // Reset internal update flag after all effects have run
-  useEffect(() => {
-    isInternalUpdate.current = false;
-  });
 
   useEffect(() => {
     if (!containerRef.current) return;
