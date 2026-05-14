@@ -88,7 +88,7 @@ const ReorderableSlide = ({ s, idx, selectedSlideId, setSelectedSlideId, layouts
                 className="line-clamp-2 text-[10px] font-bold leading-tight"
                 style={{ color: designConfig.primary }}
               >
-                {s.content.title || "Untitled Slide"}
+                {(typeof s.content.title === 'string' ? s.content.title.replace(/<[^>]*>/g, '') : s.content.title) || "Untitled Slide"}
               </div>
            </div>
          )}
