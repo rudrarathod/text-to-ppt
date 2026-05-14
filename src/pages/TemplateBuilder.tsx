@@ -536,11 +536,24 @@ export function TemplateBuilder() {
 
   React.useEffect(() => {
     if (activeLayout) {
+      // Cancel any pending debounce timers from the previous layout
+      if (codeDebounceRef.current) { clearTimeout(codeDebounceRef.current); codeDebounceRef.current = null; }
+      if (jsonDebounceRef.current) { clearTimeout(jsonDebounceRef.current); jsonDebounceRef.current = null; }
+
+      // Pause history before resetting to avoid recording the reset itself
+      useEditorStore.temporal.getState().pause();
+
       const initialCode = activeLayout.code;
       const initialJson = JSON.stringify(activeLayout.mockData || SAMPLE_DATA[activeLayout.variant] || { title: "Sample" }, null, 2);
       resetEditor(initialCode, initialJson);
-      useEditorStore.temporal.getState().clear();
-      useEditorStore.temporal.getState().resume();
+      setLocalCode(initialCode);
+      setLocalJson(initialJson);
+
+      // Clear history and resume after a microtask to ensure the reset has settled
+      queueMicrotask(() => {
+        useEditorStore.temporal.getState().clear();
+        useEditorStore.temporal.getState().resume();
+      });
       setParseError(null);
     }
   }, [activeLayout?.id, activeLayout?.variant]);
@@ -886,6 +899,7 @@ export function TemplateBuilder() {
                    </div>
                    <div className="flex-1 min-h-0 relative">
                       <Editor
+                        key={`${selectedLayoutId}-${activeTab}`}
                         height="100%"
                         defaultLanguage={activeTab === 'hbs' ? "handlebars" : "json"}
                         language={activeTab === 'hbs' ? "handlebars" : "json"}
