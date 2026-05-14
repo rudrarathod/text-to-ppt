@@ -78,6 +78,8 @@ Handlebars.registerHelper('max', function(...args) {
 });
 
 const useResolvedData = (data: Record<string, any>) => {
+  const resolutionCache = useRef<Record<string, string>>({});
+
   const [resolved, setResolved] = useState(() => {
     const initial = { ...data };
     for (const k in initial) {
@@ -88,28 +90,33 @@ const useResolvedData = (data: Record<string, any>) => {
 
   useEffect(() => {
     let active = true;
-    const blobUrls: string[] = [];
 
     const resolveImages = async () => {
-      // 1. Immediately set a safe version of the new data to avoid leaking raw protocols
+      // 1. Immediately set a safe version of the new data, using cache if available
       const safeData = { ...data };
       for (const k in safeData) {
-        if (isIdbImage(safeData[k])) safeData[k] = "";
+        if (typeof safeData[k] === 'string') {
+          if (resolutionCache.current[safeData[k]]) {
+            safeData[k] = resolutionCache.current[safeData[k]];
+          } else if (isIdbImage(safeData[k])) {
+            safeData[k] = "";
+          }
+        }
       }
       if (active) setResolved(safeData);
 
-      // 2. Check if there are any IDB images to resolve
+      // 2. Check if there are any new images to resolve
       const needsResolution = Object.values(data).some(v => 
-        typeof v === 'string' && (isIdbImage(v) || (v.startsWith('http') && !v.startsWith(window.location.origin)))
+        typeof v === 'string' && !resolutionCache.current[v] && (isIdbImage(v) || (v.startsWith('http') && !v.startsWith(window.location.origin)))
       );
       
       if (!needsResolution) {
         return;
       }
 
-      const nextData = { ...data };
-      const resolutionPromises = Object.entries(nextData).map(async ([key, val]) => {
-        if (typeof val !== 'string') return;
+      const nextData = { ...safeData };
+      const resolutionPromises = Object.entries(data).map(async ([key, val]) => {
+        if (typeof val !== 'string' || resolutionCache.current[val]) return;
 
         const blobToDataUrl = (blob: Blob): Promise<string> => {
            return new Promise((resolve, reject) => {
@@ -126,22 +133,22 @@ const useResolvedData = (data: Record<string, any>) => {
             if (blob && active) {
               const dataUrl = await blobToDataUrl(blob);
               nextData[key] = dataUrl;
+              resolutionCache.current[val] = dataUrl;
             }
           } catch (err) {
             console.error("Failed to resolve IDB image:", val, err);
           }
         } else if (val.startsWith('http') && !val.startsWith(window.location.origin) && !val.startsWith('data:')) {
-          // Pre-fetch external images to avoid CORS issues in html-to-image
           try {
             const response = await fetch(val, { mode: 'cors' });
             if (response.ok) {
               const blob = await response.blob();
               const dataUrl = await blobToDataUrl(blob);
               nextData[key] = dataUrl;
+              resolutionCache.current[val] = dataUrl;
             }
           } catch (err) {
             console.warn("Failed to pre-fetch external image (CORS likely):", val);
-            // Fallback: keep original URL, but html-to-image might fail on it
           }
         }
       });
