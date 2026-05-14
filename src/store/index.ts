@@ -824,7 +824,7 @@ export const useAppStore = create<AppState>()(
     ),
     {
       partialize: (state) => {
-        const { _hasHydrated, setHasHydrated, toasts, ...rest } = state;
+        const { _hasHydrated, setHasHydrated, toasts, templates, ...rest } = state;
         return rest;
       }
     }
