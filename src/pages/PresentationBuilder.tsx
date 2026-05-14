@@ -843,6 +843,14 @@ export function PresentationBuilder() {
                        setJsonInput(JSON.stringify(next, null, 2));
                      }
                    }}
+                   onUndo={() => {
+                      if (isEditingLayoutCode) useEditorStore.temporal.getState().undo();
+                      else useAppStore.temporal.getState().undo();
+                   }}
+                   onRedo={() => {
+                      if (isEditingLayoutCode) useEditorStore.temporal.getState().redo();
+                      else useAppStore.temporal.getState().redo();
+                   }}
                  />
                  <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full text-white text-[10px] font-black border border-white/10 z-10 uppercase tracking-widest shadow-xl pointer-events-none">
                    Slide {(slides.findIndex(s => s.id === selectedSlideId) + 1)} / {slides.length}

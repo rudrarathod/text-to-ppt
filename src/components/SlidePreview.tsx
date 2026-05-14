@@ -183,6 +183,35 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
   let renderedHtml = "";
   try {
     let processedTemplate = templateCode;
+    
+    // Always upgrade mustaches to triple mustaches so HTML is respected
+    const IGNORED_HELPERS = new Set(['if', 'else', 'unless', 'each', 'with', 'as', 'this', '@index', '@key', '@first', '@last', 'inc', 'dec', 'eq', 'not', 'add', 'sub', 'mul', 'div', 'mod', 'abs', 'round', 'ceil', 'floor', 'min', 'max', 'each_limit']);
+
+    // 1. Handle each loops specifically to make array items editable (if interactive) or just unescaped
+    processedTemplate = processedTemplate.replace(
+      /\{\{#each\s+([a-zA-Z0-9_.]+)\}\}([\s\S]*?)\{\{\/each\}\}/g,
+      (match, arrayPath, content) => {
+        let updatedContent = content.replace(
+          /(?![^<]*>)\{\{\{?\s*(this|\.)\s*\}\}\}?/g,
+          (m) => interactive ? `<span data-path="${arrayPath}.{{@index}}" contenteditable="true" class="editable-text-wrapper">{{{this}}}</span>` : `{{{this}}}`
+        );
+        updatedContent = updatedContent.replace(
+          /(?![^<]*>)\{\{\{?\s*this\.([a-zA-Z0-9_.]+)\s*\}\}\}?/g,
+          (m, prop) => interactive ? `<span data-path="${arrayPath}.{{@index}}.${prop}" contenteditable="true" class="editable-text-wrapper">{{{this.${prop}}}}</span>` : `{{{this.${prop}}}}`
+        );
+        return `{{#each ${arrayPath}}}${updatedContent}{{/each}}`;
+      }
+    );
+
+    // 2. General mustache wrapping for top-level keys
+    processedTemplate = processedTemplate.replace(
+      /(?![^<]*>)\{\{\{?\s*([a-zA-Z0-9_.]+)\s*\}\}\}?/g,
+      (match, key) => {
+        if (IGNORED_HELPERS.has(key)) return match;
+        return interactive ? `<span data-path="${key}" contenteditable="true" class="editable-text-wrapper">{{{${key}}}}</span>` : `{{{${key}}}}`;
+      }
+    );
+
     if (interactive) {
         // Ensure any element with data-image-key gets cursor-pointer
         processedTemplate = processedTemplate.replace(
@@ -196,37 +225,6 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
           (match, fullImg, before, key, after) => {
              if (match.includes('data-image-key')) return match;
              return `<span data-image-key="${key}" class="relative group inline-flex w-full h-full cursor-pointer">${fullImg}</span>`;
-          }
-        );
-
-        // Wrap text mustaches for direct editing
-        const IGNORED_HELPERS = new Set(['if', 'else', 'unless', 'each', 'with', 'as', 'this', '@index', '@key', '@first', '@last', 'inc', 'dec', 'eq', 'not', 'add', 'sub', 'mul', 'div', 'mod', 'abs', 'round', 'ceil', 'floor', 'min', 'max', 'each_limit']);
-
-        // 1. Handle each loops specifically to make array items editable
-        processedTemplate = processedTemplate.replace(
-          /\{\{#each\s+([a-zA-Z0-9_.]+)\}\}([\s\S]*?)\{\{\/each\}\}/g,
-          (match, arrayPath, content) => {
-            // Inside the content, replace {{this}} or {{.}} with indexed path
-            let updatedContent = content.replace(
-              /(?![^<]*>)\{\{\{?\s*(this|\.)\s*\}\}\}?/g,
-              (m) => `<span data-path="${arrayPath}.{{@index}}" contenteditable="true" class="editable-text-wrapper">${m}</span>`
-            );
-            // Also handle {{this.prop}} or {{prop}} inside each
-            updatedContent = updatedContent.replace(
-              /(?![^<]*>)\{\{\{?\s*this\.([a-zA-Z0-9_.]+)\s*\}\}\}?/g,
-              (m, prop) => `<span data-path="${arrayPath}.{{@index}}.${prop}" contenteditable="true" class="editable-text-wrapper">${m}</span>`
-            );
-            
-            return `{{#each ${arrayPath}}}${updatedContent}{{/each}}`;
-          }
-        );
-
-        // 2. General mustache wrapping for top-level keys
-        processedTemplate = processedTemplate.replace(
-          /(?![^<]*>)\{\{\{?\s*([a-zA-Z0-9_.]+)\s*\}\}\}?/g,
-          (match, key) => {
-            if (IGNORED_HELPERS.has(key)) return match;
-            return `<span data-path="${key}" contenteditable="true" class="editable-text-wrapper">${match}</span>`;
           }
         );
     }
@@ -356,17 +354,30 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
           .editable-text-wrapper {
             display: inline-block;
             min-width: 1ch;
-            outline: none;
-            transition: background-color 0.2s;
+            outline: 2px solid transparent;
+            transition: all 0.2s ease-in-out;
             border-radius: 4px;
             cursor: text;
+            position: relative;
+          }
+          .editable-text-wrapper:empty::before {
+            content: 'Type here...';
+            color: inherit;
+            opacity: 0.4;
+            pointer-events: none;
+            position: absolute;
+            white-space: nowrap;
           }
           .editable-text-wrapper:hover {
             background-color: rgba(103, 80, 164, 0.05);
+            outline: 1px dashed rgba(103, 80, 164, 0.5);
+            outline-offset: 2px;
           }
           .editable-text-wrapper:focus {
             background-color: rgba(103, 80, 164, 0.08);
-            box-shadow: 0 0 0 2px rgba(103, 80, 164, 0.15);
+            outline: 2px solid rgba(103, 80, 164, 0.8);
+            outline-offset: 2px;
+            box-shadow: none;
           }
         </style>
       </head>
@@ -565,7 +576,7 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
                 const target = e.target.closest('[data-path]');
                 if (target) {
                   const path = target.getAttribute('data-path');
-                  const value = target.innerText;
+                  const value = target.innerHTML;
                   
                   // Debounce to parent
                   if (window.textUpdateTimer) clearTimeout(window.textUpdateTimer);
@@ -575,8 +586,24 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
                 }
               });
 
-              // Prevent Enter in single-line containers
+              // Prevent Enter in single-line containers and handle Undo/Redo
               document.body.addEventListener('keydown', (e) => {
+                // Intercept Undo/Redo inside iframe
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+                   e.preventDefault();
+                   if (e.shiftKey) {
+                     window.parent.postMessage({ type: 'ACTION_REDO' }, '*');
+                   } else {
+                     window.parent.postMessage({ type: 'ACTION_UNDO' }, '*');
+                   }
+                   return;
+                }
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+                   e.preventDefault();
+                   window.parent.postMessage({ type: 'ACTION_REDO' }, '*');
+                   return;
+                }
+
                 const target = e.target.closest('[data-path]');
                 if (target && e.key === 'Enter') {
                    const tag = target.parentElement?.tagName;
@@ -584,6 +611,48 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
                      e.preventDefault();
                      target.blur();
                    }
+                }
+              });
+
+              // Floating Rich Text Toolbar
+              const toolbar = document.createElement('div');
+              toolbar.style.position = 'absolute';
+              toolbar.style.display = 'none';
+              toolbar.style.background = 'rgba(28, 27, 31, 0.9)';
+              toolbar.style.backdropFilter = 'blur(8px)';
+              toolbar.style.color = '#fff';
+              toolbar.style.padding = '4px';
+              toolbar.style.borderRadius = '8px';
+              toolbar.style.zIndex = '10000';
+              toolbar.style.display = 'flex';
+              toolbar.style.gap = '4px';
+              toolbar.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+              
+              const btnStyle = "padding: 4px 12px; border-radius: 4px; cursor: pointer; font-family: sans-serif; font-size: 14px; border: none; background: transparent; color: white;";
+              toolbar.innerHTML = \`
+                <button onmousedown="event.preventDefault(); document.execCommand('bold', false, null)" style="\${btnStyle} font-weight: bold;">B</button>
+                <button onmousedown="event.preventDefault(); document.execCommand('italic', false, null)" style="\${btnStyle} font-style: italic;">I</button>
+                <button onmousedown="event.preventDefault(); document.execCommand('underline', false, null)" style="\${btnStyle} text-decoration: underline;">U</button>
+              \`;
+              document.body.appendChild(toolbar);
+
+              document.addEventListener('selectionchange', () => {
+                const sel = window.getSelection();
+                if (sel.rangeCount > 0 && !sel.isCollapsed) {
+                  const range = sel.getRangeAt(0);
+                  const container = range.commonAncestorContainer;
+                  const isEditable = container.nodeType === 1 ? container.closest('[data-path]') : container.parentElement?.closest('[data-path]');
+                  
+                  if (isEditable) {
+                    const rect = range.getBoundingClientRect();
+                    toolbar.style.display = 'flex';
+                    toolbar.style.top = (rect.top + window.scrollY - 45) + 'px';
+                    toolbar.style.left = (rect.left + window.scrollX + (rect.width / 2) - (toolbar.offsetWidth / 2)) + 'px';
+                  } else {
+                    toolbar.style.display = 'none';
+                  }
+                } else {
+                  toolbar.style.display = 'none';
                 }
               });
             };
@@ -662,9 +731,11 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
   interactive?: boolean;
   onImageUpload?: (key: string, path: string) => void;
   onTextUpdate?: (path: string, value: string) => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
   className?: string;
   loading?: boolean;
-}>(({ templateCode, data, designConfig, interactive = false, onImageUpload, onTextUpdate, className, loading = false }, ref) => {
+}>(({ templateCode, data, designConfig, interactive = false, onImageUpload, onTextUpdate, onUndo, onRedo, className, loading = false }, ref) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -698,6 +769,12 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
       if (e.data?.type === 'SLIDE_READY') {
         setIsInternalLoading(false);
       }
+      if (e.data?.type === 'ACTION_UNDO') {
+        onUndo?.();
+      }
+      if (e.data?.type === 'ACTION_REDO') {
+        onRedo?.();
+      }
       if (e.data?.type === 'TEXT_UPDATE') {
         isInternalUpdate.current = true;
         onTextUpdate?.(e.data.path, e.data.value);
@@ -716,7 +793,7 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [onTextUpdate]);
+  }, [onTextUpdate, onUndo, onRedo]);
 
   const html = useMemo(
     () => generateSlideHtml(templateCode, resolvedData, designConfig, interactive),

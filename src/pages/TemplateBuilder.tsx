@@ -968,6 +968,8 @@ export function TemplateBuilder() {
                           setWorkingJson(nextStr);
                         } catch(e) {}
                       }}
+                      onUndo={undo}
+                      onRedo={redo}
                     />
 
                     {/* Mobile Navigation Buttons */}
