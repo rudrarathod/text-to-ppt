@@ -297,7 +297,7 @@ export function PresentationBuilder() {
   const [isGeneratingPresentation, setIsGeneratingPresentation] = useState(false);
   
   const [showPromptSettings, setShowPromptSettings] = useState(false);
-  const [isLayoutAiCollapsed, setIsLayoutAiCollapsed] = useState(false);
+  const [isLayoutAiCollapsed, setIsLayoutAiCollapsed] = useState(typeof window !== 'undefined' && window.innerWidth < 1024);
   const [promptSettings, setPromptSettings] = useState<PromptSettings>({
     style: ""
   });
@@ -1154,7 +1154,7 @@ export function PresentationBuilder() {
                     {/* Layout AI Assistant Panel */}
                     <div className={cn(
                       "absolute left-6 right-6 bg-[#161618] border border-[#2d2d30] rounded-2xl shadow-2xl flex flex-col shrink-0 overflow-hidden z-20 transition-all duration-300",
-                      isLayoutAiCollapsed ? "bottom-6" : "bottom-6"
+                      isLayoutAiCollapsed ? "bottom-20 md:bottom-6" : "bottom-20 md:bottom-6"
                     )}>
                        <div 
                          className="flex items-center justify-between px-4 py-3 border-b border-[#2d2d30] bg-[#1c1c1e] cursor-pointer"
@@ -1394,7 +1394,7 @@ export function PresentationBuilder() {
             {/* AI Assistant fixed to bottom inside Right Panel */}
             {generatorMode === 'individual' && selectedSlide && (
             <div className={cn(
-              "absolute bottom-6 left-6 right-6 z-20 transition-all duration-500",
+              "absolute bottom-20 md:bottom-6 left-6 right-6 z-20 transition-all duration-500",
               activeSidebarTab === 'content' ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none"
             )}>
                <AIAssistantPanel 
@@ -1408,7 +1408,8 @@ export function PresentationBuilder() {
                  placeholder="e.g. Generate 3 key points..."
                  defaultMode={aiMode}
                  onModeChange={(mode) => setAiMode(mode as 'ai' | 'prompt')}
-                  systemPromptBuilder={(p) => buildSlideContentPrompt(p, selectedSlide?.code || activeLayout?.code || "", jsonInput, promptSettings)}
+                 systemPromptBuilder={(p) => buildSlideContentPrompt(p, selectedSlide?.code || activeLayout?.code || "", jsonInput, promptSettings)}
+                 defaultCollapsed={typeof window !== 'undefined' && window.innerWidth < 1024}
                />
                {aiMode === 'prompt' && (
                  <div className="relative mt-2 bg-[#1e1e1e] border border-[#2d2d30] rounded-xl p-2 shadow-2xl">

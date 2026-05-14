@@ -909,11 +909,9 @@ export function TemplateBuilder() {
                         options={{ minimap: { enabled: false }, fontSize: 14, wordWrap: "on", padding: { top: 12, bottom: 100 }, scrollBeyondLastLine: false, fixedOverflowWidgets: true }}
                       />
 
-                      <div className="lg:hidden absolute bottom-4 right-4 z-30">
-                        <button onClick={() => setShowAiOnMobile(!showAiOnMobile)} className={cn("w-12 h-12 rounded-full flex items-center justify-center shadow-2xl transition-all active:scale-95", showAiOnMobile ? "bg-[#1e1e1e] text-white rotate-45 border border-white/10" : "bg-[#D62828] text-white")}><X size={24} /></button>
-                      </div>
 
-                      <div className={cn("absolute bottom-4 left-4 right-4 z-20 lg:w-[450px] transition-all duration-300 lg:block", showAiOnMobile ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0 pointer-events-none lg:translate-y-0 lg:opacity-100 lg:pointer-events-auto")}>
+
+                      <div className={cn("absolute bottom-20 lg:bottom-4 left-4 right-4 z-20 lg:w-[450px] transition-all duration-300 lg:block")}>
                          <AIAssistantPanel 
                            promptValue={aiPrompt} 
                            onPromptChange={setAiPrompt} 
@@ -929,6 +927,7 @@ export function TemplateBuilder() {
                            responseValue={aiResponse}
                            onResponseChange={setAiResponse}
                            onApplyResponse={handleApplyLayoutAiResponse}
+                           defaultCollapsed={typeof window !== 'undefined' && window.innerWidth < 1024}
                          />
                       </div>
                    </div>
