@@ -84,7 +84,7 @@ const SAMPLE_DATA: Record<LayoutVariant, any> = {
 };
 
 
-const ReorderableLayout = ({ l, selectedLayoutId, setSelectedLayoutId, setMobileTab, editingLayoutId, editingLayoutName, setEditingLayoutName, renameLayoutInActiveTemplate, setEditingLayoutId, workingCode, duplicateLayoutInActiveTemplate, setLayoutToDelete, layouts, isDefaultTemplate }: any) => {
+const ReorderableLayout = ({ l, selectedLayoutId, setSelectedLayoutId, setMobileTab, editingLayoutId, editingLayoutName, setEditingLayoutName, renameLayoutInActiveTemplate, setEditingLayoutId, workingCode, duplicateLayoutInActiveTemplate, setLayoutToDelete, layouts, isDefaultTemplate, handleAppAction }: any) => {
 
   const controls = useDragControls();
   
@@ -117,14 +117,14 @@ const ReorderableLayout = ({ l, selectedLayoutId, setSelectedLayoutId, setMobile
           onChange={(e) => setEditingLayoutName(e.target.value)}
           onBlur={() => {
              if (editingLayoutName.trim() && editingLayoutName !== l.name) {
-               renameLayoutInActiveTemplate(l.id, editingLayoutName.trim());
+               handleAppAction(() => renameLayoutInActiveTemplate(l.id, editingLayoutName.trim()));
              }
              setEditingLayoutId(null);
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
                if (editingLayoutName.trim() && editingLayoutName !== l.name) {
-                 renameLayoutInActiveTemplate(l.id, editingLayoutName.trim());
+                 handleAppAction(() => renameLayoutInActiveTemplate(l.id, editingLayoutName.trim()));
                }
                setEditingLayoutId(null);
             } else if (e.key === 'Escape') {
@@ -150,10 +150,10 @@ const ReorderableLayout = ({ l, selectedLayoutId, setSelectedLayoutId, setMobile
                {selectedLayoutId === l.id && workingCode !== l.code && <div className="w-2 h-2 rounded-full bg-[#fe6247] mr-1" />}
                {!isDefaultTemplate && (
               <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={(e) => { e.stopPropagation(); duplicateLayoutInActiveTemplate(l.id); }} className="p-1 hover:text-white" title="Duplicate"><Copy size={12} /></button>
+                <button onClick={(e) => { e.stopPropagation(); handleAppAction(() => duplicateLayoutInActiveTemplate(l.id)); }} className="p-1 hover:text-white" title="Duplicate"><Copy size={12} /></button>
                 <button onClick={(e) => { e.stopPropagation(); setEditingLayoutId(l.id); setEditingLayoutName(l.name); }} className="p-1 hover:text-white" title="Rename"><Edit2 size={12} /></button>
                 {layouts.length > 1 && (
-                  <button onClick={(e) => { e.stopPropagation(); setLayoutToDelete(l.id); }} className="p-1 hover:text-[#D62828]" title="Delete"><Trash2 size={12} /></button>
+                  <button onClick={(e) => { e.stopPropagation(); handleAppAction(() => setLayoutToDelete(l.id)); }} className="p-1 hover:text-[#D62828]" title="Delete"><Trash2 size={12} /></button>
                 )}
               </div>
             )}
@@ -182,6 +182,48 @@ export function TemplateBuilder() {
   const [localJson, setLocalJson] = useState(workingJson);
   const codeDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const jsonDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const lastActionRef = useRef<'app' | 'editor'>('editor');
+
+  const handleAppAction = (action: () => void) => {
+    lastActionRef.current = 'app';
+    action();
+  };
+
+  const handleUndo = () => {
+    if (lastActionRef.current === 'editor') {
+      if (editorPast.length > 0) {
+        editorUndo();
+      } else if (pastStates.length > 0) {
+        lastActionRef.current = 'app';
+        undo();
+      }
+    } else {
+      if (pastStates.length > 0) {
+        undo();
+      } else if (editorPast.length > 0) {
+        lastActionRef.current = 'editor';
+        editorUndo();
+      }
+    }
+  };
+
+  const handleRedo = () => {
+    if (lastActionRef.current === 'editor') {
+      if (editorFuture.length > 0) {
+        editorRedo();
+      } else if (futureStates.length > 0) {
+        lastActionRef.current = 'app';
+        redo();
+      }
+    } else {
+      if (futureStates.length > 0) {
+        redo();
+      } else if (editorFuture.length > 0) {
+        lastActionRef.current = 'editor';
+        editorRedo();
+      }
+    }
+  };
 
   useEffect(() => {
     setLocalCode(workingCode);
@@ -195,6 +237,7 @@ export function TemplateBuilder() {
 
   const handleEditorCodeChange = (val: string) => {
     setLocalCode(val);
+    lastActionRef.current = 'editor';
     if (codeDebounceRef.current) clearTimeout(codeDebounceRef.current);
     codeDebounceRef.current = setTimeout(() => {
       setWorkingCode(val);
@@ -203,6 +246,7 @@ export function TemplateBuilder() {
 
   const handleEditorJsonChange = (val: string) => {
     setLocalJson(val);
+    lastActionRef.current = 'editor';
     if (jsonDebounceRef.current) clearTimeout(jsonDebounceRef.current);
     jsonDebounceRef.current = setTimeout(() => {
       setWorkingJson(val);
@@ -244,22 +288,22 @@ export function TemplateBuilder() {
         if (e.shiftKey) {
           if (isInput) return;
           e.preventDefault();
-          useEditorStore.temporal.getState().redo();
+          handleRedo();
         } else {
           if (isInput) return;
           e.preventDefault();
-          useEditorStore.temporal.getState().undo();
+          handleUndo();
         }
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
         if (isInput) return;
         e.preventDefault();
-        useEditorStore.temporal.getState().redo();
+        handleRedo();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [handleUndo, handleRedo]);
 
   React.useEffect(() => {
     if (id && activeTemplate) {
@@ -306,7 +350,7 @@ export function TemplateBuilder() {
     try {
       const config = await askAiForDesignConfig(themeAiPrompt);
       if (config) {
-        updateActiveTemplateDesign(config);
+        handleAppAction(() => updateActiveTemplateDesign(config));
       }
     } catch (err) {
       console.error(err);
@@ -321,7 +365,7 @@ export function TemplateBuilder() {
       const jsonStr = jsonMatch ? jsonMatch[1].trim() : themeAiResponse.trim();
       const config = JSON.parse(jsonStr);
       if (config) {
-        updateActiveTemplateDesign(config);
+        handleAppAction(() => updateActiveTemplateDesign(config));
         setThemeAiResponse("");
       }
     } catch (err) {
@@ -506,9 +550,11 @@ export function TemplateBuilder() {
         parsedMock = JSON.parse(localJson);
       } catch (e) {}
 
-      updateLayoutInActiveTemplate(activeLayout.id, {
-        code: localCode,
-        mockData: parsedMock || activeLayout.mockData
+      handleAppAction(() => {
+        updateLayoutInActiveTemplate(activeLayout.id, {
+          code: localCode,
+          mockData: parsedMock || activeLayout.mockData
+        });
       });
     }
   };
@@ -526,20 +572,22 @@ export function TemplateBuilder() {
 
   const handleAddLayout = () => {
     const newId = `l-${Date.now()}`;
-    addLayoutToActiveTemplate({
-      id: newId,
-      name: "New Layout",
-      variant: "content",
-      code: `<div class="flex flex-col h-full w-full bg-lumina-surface p-lumina-xl">
+    handleAppAction(() => {
+      addLayoutToActiveTemplate({
+        id: newId,
+        name: "New Layout",
+        variant: "content",
+        code: `<div class="flex flex-col h-full w-full bg-lumina-surface p-lumina-xl">
   <h2 class="text-lumina-primary type-headline-lg mb-lumina-lg border-b-4 border-lumina-primary-container pb-lumina-sm inline-block">{{title}}</h2>
   <div class="text-lumina-on-surface-variant type-body-lg">
     {{description}}
   </div>
 </div>`,
-      mockData: {
-        title: "New Section Title",
-        description: "Enter your content description here. This layout is pre-configured with the Lumina design system tokens for perfect visual alignment."
-      }
+        mockData: {
+          title: "New Section Title",
+          description: "Enter your content description here. This layout is pre-configured with the Lumina design system tokens for perfect visual alignment."
+        }
+      });
     });
     setSelectedLayoutId(newId);
   };
@@ -593,18 +641,20 @@ export function TemplateBuilder() {
         const simplifiedLayouts = layouts.map(l => ({ id: l.id, name: l.name }));
         const newLayouts = await askAiForFullTemplate(fullPrompt, simplifiedLayouts, promptSettings);
         
-        if (newLayouts && newLayouts.length > 0) {
+            if (newLayouts && newLayouts.length > 0) {
           let firstNewId: string | null = null;
-          newLayouts.forEach((nl, index) => {
-            const newId = `l-gen-${Date.now()}-${index}`;
-            if (index === 0) firstNewId = newId;
-            
-            addLayoutToActiveTemplate({
-              id: newId,
-              name: nl.name || `Generated Layout ${index + 1}`,
-              variant: nl.variant || "content",
-              code: nl.code || "<div>Empty</div>",
-              mockData: nl.mockData || undefined
+          handleAppAction(() => {
+            newLayouts.forEach((nl, index) => {
+              const newId = `l-gen-${Date.now()}-${index}`;
+              if (index === 0) firstNewId = newId;
+              
+              addLayoutToActiveTemplate({
+                id: newId,
+                name: nl.name || `Generated Layout ${index + 1}`,
+                variant: nl.variant || "content",
+                code: nl.code || "<div>Empty</div>",
+                mockData: nl.mockData || undefined
+              });
             });
           });
           
@@ -652,14 +702,14 @@ export function TemplateBuilder() {
                 onChange={(e) => setTemplateName(e.target.value)}
                 onBlur={() => {
                   if (templateName.trim() && templateName !== activeTemplate.name) {
-                    renameTemplate(activeTemplate.id, templateName.trim());
+                    handleAppAction(() => renameTemplate(activeTemplate.id, templateName.trim()));
                   }
                   setIsEditingTemplateName(false);
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     if (templateName.trim() && templateName !== activeTemplate.name) {
-                      renameTemplate(activeTemplate.id, templateName.trim());
+                      handleAppAction(() => renameTemplate(activeTemplate.id, templateName.trim()));
                     }
                     setIsEditingTemplateName(false);
                   } else if (e.key === 'Escape') {
@@ -697,20 +747,20 @@ export function TemplateBuilder() {
         actions={
           <div className="flex items-center gap-2">
             <div className="hidden lg:flex items-center gap-2">
-              <div className="flex items-center mr-2 border border-[#333] rounded-lg overflow-hidden bg-[#1c1c1e]">
+               <div className="flex items-center mr-2 border border-[#333] rounded-lg overflow-hidden bg-[#1c1c1e]">
                  <button 
-                   onClick={() => editorUndo()} 
-                   disabled={editorPast.length === 0}
+                   onClick={() => handleUndo()} 
+                   disabled={editorPast.length === 0 && pastStates.length === 0}
                    className="p-1.5 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#2d2d30] disabled:opacity-30 disabled:hover:bg-transparent transition-colors border-r border-[#333]"
-                   title="Undo Editor Change"
+                   title="Undo (Ctrl+Z)"
                  >
                    <Undo2 size={14} />
                  </button>
                  <button 
-                   onClick={() => editorRedo()} 
-                   disabled={editorFuture.length === 0}
+                   onClick={() => handleRedo()} 
+                   disabled={editorFuture.length === 0 && futureStates.length === 0}
                    className="p-1.5 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#2d2d30] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-                   title="Redo Editor Change"
+                   title="Redo (Ctrl+Y)"
                  >
                    <Redo2 size={14} />
                  </button>
@@ -770,7 +820,7 @@ export function TemplateBuilder() {
               <Reorder.Group 
                 axis="y" 
                 values={layouts} 
-                onReorder={reorderLayoutsInActiveTemplate}
+                onReorder={(newLayouts) => handleAppAction(() => reorderLayoutsInActiveTemplate(newLayouts))}
                 className="flex-1 overflow-y-auto p-3 space-y-1"
               >
                 {layouts.map(l => (
@@ -789,7 +839,7 @@ export function TemplateBuilder() {
                      duplicateLayoutInActiveTemplate={duplicateLayoutInActiveTemplate}
                      setLayoutToDelete={setLayoutToDelete}
                      layouts={layouts}
-                     isDefaultTemplate={activeTemplate?.isDefault}
+                     isDefaultTemplate={activeTemplate?.isDefault} handleAppAction={handleAppAction}
                    />
                 ))}
               </Reorder.Group>
@@ -950,7 +1000,7 @@ export function TemplateBuilder() {
                       <label className="block text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Paste Generated JSON</label>
                       <Textarea value={aiResponse} onChange={e => setAiResponse(e.target.value)} placeholder="Paste the JSON array of layouts here..." className="w-full bg-[#252526] border border-[#333] text-gray-200 text-sm focus-visible:ring-1 focus-visible:ring-[#D62828] font-sans resize-none rounded-xl p-4 min-h-[120px]" />
                       <div className="flex justify-end mt-3">
-                        <Button onClick={() => { if (aiResponse.trim()) { try { let jsonStr = aiResponse; const jsonMatch = aiResponse.match(/```(?:json)?\n([\s\S]*?)```/i) || aiResponse.match(/<json>\s*([\s\S]*?)\s*<\/json>/i); if (jsonMatch) jsonStr = jsonMatch[1]; const newLayouts = JSON.parse(jsonStr); if (Array.isArray(newLayouts) && newLayouts.length > 0) { newLayouts.forEach((nl, index) => { const newId = `l-gen-${Date.now()}-${index}`; addLayoutToActiveTemplate({ id: newId, name: nl.name || `Generated Layout ${index + 1}`, variant: nl.variant || "content", code: nl.code || "<div>Empty</div>", mockData: nl.mockData || undefined }); }); setAiResponse(""); } } catch (e) { alert("Invalid JSON"); } } }} disabled={!aiResponse.trim()} className="bg-[#D62828] text-white border-none">Apply Layouts</Button>
+                        <Button onClick={() => { if (aiResponse.trim()) { try { let jsonStr = aiResponse; const jsonMatch = aiResponse.match(/```(?:json)?\n([\s\S]*?)```/i) || aiResponse.match(/<json>\s*([\s\S]*?)\s*<\/json>/i); if (jsonMatch) jsonStr = jsonMatch[1]; const newLayouts = JSON.parse(jsonStr); if (Array.isArray(newLayouts) && newLayouts.length > 0) { handleAppAction(() => { newLayouts.forEach((nl, index) => { const newId = `l-gen-${Date.now()}-${index}`; addLayoutToActiveTemplate({ id: newId, name: nl.name || `Generated Layout ${index + 1}`, variant: nl.variant || "content", code: nl.code || "<div>Empty</div>", mockData: nl.mockData || undefined }); }); }); setAiResponse(""); } } catch (e) { alert("Invalid JSON"); } } }} disabled={!aiResponse.trim()} className="bg-[#D62828] text-white border-none">Apply Layouts</Button>
                       </div>
                     </div>
                  )}
@@ -974,11 +1024,11 @@ export function TemplateBuilder() {
                          </div>
                          <div className="p-3 border-t border-[#2d2d30] flex items-center justify-between bg-[#1e1e1e]">
                            <span className="text-sm font-medium text-gray-200 truncate pr-2" title={l.name}>{l.name}</span>
-                           <div className="flex gap-2 shrink-0">                               <button onClick={() => moveLayoutInActiveTemplate(l.id, 'up')} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Move Up"><ChevronUp size={14} /></button>
-                               <button onClick={() => moveLayoutInActiveTemplate(l.id, 'down')} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Move Down"><ChevronDown size={14} /></button>
-                               <button onClick={() => duplicateLayoutInActiveTemplate(l.id)} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Duplicate"><Copy size={14} /></button>
+                            <div className="flex gap-2 shrink-0">                               <button onClick={() => handleAppAction(() => moveLayoutInActiveTemplate(l.id, 'up'))} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Move Up"><ChevronUp size={14} /></button>
+                               <button onClick={() => handleAppAction(() => moveLayoutInActiveTemplate(l.id, 'down'))} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Move Down"><ChevronDown size={14} /></button>
+                               <button onClick={() => handleAppAction(() => duplicateLayoutInActiveTemplate(l.id))} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Duplicate"><Copy size={14} /></button>
                                <button onClick={() => { setSelectedLayoutId(l.id); setBuilderMode('individual'); }} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Edit"><Edit2 size={14} /></button>
-                               <button onClick={() => setLayoutToDelete(l.id)} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Delete"><Trash2 size={14} /></button>
+                               <button onClick={() => handleAppAction(() => setLayoutToDelete(l.id))} className="p-1.5 text-gray-400 hover:text-white bg-[#252526] rounded hover:bg-[#D62828] transition-colors" title="Delete"><Trash2 size={14} /></button>
 
                            </div>
                          </div>
@@ -1014,7 +1064,7 @@ export function TemplateBuilder() {
                    </div>
                 ) : (
                    <div className="animate-in fade-in slide-in-from-left-4 duration-300 h-full">
-                     <ThemeSettingsPanel config={designConfig} onChange={(updates) => updateActiveTemplateDesign(updates)} layout="sidebar" width={themeSidebarWidth} />
+                     <ThemeSettingsPanel config={designConfig} onChange={(updates) => handleAppAction(() => updateActiveTemplateDesign(updates))} layout="sidebar" width={themeSidebarWidth} />
                    </div>
                 )}
               </div>
@@ -1029,7 +1079,7 @@ export function TemplateBuilder() {
         confirmLabel="Delete"
         onConfirm={() => {
           if (layoutToDelete) {
-            removeLayoutFromActiveTemplate(layoutToDelete);
+            handleAppAction(() => removeLayoutFromActiveTemplate(layoutToDelete));
             setLayoutToDelete(null);
           }
         }}
