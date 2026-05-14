@@ -831,7 +831,30 @@ export const useAppStore = create<AppState>()(
   )
 );
 
+// --- Editor Session Store (Isolated History) ---
+
+export interface EditorState {
+  code: string;
+  json: string;
+  setCode: (code: string) => void;
+  setJson: (json: string) => void;
+  reset: (code: string, json: string) => void;
+}
+
+export const useEditorStore = create<EditorState>()(
+  temporal((set) => ({
+    code: "",
+    json: "",
+    setCode: (code) => set({ code }),
+    setJson: (json) => set({ json }),
+    reset: (code, json) => {
+      set({ code, json });
+    },
+  }))
+);
+
 // Start with history tracking paused (only enable in Builder components)
 if (typeof window !== 'undefined') {
   useAppStore.temporal.getState().pause();
+  useEditorStore.temporal.getState().pause();
 }

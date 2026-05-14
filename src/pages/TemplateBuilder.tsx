@@ -170,6 +170,14 @@ export function TemplateBuilder() {
   const navigate = useNavigate();
   const { templates, addLayoutToActiveTemplate, updateLayoutInActiveTemplate, renameLayoutInActiveTemplate, setActiveTemplate, removeLayoutFromActiveTemplate, updateActiveTemplateDesign, renameTemplate, duplicateLayoutInActiveTemplate, moveLayoutInActiveTemplate, reorderLayoutsInActiveTemplate } = useAppStore();
   const { undo, redo, pastStates, futureStates } = useStore(useAppStore.temporal, (state) => state);
+  const { 
+    code: workingCode, 
+    json: workingJson, 
+    setCode: setWorkingCode, 
+    setJson: setWorkingJson, 
+    reset: resetEditor 
+  } = useEditorStore();
+  const { undo: editorUndo, redo: editorRedo, pastStates: editorPast, futureStates: editorFuture } = useStore(useEditorStore.temporal, (state) => state);
   
   const activeTemplate = useMemo(() => templates.find(t => t.id === id), [templates, id]);
 
@@ -206,16 +214,16 @@ export function TemplateBuilder() {
         if (e.shiftKey) {
           if (isInput) return;
           e.preventDefault();
-          redo();
+          editorRedo();
         } else {
           if (isInput) return;
           e.preventDefault();
-          undo();
+          editorUndo();
         }
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
         if (isInput) return;
         e.preventDefault();
-        redo();
+        editorRedo();
       }
     };
 
@@ -240,10 +248,6 @@ export function TemplateBuilder() {
 
   const [selectedLayoutId, setSelectedLayoutId] = useState<string | null>(layouts[0]?.id || null);
   
-  const activeLayout = useMemo(() => layouts.find(l => l.id === selectedLayoutId) || layouts[0], [layouts, selectedLayoutId]);
-  
-  const [workingCode, setWorkingCode] = useState<string>("");
-  const [workingJson, setWorkingJson] = useState<string>("");
   const [activeTab, setActiveTab] = useState<'hbs' | 'json'>('hbs');
   const [showThemeEditor, setShowThemeEditor] = useState<boolean>(false);
   const [editingLayoutId, setEditingLayoutId] = useState<string | null>(null);
@@ -436,10 +440,15 @@ export function TemplateBuilder() {
     }
   }, [layouts, selectedLayoutId]);
 
+  const activeLayout = useMemo(() => layouts.find(l => l.id === selectedLayoutId) || layouts[0], [layouts, selectedLayoutId]);
+
   React.useEffect(() => {
     if (activeLayout) {
-      setWorkingCode(activeLayout.code);
-      setWorkingJson(JSON.stringify(activeLayout.mockData || SAMPLE_DATA[activeLayout.variant] || { title: "Sample" }, null, 2));
+      const initialCode = activeLayout.code;
+      const initialJson = JSON.stringify(activeLayout.mockData || SAMPLE_DATA[activeLayout.variant] || { title: "Sample" }, null, 2);
+      resetEditor(initialCode, initialJson);
+      useEditorStore.temporal.getState().clear();
+      useEditorStore.temporal.getState().resume();
       setParseError(null);
     }
   }, [activeLayout?.id, activeLayout?.variant]);
@@ -659,18 +668,18 @@ export function TemplateBuilder() {
             <div className="hidden lg:flex items-center gap-2">
               <div className="flex items-center mr-2 border border-[#333] rounded-lg overflow-hidden bg-[#1c1c1e]">
                  <button 
-                   onClick={() => undo()} 
-                   disabled={pastStates.length === 0}
+                   onClick={() => editorUndo()} 
+                   disabled={editorPast.length === 0}
                    className="p-1.5 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#2d2d30] disabled:opacity-30 disabled:hover:bg-transparent transition-colors border-r border-[#333]"
-                   title="Undo"
+                   title="Undo Editor Change"
                  >
                    <Undo2 size={14} />
                  </button>
                  <button 
-                   onClick={() => redo()} 
-                   disabled={futureStates.length === 0}
+                   onClick={() => editorRedo()} 
+                   disabled={editorFuture.length === 0}
                    className="p-1.5 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#2d2d30] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-                   title="Redo"
+                   title="Redo Editor Change"
                  >
                    <Redo2 size={14} />
                  </button>

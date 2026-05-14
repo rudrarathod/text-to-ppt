@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Reorder, useDragControls } from "motion/react";
-import { useAppStore, SlideData } from "../store";
+import { useAppStore, SlideData, useEditorStore } from "../store";
 import Editor from "../components/LazyEditor";
 import { SlidePreview, SlideStatic, SlidePreviewRef } from "../components/SlidePreview";
 import { Button, Textarea } from "../components/ui";
@@ -181,16 +181,19 @@ export function PresentationBuilder() {
         if (e.shiftKey) {
           if (isInput) return; // Let the editor handle its own redo
           e.preventDefault();
-          redo();
+          if (isEditingLayoutCode) editorRedo();
+          else redo();
         } else {
           if (isInput) return; // Let the editor handle its own undo
           e.preventDefault();
-          undo();
+          if (isEditingLayoutCode) editorUndo();
+          else undo();
         }
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
         if (isInput) return; // Let the editor handle its own redo
         e.preventDefault();
-        redo();
+        if (isEditingLayoutCode) editorRedo();
+        else redo();
       }
     };
 
@@ -233,14 +236,21 @@ export function PresentationBuilder() {
   const [aiResponse, setAiResponse] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const { 
+    code: layoutEditCode, 
+    json: editorJson, 
+    setCode: setLayoutEditCode, 
+    setJson: setEditorJson, 
+    reset: resetEditor 
+  } = useEditorStore();
+  const { undo: editorUndo, redo: editorRedo, pastStates: editorPast, futureStates: editorFuture } = useStore(useEditorStore.temporal, (state) => state);
+
   const [activeSidebarTab, setActiveSidebarTab] = useState<'design' | 'content'>('design');
   const [isEditingLayoutCode, setIsEditingLayoutCode] = useState(false);
-  const [layoutEditCode, setLayoutEditCode] = useState("");
   const [layoutAiPrompt, setLayoutAiPrompt] = useState("");
   const [isLayoutAiLoading, setIsLayoutAiLoading] = useState(false);
   const [layoutAiMode, setLayoutAiMode] = useState<'ai' | 'prompt'>('ai');
   const [layoutAiResponse, setLayoutAiResponse] = useState("");
-  const [tempJsonInput, setTempJsonInput] = useState<string | null>(null);
   const [layoutEditorSubTab, setLayoutEditorSubTab] = useState<'code' | 'data'>('code');
 
   const [generatorMode, setGeneratorMode] = useState<'individual' | 'presentation'>('individual');
@@ -546,24 +556,24 @@ export function PresentationBuilder() {
 
 
   const previewData = useMemo(() => {
-    if (selectedSlide && isEditingLayoutCode && tempJsonInput) {
-      try { return JSON.parse(tempJsonInput); } catch(e) { return selectedSlide.content; }
+    if (selectedSlide && isEditingLayoutCode && editorJson) {
+      try { return JSON.parse(editorJson); } catch(e) { return selectedSlide.content; }
     }
     // Real-time preview from editor state
     if (selectedSlide && jsonInput && !isEditingLayoutCode) {
       try { return JSON.parse(jsonInput); } catch(e) { /* Fallback to last valid store state */ }
     }
     return selectedSlide?.content || {};
-  }, [selectedSlide, isEditingLayoutCode, tempJsonInput, jsonInput]);
+  }, [selectedSlide, isEditingLayoutCode, editorJson, jsonInput]);
 
   const handleLayoutAiGenerate = async () => {
     if (!layoutAiPrompt.trim() || !activeLayout) return;
     setIsLayoutAiLoading(true);
     try {
-      const { code, json } = await askAiForLayoutCode(layoutAiPrompt, layoutEditCode, tempJsonInput || jsonInput, designConfig, promptSettings);
+      const { code, json } = await askAiForLayoutCode(layoutAiPrompt, layoutEditCode, editorJson || jsonInput, designConfig, promptSettings);
       setLayoutEditCode(code);
       if (json) {
-        setTempJsonInput(json);
+        setEditorJson(json);
       }
       setLayoutAiPrompt("");
     } catch (e: any) {
@@ -751,9 +761,9 @@ export function PresentationBuilder() {
                    onImageUpload={(key, path) => {
                      if (isEditingLayoutCode) {
                        try {
-                         const current = tempJsonInput ? JSON.parse(tempJsonInput) : selectedSlide.content;
+                         const current = editorJson ? JSON.parse(editorJson) : selectedSlide.content;
                          const next = { ...current, [key]: path };
-                         setTempJsonInput(JSON.stringify(next, null, 2));
+                         setEditorJson(JSON.stringify(next, null, 2));
                        } catch(e) {}
                      } else {
                        const newContent = { ...selectedSlide.content, [key]: path };
@@ -1033,19 +1043,37 @@ export function PresentationBuilder() {
                          </div>
                       </div>
                       <div className="flex items-center gap-2">
+                        <div className="flex items-center mr-2 border border-[#333] rounded-lg overflow-hidden bg-[#1c1c1e]">
+                          <button 
+                            onClick={() => editorUndo()} 
+                            disabled={editorPast.length === 0}
+                            className="p-1.5 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#2d2d30] disabled:opacity-30 disabled:hover:bg-transparent transition-colors border-r border-[#333]"
+                            title="Undo Editor Change"
+                          >
+                            <Undo2 size={12} />
+                          </button>
+                          <button 
+                            onClick={() => editorRedo()} 
+                            disabled={editorFuture.length === 0}
+                            className="p-1.5 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#2d2d30] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                            title="Redo Editor Change"
+                          >
+                            <Redo2 size={12} />
+                          </button>
+                        </div>
                         <Button 
                           onClick={() => {
                             if (activeLayout && activeTemplateId) {
                               updateSlideCode(selectedSlideId!, layoutEditCode);
-                              if (tempJsonInput) {
+                              if (editorJson) {
                                 try {
-                                  const parsed = JSON.parse(tempJsonInput);
-                                  setJsonInput(tempJsonInput);
+                                  const parsed = JSON.parse(editorJson);
+                                  setJsonInput(editorJson);
                                   updateSlideContent(selectedSlideId!, parsed);
                                 } catch(e) {}
                               }
                               setIsEditingLayoutCode(false);
-                              setTempJsonInput(null);
+                              useEditorStore.temporal.getState().pause();
                               addToast("Layout updated successfully!", "success");
                             }
                           }}
@@ -1079,8 +1107,8 @@ export function PresentationBuilder() {
                            height="100%"
                            language="json"
                            theme="vs-dark"
-                           value={tempJsonInput || ""}
-                           onChange={(val) => setTempJsonInput(val || "")}
+                           value={editorJson || ""}
+                           onChange={(val) => setEditorJson(val || "")}
                            options={{
                              minimap: { enabled: false },
                              fontSize: 12,
@@ -1231,8 +1259,11 @@ export function PresentationBuilder() {
                            <button 
                              onClick={() => {
                                if (activeLayout) {
-                                 setLayoutEditCode(selectedSlide.code || activeLayout.code);
-                                 setTempJsonInput(jsonInput);
+                                 const initialCode = selectedSlide.code || activeLayout.code;
+                                 const initialJson = jsonInput;
+                                 resetEditor(initialCode, initialJson);
+                                 useEditorStore.temporal.getState().clear();
+                                 useEditorStore.temporal.getState().resume();
                                  setIsEditingLayoutCode(true);
                                }
                              }}
