@@ -317,9 +317,7 @@ export function PresentationBuilder() {
        if (previewRef.current) {
          const thumb = await previewRef.current.capture();
          if (thumb) {
-           useAppStore.temporal.getState().pause();
            updateSlideThumbnail(selectedSlideId, thumb);
-           useAppStore.temporal.getState().resume();
          }
        }
     }, 1500); 
