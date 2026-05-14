@@ -181,11 +181,14 @@ export function TemplateBuilder() {
   React.useEffect(() => {
     // Resume history tracking when entering the template builder
     useAppStore.temporal.getState().resume();
+    // Clear history so we start fresh for this specific template
+    useAppStore.temporal.getState().clear();
+    
     return () => {
       // Pause history tracking when leaving
       useAppStore.temporal.getState().pause();
     };
-  }, []);
+  }, [id]);
 
   React.useEffect(() => {
     if (id && activeTemplate) {

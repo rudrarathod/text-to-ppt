@@ -146,11 +146,14 @@ export function PresentationBuilder() {
   useEffect(() => {
     // Resume history tracking when entering the builder
     useAppStore.temporal.getState().resume();
+    // Clear history so we start fresh for this specific presentation
+    useAppStore.temporal.getState().clear();
+    
     return () => {
       // Pause history tracking when leaving the builder
       useAppStore.temporal.getState().pause();
     };
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     if (id && id !== activePresentationId) {
