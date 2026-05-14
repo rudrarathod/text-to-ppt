@@ -141,6 +141,16 @@ export function PresentationBuilder() {
   const navigate = useNavigate();
   const { templates, presentations, activePresentationId, setSlides, addSlide, removeSlide, updateSlideContent, updateSlideLayout, updateLayoutInTemplate, setActiveTemplate, setPresentationTemplate, setActivePresentation, updateSlideThumbnail, updateSlideCode, addToast, duplicateSlideInActivePresentation, moveSlideInActivePresentation } = useAppStore();
   const { undo, redo, pastStates, futureStates } = useStore(useAppStore.temporal, (state) => state);
+  const { 
+    code: layoutEditCode, 
+    json: editorJson, 
+    setCode: setLayoutEditCode, 
+    setJson: setEditorJson, 
+    reset: resetEditor 
+  } = useEditorStore();
+  const { undo: editorUndo, redo: editorRedo, pastStates: editorPast, futureStates: editorFuture } = useStore(useEditorStore.temporal, (state) => state);
+  const [isEditingLayoutCode, setIsEditingLayoutCode] = useState(false);
+
   const [isCapturing, setIsCapturing] = useState(false);
   
   useEffect(() => {
@@ -199,7 +209,7 @@ export function PresentationBuilder() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo]);
+  }, [undo, redo, editorUndo, editorRedo, isEditingLayoutCode]);
 
   const activePresentation = presentations.find(p => p.id === (id || activePresentationId));
   const slides = activePresentation?.slides || [];
@@ -236,17 +246,39 @@ export function PresentationBuilder() {
   const [aiResponse, setAiResponse] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
-  const { 
-    code: layoutEditCode, 
-    json: editorJson, 
-    setCode: setLayoutEditCode, 
-    setJson: setEditorJson, 
-    reset: resetEditor 
-  } = useEditorStore();
-  const { undo: editorUndo, redo: editorRedo, pastStates: editorPast, futureStates: editorFuture } = useStore(useEditorStore.temporal, (state) => state);
+
+  const [localCode, setLocalCode] = useState(layoutEditCode);
+  const [localJson, setLocalJson] = useState(editorJson);
+  const codeDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const jsonDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setLocalCode(layoutEditCode);
+    if (codeDebounceRef.current) clearTimeout(codeDebounceRef.current);
+  }, [layoutEditCode]);
+
+  useEffect(() => {
+    setLocalJson(editorJson);
+    if (jsonDebounceRef.current) clearTimeout(jsonDebounceRef.current);
+  }, [editorJson]);
+
+  const handleEditorCodeChange = (val: string) => {
+    setLocalCode(val);
+    if (codeDebounceRef.current) clearTimeout(codeDebounceRef.current);
+    codeDebounceRef.current = setTimeout(() => {
+      setLayoutEditCode(val);
+    }, 1000);
+  };
+
+  const handleEditorJsonChange = (val: string) => {
+    setLocalJson(val);
+    if (jsonDebounceRef.current) clearTimeout(jsonDebounceRef.current);
+    jsonDebounceRef.current = setTimeout(() => {
+      setEditorJson(val);
+    }, 1000);
+  };
 
   const [activeSidebarTab, setActiveSidebarTab] = useState<'design' | 'content'>('design');
-  const [isEditingLayoutCode, setIsEditingLayoutCode] = useState(false);
   const [layoutAiPrompt, setLayoutAiPrompt] = useState("");
   const [isLayoutAiLoading, setIsLayoutAiLoading] = useState(false);
   const [layoutAiMode, setLayoutAiMode] = useState<'ai' | 'prompt'>('ai');
@@ -556,24 +588,24 @@ export function PresentationBuilder() {
 
 
   const previewData = useMemo(() => {
-    if (selectedSlide && isEditingLayoutCode && editorJson) {
-      try { return JSON.parse(editorJson); } catch(e) { return selectedSlide.content; }
+    if (selectedSlide && isEditingLayoutCode && localJson) {
+      try { return JSON.parse(localJson); } catch(e) { return selectedSlide.content; }
     }
     // Real-time preview from editor state
     if (selectedSlide && jsonInput && !isEditingLayoutCode) {
       try { return JSON.parse(jsonInput); } catch(e) { /* Fallback to last valid store state */ }
     }
     return selectedSlide?.content || {};
-  }, [selectedSlide, isEditingLayoutCode, editorJson, jsonInput]);
+  }, [selectedSlide, isEditingLayoutCode, localJson, jsonInput]);
 
   const handleLayoutAiGenerate = async () => {
     if (!layoutAiPrompt.trim() || !activeLayout) return;
     setIsLayoutAiLoading(true);
     try {
-      const { code, json } = await askAiForLayoutCode(layoutAiPrompt, layoutEditCode, editorJson || jsonInput, designConfig, promptSettings);
-      setLayoutEditCode(code);
+      const { code, json } = await askAiForLayoutCode(layoutAiPrompt, localCode, localJson || jsonInput, designConfig, promptSettings);
+      setLayoutEditCode(code); // global save
       if (json) {
-        setEditorJson(json);
+        setEditorJson(json); // global save
       }
       setLayoutAiPrompt("");
     } catch (e: any) {
@@ -752,7 +784,7 @@ export function PresentationBuilder() {
               <>
                 <SlidePreview 
                    ref={previewRef}
-                   templateCode={isEditingLayoutCode ? layoutEditCode : (selectedSlide?.code || activeLayout?.code || "")} 
+                   templateCode={isEditingLayoutCode ? localCode : (selectedSlide?.code || activeLayout?.code || "")} 
                    data={previewData} 
                    designConfig={designConfig}
                    interactive={true}
@@ -761,9 +793,11 @@ export function PresentationBuilder() {
                    onImageUpload={(key, path) => {
                      if (isEditingLayoutCode) {
                        try {
-                         const current = editorJson ? JSON.parse(editorJson) : selectedSlide.content;
+                         const current = localJson ? JSON.parse(localJson) : selectedSlide.content;
                          const next = { ...current, [key]: path };
-                         setEditorJson(JSON.stringify(next, null, 2));
+                         const nextStr = JSON.stringify(next, null, 2);
+                         setLocalJson(nextStr);
+                         setEditorJson(nextStr);
                        } catch(e) {}
                      } else {
                        const newContent = { ...selectedSlide.content, [key]: path };
@@ -1047,11 +1081,11 @@ export function PresentationBuilder() {
                         <Button 
                           onClick={() => {
                             if (activeLayout && activeTemplateId) {
-                              updateSlideCode(selectedSlideId!, layoutEditCode);
-                              if (editorJson) {
+                              updateSlideCode(selectedSlideId!, localCode);
+                              if (localJson) {
                                 try {
-                                  const parsed = JSON.parse(editorJson);
-                                  setJsonInput(editorJson);
+                                  const parsed = JSON.parse(localJson);
+                                  setJsonInput(localJson);
                                   updateSlideContent(selectedSlideId!, parsed);
                                 } catch(e) {}
                               }
@@ -1074,8 +1108,8 @@ export function PresentationBuilder() {
                            height="100%"
                            language="handlebars"
                            theme="vs-dark"
-                           value={layoutEditCode}
-                           onChange={(val) => setLayoutEditCode(val || "")}
+                           value={localCode}
+                           onChange={(val) => handleEditorCodeChange(val || "")}
                            options={{
                              minimap: { enabled: false },
                              fontSize: 12,
@@ -1091,8 +1125,8 @@ export function PresentationBuilder() {
                            height="100%"
                            language="json"
                            theme="vs-dark"
-                           value={editorJson || ""}
-                           onChange={(val) => setEditorJson(val || "")}
+                           value={localJson || ""}
+                           onChange={(val) => handleEditorJsonChange(val || "")}
                            options={{
                              minimap: { enabled: false },
                              fontSize: 12,
@@ -1168,7 +1202,7 @@ export function PresentationBuilder() {
                                      if (layoutAiMode === 'ai') {
                                        handleLayoutAiGenerate();
                                      } else if (layoutAiPrompt.trim()) {
-                                       const fullPrompt = buildLayoutPrompt(layoutAiPrompt, layoutEditCode, jsonInput, designConfig, promptSettings);
+                                       const fullPrompt = buildLayoutPrompt(layoutAiPrompt, localCode, jsonInput, designConfig, promptSettings);
                                        copyToClipboard(fullPrompt);
                                        setCopiedPrompt(true);
                                        setTimeout(() => setCopiedPrompt(false), 2000);
@@ -1181,7 +1215,7 @@ export function PresentationBuilder() {
                                    if (layoutAiMode === 'ai') {
                                      handleLayoutAiGenerate();
                                } else if (layoutAiPrompt.trim()) {
-                                 const fullPrompt = buildLayoutPrompt(layoutAiPrompt, layoutEditCode, jsonInput, designConfig, promptSettings);
+                                 const fullPrompt = buildLayoutPrompt(layoutAiPrompt, localCode, jsonInput, designConfig, promptSettings);
                                  copyToClipboard(fullPrompt);
                                  setCopiedPrompt(true);
                                  setTimeout(() => setCopiedPrompt(false), 2000);

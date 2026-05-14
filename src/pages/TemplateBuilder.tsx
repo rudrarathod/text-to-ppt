@@ -146,15 +146,14 @@ const ReorderableLayout = ({ l, selectedLayoutId, setSelectedLayoutId, setMobile
             </div>
             <span className="truncate">{l.name}</span>
           </div>
-          <div className="flex items-center gap-0.5">
-            {selectedLayoutId === l.id && workingCode !== l.code && <div className="w-2 h-2 rounded-full bg-[#fe6247] mr-1" />}
-            {!isDefaultTemplate && (
+             <div className="flex items-center gap-0.5">
+               {selectedLayoutId === l.id && localCode !== l.code && <div className="w-2 h-2 rounded-full bg-[#fe6247] mr-1" />}
+               {!isDefaultTemplate && (
               <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <button onClick={(e) => { e.stopPropagation(); duplicateLayoutInActiveTemplate(l.id); }} className="p-1 hover:text-white" title="Duplicate"><Copy size={12} /></button>
                 <button onClick={(e) => { e.stopPropagation(); setEditingLayoutId(l.id); setEditingLayoutName(l.name); }} className="p-1 hover:text-white" title="Rename"><Edit2 size={12} /></button>
                 {layouts.length > 1 && (
                   <button onClick={(e) => { e.stopPropagation(); setLayoutToDelete(l.id); }} className="p-1 hover:text-[#D62828]" title="Delete"><Trash2 size={12} /></button>
-
                 )}
               </div>
             )}
@@ -178,6 +177,37 @@ export function TemplateBuilder() {
     reset: resetEditor 
   } = useEditorStore();
   const { undo: editorUndo, redo: editorRedo, pastStates: editorPast, futureStates: editorFuture } = useStore(useEditorStore.temporal, (state) => state);
+
+  const [localCode, setLocalCode] = useState(workingCode);
+  const [localJson, setLocalJson] = useState(workingJson);
+  const codeDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const jsonDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setLocalCode(workingCode);
+    if (codeDebounceRef.current) clearTimeout(codeDebounceRef.current);
+  }, [workingCode]);
+
+  useEffect(() => {
+    setLocalJson(workingJson);
+    if (jsonDebounceRef.current) clearTimeout(jsonDebounceRef.current);
+  }, [workingJson]);
+
+  const handleEditorCodeChange = (val: string) => {
+    setLocalCode(val);
+    if (codeDebounceRef.current) clearTimeout(codeDebounceRef.current);
+    codeDebounceRef.current = setTimeout(() => {
+      setWorkingCode(val);
+    }, 1000);
+  };
+
+  const handleEditorJsonChange = (val: string) => {
+    setLocalJson(val);
+    if (jsonDebounceRef.current) clearTimeout(jsonDebounceRef.current);
+    jsonDebounceRef.current = setTimeout(() => {
+      setWorkingJson(val);
+    }, 1000);
+  };
   
   const activeTemplate = useMemo(() => templates.find(t => t.id === id), [templates, id]);
 
@@ -229,7 +259,7 @@ export function TemplateBuilder() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo]);
+  }, [undo, redo, editorUndo, editorRedo]);
 
   React.useEffect(() => {
     if (id && activeTemplate) {
@@ -360,6 +390,7 @@ export function TemplateBuilder() {
   const [isSwitchingLayout, setIsSwitchingLayout] = useState(false);
   const touchStart = useRef<number | null>(null);
   const touchEnd = useRef<number | null>(null);
+  const previewRef = useRef<any>(null);
 
   const minSwipeDistance = 50;
 
@@ -457,8 +488,8 @@ export function TemplateBuilder() {
   React.useEffect(() => {
     const timer = setTimeout(() => {
       try {
-        if (workingCode) {
-           Handlebars.precompile(workingCode);
+        if (localCode) {
+           Handlebars.precompile(localCode);
         }
         setParseError(null);
       } catch (err: any) {
@@ -466,17 +497,17 @@ export function TemplateBuilder() {
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [workingCode]);
+  }, [localCode]);
 
   const handleSave = () => {
     if (activeLayout) {
       let parsedMock;
       try {
-        parsedMock = JSON.parse(workingJson);
+        parsedMock = JSON.parse(localJson);
       } catch (e) {}
 
       updateLayoutInActiveTemplate(activeLayout.id, {
-        code: workingCode,
+        code: localCode,
         mockData: parsedMock || activeLayout.mockData
       });
     }
@@ -531,7 +562,7 @@ export function TemplateBuilder() {
       setIsAiLoading(true);
       
       try {
-        const { code, json } = await askAiForLayoutCode(aiPrompt, workingCode, workingJson, promptSettings);
+        const { code, json } = await askAiForLayoutCode(aiPrompt, localCode, localJson, promptSettings);
         setWorkingCode(code);
         if (json) {
           setWorkingJson(json);
@@ -600,7 +631,7 @@ export function TemplateBuilder() {
 
   let currentSampleData = activeLayout.mockData || SAMPLE_DATA[activeLayout.variant] || { title: "Sample" };
   try {
-    currentSampleData = JSON.parse(workingJson);
+    currentSampleData = JSON.parse(localJson);
   } catch(e) {
     // keeping default if invalid JSON
   }
@@ -754,7 +785,7 @@ export function TemplateBuilder() {
                      setEditingLayoutName={setEditingLayoutName}
                      renameLayoutInActiveTemplate={renameLayoutInActiveTemplate}
                      setEditingLayoutId={setEditingLayoutId}
-                     workingCode={workingCode}
+                     workingCode={localCode}
                      duplicateLayoutInActiveTemplate={duplicateLayoutInActiveTemplate}
                      setLayoutToDelete={setLayoutToDelete}
                      layouts={layouts}
@@ -793,8 +824,8 @@ export function TemplateBuilder() {
                         defaultLanguage={activeTab === 'hbs' ? "handlebars" : "json"}
                         language={activeTab === 'hbs' ? "handlebars" : "json"}
                         theme="vs-dark"
-                        value={activeTab === 'hbs' ? workingCode : workingJson}
-                        onChange={(val) => activeTab === 'hbs' ? setWorkingCode(val || "") : setWorkingJson(val || "")}
+                        value={activeTab === 'hbs' ? localCode : localJson}
+                        onChange={(val) => activeTab === 'hbs' ? handleEditorCodeChange(val || "") : handleEditorJsonChange(val || "")}
                         options={{ minimap: { enabled: false }, fontSize: 14, wordWrap: "on", padding: { top: 12, bottom: 100 }, scrollBeyondLastLine: false, fixedOverflowWidgets: true }}
                       />
 
@@ -814,7 +845,7 @@ export function TemplateBuilder() {
                            placeholder="e.g., Add a dark overlay..." 
                            defaultMode={aiMode} 
                            onModeChange={(mode) => setAiMode(mode as 'ai' | 'prompt')} 
-                           systemPromptBuilder={(p) => buildLayoutPrompt(p, workingCode, workingJson, promptSettings)}
+                           systemPromptBuilder={(p) => buildLayoutPrompt(p, localCode, localJson, promptSettings)}
                            responseValue={aiResponse}
                            onResponseChange={setAiResponse}
                            onApplyResponse={handleApplyLayoutAiResponse}
@@ -835,7 +866,8 @@ export function TemplateBuilder() {
                     onTouchEnd={onTouchEnd}
                   >
                     <SlidePreview 
-                      templateCode={workingCode} 
+                      ref={previewRef}
+                      templateCode={localCode} 
                       data={currentSampleData} 
                       designConfig={designConfig} 
                       config={designConfig} 
