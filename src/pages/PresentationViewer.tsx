@@ -214,7 +214,7 @@ export function PresentationViewer() {
       >
         {slides.length > 0 && (
           <SlideStatic 
-            templateCode={layouts.find(l => l.id === slides[currentIndex].layoutId)?.code || layouts[0].code}
+            templateCode={slides[currentIndex].code || layouts.find(l => l.id === slides[currentIndex].layoutId)?.code || layouts[0].code}
             data={slides[currentIndex].content}
             designConfig={designConfig}
           />
