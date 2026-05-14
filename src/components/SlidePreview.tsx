@@ -677,11 +677,12 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
   data: Record<string, any>;
   designConfig?: Record<string, any>;
   interactive?: boolean;
+  slideId?: string;
   onImageUpload?: (key: string, path: string) => void;
   onTextUpdate?: (path: string, value: string) => void;
   className?: string;
   loading?: boolean;
-}>(({ templateCode, data, designConfig, interactive = false, onImageUpload, onTextUpdate, className, loading = false }, ref) => {
+}>(({ templateCode, data, designConfig, interactive = false, slideId, onImageUpload, onTextUpdate, className, loading = false }, ref) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -706,6 +707,7 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
   const isInitialMount = useRef(true);
   const lastTemplateRef = useRef(templateCode);
   const lastDesignRef = useRef(JSON.stringify(designConfig));
+  const lastSlideIdRef = useRef(slideId);
 
   const onImageUploadRef = useRef(onImageUpload);
   useEffect(() => {
@@ -748,10 +750,14 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
     if (!iframe) return;
 
     const designStr = JSON.stringify(designConfig);
-    const isStructuralChange = lastTemplateRef.current !== templateCode || lastDesignRef.current !== designStr;
+    const isStructuralChange = 
+      lastTemplateRef.current !== templateCode || 
+      lastDesignRef.current !== designStr ||
+      lastSlideIdRef.current !== slideId;
     
     lastTemplateRef.current = templateCode;
     lastDesignRef.current = designStr;
+    lastSlideIdRef.current = slideId;
 
     if (isInternalUpdate.current) {
       return;
