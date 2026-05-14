@@ -832,6 +832,7 @@ export const useAppStore = create<AppState>()(
     ),
     {
       limit: 50,
+      equality: (pastState, currentState) => JSON.stringify(pastState) === JSON.stringify(currentState),
       partialize: (state) => {
         const { _hasHydrated, setHasHydrated, toasts, ...rest } = state;
         
