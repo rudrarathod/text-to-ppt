@@ -28,7 +28,9 @@ import {
   ArrowLeft,
   Search,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Undo2,
+  Redo2
 } from 'lucide-react';
 import { askAiForLayoutCode, buildLayoutPrompt, askAiForFullTemplate, buildFullTemplatePrompt, PromptSettings, askAiForDesignConfig, buildDesignConfigPrompt } from "../lib/gemini";
 import { cn, copyToClipboard } from "../lib/utils";
@@ -44,6 +46,7 @@ import { PageHeader } from "../components/layout/PageHeader";
 
 import { SlideShowcase } from "../components/SlideShowcase";
 import { ConfirmationModal } from "../components/ConfirmationModal";
+import { useStore } from 'zustand';
 
 
 
@@ -166,6 +169,7 @@ export function TemplateBuilder() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { templates, addLayoutToActiveTemplate, updateLayoutInActiveTemplate, renameLayoutInActiveTemplate, setActiveTemplate, removeLayoutFromActiveTemplate, updateActiveTemplateDesign, renameTemplate, duplicateLayoutInActiveTemplate, moveLayoutInActiveTemplate, reorderLayoutsInActiveTemplate } = useAppStore();
+  const { undo, redo, pastStates, futureStates } = useStore(useAppStore.temporal, (state) => state);
   
   const activeTemplate = useMemo(() => templates.find(t => t.id === id), [templates, id]);
 
@@ -189,6 +193,35 @@ export function TemplateBuilder() {
       useAppStore.temporal.getState().pause();
     };
   }, [id]);
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isInput = target.tagName === 'INPUT' || 
+                      target.tagName === 'TEXTAREA' || 
+                      target.isContentEditable ||
+                      target.closest('.monaco-editor');
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        if (e.shiftKey) {
+          if (isInput) return;
+          e.preventDefault();
+          redo();
+        } else {
+          if (isInput) return;
+          e.preventDefault();
+          undo();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        if (isInput) return;
+        e.preventDefault();
+        redo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo]);
 
   React.useEffect(() => {
     if (id && activeTemplate) {
@@ -624,6 +657,24 @@ export function TemplateBuilder() {
         actions={
           <div className="flex items-center gap-2">
             <div className="hidden lg:flex items-center gap-2">
+              <div className="flex items-center mr-2 border border-[#333] rounded-lg overflow-hidden bg-[#1c1c1e]">
+                 <button 
+                   onClick={() => undo()} 
+                   disabled={pastStates.length === 0}
+                   className="p-1.5 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#2d2d30] disabled:opacity-30 disabled:hover:bg-transparent transition-colors border-r border-[#333]"
+                   title="Undo"
+                 >
+                   <Undo2 size={14} />
+                 </button>
+                 <button 
+                   onClick={() => redo()} 
+                   disabled={futureStates.length === 0}
+                   className="p-1.5 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#2d2d30] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                   title="Redo"
+                 >
+                   <Redo2 size={14} />
+                 </button>
+              </div>
               <Button onClick={handleExport} variant="outline" size="sm" className="gap-2 border-[#333] hover:bg-[#252526] text-gray-300">
                 <Download size={14} /> Export
               </Button>

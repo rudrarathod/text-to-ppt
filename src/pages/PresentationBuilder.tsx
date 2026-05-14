@@ -170,15 +170,25 @@ export function PresentationBuilder() {
   // Keyboard Shortcuts for Undo/Redo
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if the user is typing in a text-entry element
+      const target = e.target as HTMLElement;
+      const isInput = target.tagName === 'INPUT' || 
+                      target.tagName === 'TEXTAREA' || 
+                      target.isContentEditable ||
+                      target.closest('.monaco-editor');
+
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
         if (e.shiftKey) {
+          if (isInput) return; // Let the editor handle its own redo
           e.preventDefault();
           redo();
         } else {
+          if (isInput) return; // Let the editor handle its own undo
           e.preventDefault();
           undo();
         }
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        if (isInput) return; // Let the editor handle its own redo
         e.preventDefault();
         redo();
       }
@@ -245,6 +255,9 @@ export function PresentationBuilder() {
     style: ""
   });
   const [slideToDelete, setSlideToDelete] = useState<string | null>(null);
+
+  const lastSyncedContent = useRef<string | null>(null);
+  const historyDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const [mobileTab, setMobileTab] = useState<'slides' | 'preview' | 'editor'>('preview');
   const [captureSlideData, setCaptureSlideData] = useState<{
@@ -392,12 +405,23 @@ export function PresentationBuilder() {
     }
   };
 
-  React.useEffect(() => {
+  // Sync selection and content if current slide changes or content updates externally (Undo/Redo)
+  useEffect(() => {
     if (selectedSlide) {
-      setJsonInput(JSON.stringify(selectedSlide.content, null, 2));
-      setJsonError("");
+      const storeContentStr = JSON.stringify(selectedSlide.content);
+      // Sync from store if:
+      // 1. We changed slides (id mismatch)
+      // 2. The content in store changed externally (e.g. Undo/Redo) and differs from what we last saw/sent
+      if (!selectedSlideId || selectedSlide.id !== selectedSlideId || storeContentStr !== lastSyncedContent.current) {
+        setJsonInput(JSON.stringify(selectedSlide.content, null, 2));
+        lastSyncedContent.current = storeContentStr;
+        setJsonError("");
+      }
+    } else {
+      setJsonInput("");
+      lastSyncedContent.current = null;
     }
-  }, [selectedSlide?.id]); // only refresh when slide changes, not when content changes from other sources
+  }, [selectedSlide?.id, selectedSlide?.content]);
 
   const handleJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newVal = e.target.value;
@@ -407,7 +431,16 @@ export function PresentationBuilder() {
     try {
       const parsed = JSON.parse(newVal);
       setJsonError("");
-      updateSlideContent(selectedSlideId, parsed);
+      
+      // Debounce the "meaningful" update that actually gets recorded in history.
+      // We no longer update the store in real-time here because the previewData memo
+      // now handles real-time preview directly from jsonInput.
+      if (historyDebounceRef.current) clearTimeout(historyDebounceRef.current);
+      historyDebounceRef.current = setTimeout(() => {
+        updateSlideContent(selectedSlideId, parsed);
+        // Update our sync ref so the useEffect doesn't trigger a re-sync back to the editor
+        lastSyncedContent.current = JSON.stringify(parsed);
+      }, 1000);
     } catch (err: any) {
       setJsonError(err.message);
     }
@@ -516,8 +549,12 @@ export function PresentationBuilder() {
     if (selectedSlide && isEditingLayoutCode && tempJsonInput) {
       try { return JSON.parse(tempJsonInput); } catch(e) { return selectedSlide.content; }
     }
+    // Real-time preview from editor state
+    if (selectedSlide && jsonInput && !isEditingLayoutCode) {
+      try { return JSON.parse(jsonInput); } catch(e) { /* Fallback to last valid store state */ }
+    }
     return selectedSlide?.content || {};
-  }, [selectedSlide, isEditingLayoutCode, tempJsonInput]);
+  }, [selectedSlide, isEditingLayoutCode, tempJsonInput, jsonInput]);
 
   const handleLayoutAiGenerate = async () => {
     if (!layoutAiPrompt.trim() || !activeLayout) return;
