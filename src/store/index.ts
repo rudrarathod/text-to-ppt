@@ -500,8 +500,8 @@ const storage = {
 };
 
 export const useAppStore = create<AppState>()(
-  temporal(
-    persist(
+  persist(
+    temporal(
       (set) => ({
       templates: [],
       activeTemplateId: "",
@@ -819,18 +819,6 @@ export const useAppStore = create<AppState>()(
     }),
 
     {
-      name: 'domino-storage',
-      storage: createJSONStorage(() => storage),
-      onRehydrateStorage: (state) => {
-        return () => state.setHasHydrated(true);
-      },
-      partialize: (state) => {
-        const { _hasHydrated, setHasHydrated, ...rest } = state;
-        return rest;
-      },
-    }
-    ),
-    {
       limit: 50,
       equality: (pastState, currentState) => JSON.stringify(pastState) === JSON.stringify(currentState),
       partialize: (state) => {
@@ -847,6 +835,18 @@ export const useAppStore = create<AppState>()(
         
         return { ...rest, presentations: cleanedPresentations };
       }
+    }
+    ),
+    {
+      name: 'domino-storage',
+      storage: createJSONStorage(() => storage),
+      onRehydrateStorage: (state) => {
+        return () => state.setHasHydrated(true);
+      },
+      partialize: (state) => {
+        const { _hasHydrated, setHasHydrated, temporal, ...rest } = state;
+        return rest;
+      },
     }
   )
 );
