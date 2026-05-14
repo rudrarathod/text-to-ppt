@@ -216,6 +216,7 @@ interface AppState {
   updateTemplateDesign: (templateId: string, config: Partial<DesignConfig>) => void;
   updateSlideThumbnail: (slideId: string, thumbnail: string) => void;
   updateSlideCode: (slideId: string, code: string) => void;
+  updateSlideCodeAndContent: (slideId: string, code: string, content: Record<string, any>) => void;
   loadDefaultTemplatesFromAssets: () => void;
   
   toasts: Toast[];
@@ -773,6 +774,13 @@ export const useAppStore = create<AppState>()(
             : p
         )
       })),
+      updateSlideCodeAndContent: (slideId, code, content) => set((state) => ({
+        presentations: state.presentations.map(p => 
+          p.id === state.activePresentationId 
+            ? { ...p, slides: p.slides.map(s => s.id === slideId ? { ...s, code, content } : s), updatedAt: Date.now() }
+            : p
+        )
+      })),
 
       loadDefaultTemplatesFromAssets: () => {
         try {
@@ -823,9 +831,20 @@ export const useAppStore = create<AppState>()(
     }
     ),
     {
+      limit: 50,
       partialize: (state) => {
         const { _hasHydrated, setHasHydrated, toasts, ...rest } = state;
-        return rest;
+        
+        // Strip thumbnails from presentations to avoid huge history states
+        const cleanedPresentations = rest.presentations.map(p => ({
+          ...p,
+          slides: p.slides.map(s => {
+            const { thumbnail, ...slideRest } = s;
+            return slideRest;
+          })
+        }));
+        
+        return { ...rest, presentations: cleanedPresentations };
       }
     }
   )
@@ -850,7 +869,7 @@ export const useEditorStore = create<EditorState>()(
     reset: (code, json) => {
       set({ code, json });
     },
-  }))
+  }), { limit: 30 })
 );
 
 // Start with history tracking paused (only enable in Builder components)

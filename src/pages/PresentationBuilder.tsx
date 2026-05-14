@@ -139,7 +139,7 @@ const ReorderableSlide = ({ s, idx, selectedSlideId, setSelectedSlideId, layouts
 export function PresentationBuilder() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { templates, presentations, activePresentationId, setSlides, addSlide, removeSlide, updateSlideContent, updateSlideLayout, updateLayoutInTemplate, setActiveTemplate, setPresentationTemplate, setActivePresentation, updateSlideThumbnail, updateSlideCode, addToast, duplicateSlideInActivePresentation, moveSlideInActivePresentation } = useAppStore();
+  const { templates, presentations, activePresentationId, setSlides, addSlide, removeSlide, updateSlideContent, updateSlideLayout, updateLayoutInTemplate, setActiveTemplate, setPresentationTemplate, setActivePresentation, updateSlideThumbnail, updateSlideCode, updateSlideCodeAndContent, addToast, duplicateSlideInActivePresentation, moveSlideInActivePresentation } = useAppStore();
   const { undo, redo, pastStates, futureStates } = useStore(useAppStore.temporal, (state) => state);
   const { 
     code: layoutEditCode, 
@@ -1081,14 +1081,19 @@ export function PresentationBuilder() {
                         <Button 
                           onClick={() => {
                             if (activeLayout && activeTemplateId) {
-                              updateSlideCode(selectedSlideId!, localCode);
                               if (localJson) {
                                 try {
                                   const parsed = JSON.parse(localJson);
                                   setJsonInput(localJson);
-                                  updateSlideContent(selectedSlideId!, parsed);
-                                } catch(e) {}
+                                  updateSlideCodeAndContent(selectedSlideId!, localCode, parsed);
+                                } catch(e) {
+                                  // Fallback to updating just code if JSON is invalid
+                                  updateSlideCode(selectedSlideId!, localCode);
+                                }
+                              } else {
+                                updateSlideCode(selectedSlideId!, localCode);
                               }
+                              
                               setIsEditingLayoutCode(false);
                               useEditorStore.temporal.getState().clear();
                               useEditorStore.temporal.getState().pause();
