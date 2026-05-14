@@ -949,10 +949,25 @@ export function TemplateBuilder() {
                       templateCode={localCode} 
                       data={currentSampleData} 
                       designConfig={designConfig} 
-                      config={designConfig} 
                       interactive={true} 
                       loading={isSwitchingLayout}
                       className="w-full h-full max-h-[80vh] md:max-h-none transition-all duration-300" 
+                      onTextUpdate={(path, value) => {
+                        try {
+                          const current = JSON.parse(localJson);
+                          const keys = path.split('.');
+                          let curr = current;
+                          for (let i = 0; i < keys.length - 1; i++) {
+                            const key = keys[i];
+                            if (!curr[key]) curr[key] = isNaN(Number(keys[i+1])) ? {} : [];
+                            curr = curr[key];
+                          }
+                          curr[keys[keys.length - 1]] = value;
+                          const nextStr = JSON.stringify(current, null, 2);
+                          setLocalJson(nextStr);
+                          setWorkingJson(nextStr);
+                        } catch(e) {}
+                      }}
                     />
 
                     {/* Mobile Navigation Buttons */}

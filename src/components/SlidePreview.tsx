@@ -191,6 +191,37 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
              return `<span data-image-key="${key}" class="relative group inline-flex w-full h-full cursor-pointer">${fullImg}</span>`;
           }
         );
+
+        // Wrap text mustaches for direct editing
+        const IGNORED_HELPERS = new Set(['if', 'else', 'unless', 'each', 'with', 'as', 'this', '@index', '@key', '@first', '@last', 'inc', 'dec', 'eq', 'not', 'add', 'sub', 'mul', 'div', 'mod', 'abs', 'round', 'ceil', 'floor', 'min', 'max', 'each_limit']);
+
+        // 1. Handle each loops specifically to make array items editable
+        processedTemplate = processedTemplate.replace(
+          /\{\{#each\s+([a-zA-Z0-9_.]+)\}\}([\s\S]*?)\{\{\/each\}\}/g,
+          (match, arrayPath, content) => {
+            // Inside the content, replace {{this}} or {{.}} with indexed path
+            let updatedContent = content.replace(
+              /(?![^<]*>)\{\{\{?\s*(this|\.)\s*\}\}\}?/g,
+              (m) => `<span data-path="${arrayPath}.{{@index}}" contenteditable="true" class="editable-text-wrapper">${m}</span>`
+            );
+            // Also handle {{this.prop}} or {{prop}} inside each
+            updatedContent = updatedContent.replace(
+              /(?![^<]*>)\{\{\{?\s*this\.([a-zA-Z0-9_.]+)\s*\}\}\}?/g,
+              (m, prop) => `<span data-path="${arrayPath}.{{@index}}.${prop}" contenteditable="true" class="editable-text-wrapper">${m}</span>`
+            );
+            
+            return `{{#each ${arrayPath}}}${updatedContent}{{/each}}`;
+          }
+        );
+
+        // 2. General mustache wrapping for top-level keys
+        processedTemplate = processedTemplate.replace(
+          /(?![^<]*>)\{\{\{?\s*([a-zA-Z0-9_.]+)\s*\}\}\}?/g,
+          (match, key) => {
+            if (IGNORED_HELPERS.has(key)) return match;
+            return `<span data-path="${key}" contenteditable="true" class="editable-text-wrapper">${match}</span>`;
+          }
+        );
     }
     
     // Check cache first
@@ -312,6 +343,23 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
             font-weight: ${designConfig?.typeCaption?.fontWeight || '400'};
             line-height: ${designConfig?.typeCaption?.lineHeight || '16px'};
             letter-spacing: ${designConfig?.typeCaption?.letterSpacing || '0.4px'};
+          }
+
+          /* Editable Text Styles */
+          .editable-text-wrapper {
+            display: inline-block;
+            min-width: 1ch;
+            outline: none;
+            transition: background-color 0.2s;
+            border-radius: 4px;
+            cursor: text;
+          }
+          .editable-text-wrapper:hover {
+            background-color: rgba(103, 80, 164, 0.05);
+          }
+          .editable-text-wrapper:focus {
+            background-color: rgba(103, 80, 164, 0.08);
+            box-shadow: 0 0 0 2px rgba(103, 80, 164, 0.15);
           }
         </style>
       </head>
@@ -482,6 +530,8 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
 
             const init = () => {
               if (!document.body) return;
+              
+              // Handle image clicks
               document.body.addEventListener('click', (e) => {
                  const target = e.target.closest('[data-image-key]');
                  if(target) {
@@ -501,6 +551,57 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
                     };
                     input.click();
                  }
+              });
+
+              // Handle text updates
+              document.body.addEventListener('input', (e) => {
+                const target = e.target.closest('[data-path]');
+                if (target) {
+                  const path = target.getAttribute('data-path');
+                  const value = target.innerText;
+                  
+                  // Debounce to parent
+                  if (window.textUpdateTimer) clearTimeout(window.textUpdateTimer);
+                  window.textUpdateTimer = setTimeout(() => {
+                    window.parent.postMessage({ type: 'TEXT_UPDATE', path, value }, '*');
+                  }, 200);
+                }
+              });
+
+              // Prevent Enter in single-line containers
+              document.body.addEventListener('keydown', (e) => {
+                const target = e.target.closest('[data-path]');
+                if (target && e.key === 'Enter') {
+                   const tag = target.parentElement?.tagName;
+                   if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LABEL', 'SPAN'].includes(tag)) {
+                     e.preventDefault();
+                     target.blur();
+                   }
+                }
+              });
+
+              // Handle content patching without reload
+              window.addEventListener('message', (e) => {
+                if (e.data?.type === 'PATCH_HTML') {
+                  const parser = new DOMParser();
+                  const doc = parser.parseFromString(e.data.html, 'text/html');
+                  const newContent = doc.getElementById('slide-root')?.innerHTML || doc.body.innerHTML;
+                  
+                  const root = document.getElementById('slide-root');
+                  if (root && root.innerHTML !== newContent) {
+                    const active = document.activeElement;
+                    const path = active?.getAttribute('data-path');
+                    
+                    root.innerHTML = newContent;
+                    
+                    // Try to restore focus if it was lost
+                    if (path) {
+                      const newActive = root.querySelector('[data-path="' + path + '"]');
+                      if (newActive) newActive.focus();
+                    }
+                  }
+                  window.parent.postMessage({ type: 'SLIDE_READY' }, '*');
+                }
               });
             };
 
@@ -577,9 +678,10 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
   designConfig?: Record<string, any>;
   interactive?: boolean;
   onImageUpload?: (key: string, path: string) => void;
+  onTextUpdate?: (path: string, value: string) => void;
   className?: string;
   loading?: boolean;
-}>(({ templateCode, data, designConfig, interactive = false, onImageUpload, className, loading = false }, ref) => {
+}>(({ templateCode, data, designConfig, interactive = false, onImageUpload, onTextUpdate, className, loading = false }, ref) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -600,7 +702,10 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
   const resolvedData = useResolvedData(data);
 
   const [isInternalLoading, setIsInternalLoading] = useState(true);
+  const isInternalUpdate = useRef(false);
   const isInitialMount = useRef(true);
+  const lastTemplateRef = useRef(templateCode);
+  const lastDesignRef = useRef(JSON.stringify(designConfig));
 
   const onImageUploadRef = useRef(onImageUpload);
   useEffect(() => {
@@ -611,6 +716,10 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
     const handleMessage = async (e: MessageEvent) => {
       if (e.data?.type === 'SLIDE_READY') {
         setIsInternalLoading(false);
+      }
+      if (e.data?.type === 'TEXT_UPDATE') {
+        isInternalUpdate.current = true;
+        onTextUpdate?.(e.data.path, e.data.value);
       }
       if (e.data?.type === 'IMAGE_UPLOAD' && onImageUploadRef.current) {
         const { key, data: base64 } = e.data;
@@ -626,7 +735,7 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, []);
+  }, [onTextUpdate]);
 
   const html = useMemo(
     () => generateSlideHtml(templateCode, resolvedData, designConfig, interactive),
@@ -638,12 +747,27 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
     const iframe = iframeRef.current;
     if (!iframe) return;
 
-    // Always do a full write to ensure Tailwind CDN processes all classes
+    const designStr = JSON.stringify(designConfig);
+    const isStructuralChange = lastTemplateRef.current !== templateCode || lastDesignRef.current !== designStr;
+    
+    lastTemplateRef.current = templateCode;
+    lastDesignRef.current = designStr;
+
+    if (isInternalUpdate.current) {
+      return;
+    }
+
     const doc = iframe.contentWindow?.document;
-    if (doc) {
+    if (!doc) return;
+
+    if (isStructuralChange || isInitialMount.current) {
       doc.open();
       doc.write(html);
       doc.close();
+      isInitialMount.current = false;
+    } else {
+      // Use messaging for content-only updates to avoid flickering and focus loss
+      iframe.contentWindow?.postMessage({ type: 'PATCH_HTML', html }, '*');
     }
   }, [html, loading]);
 
@@ -655,11 +779,18 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
   }, [loading]);
 
   useEffect(() => {
+    if (isInternalUpdate.current) return;
+
     setIsInternalLoading(true);
     // Safety timeout: if SLIDE_READY doesn't arrive in 5s, hide skeleton anyway
     const timer = setTimeout(() => setIsInternalLoading(false), 5000);
     return () => clearTimeout(timer);
   }, [templateCode, JSON.stringify(designConfig), JSON.stringify(resolvedData)]);
+
+  // Reset internal update flag after all effects have run
+  useEffect(() => {
+    isInternalUpdate.current = false;
+  });
 
   useEffect(() => {
     if (!containerRef.current) return;
