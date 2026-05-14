@@ -144,6 +144,15 @@ export function PresentationBuilder() {
   const [isCapturing, setIsCapturing] = useState(false);
   
   useEffect(() => {
+    // Resume history tracking when entering the builder
+    useAppStore.temporal.getState().resume();
+    return () => {
+      // Pause history tracking when leaving the builder
+      useAppStore.temporal.getState().pause();
+    };
+  }, []);
+
+  useEffect(() => {
     if (id && id !== activePresentationId) {
       if (presentations.some(p => p.id === id)) {
         setActivePresentation(id);
@@ -317,7 +326,10 @@ export function PresentationBuilder() {
        if (previewRef.current) {
          const thumb = await previewRef.current.capture();
          if (thumb) {
+           const temporal = useAppStore.temporal.getState();
+           temporal.pause();
            updateSlideThumbnail(selectedSlideId, thumb);
+           temporal.resume();
          }
        }
     }, 1500); 

@@ -830,3 +830,8 @@ export const useAppStore = create<AppState>()(
     }
   )
 );
+
+// Start with history tracking paused (only enable in Builder components)
+if (typeof window !== 'undefined') {
+  useAppStore.temporal.getState().pause();
+}

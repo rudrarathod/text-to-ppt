@@ -177,6 +177,16 @@ export function TemplateBuilder() {
       setTemplateName(activeTemplate.name);
     }
   }, [activeTemplate?.name]);
+  
+  React.useEffect(() => {
+    // Resume history tracking when entering the template builder
+    useAppStore.temporal.getState().resume();
+    return () => {
+      // Pause history tracking when leaving
+      useAppStore.temporal.getState().pause();
+    };
+  }, []);
+
   React.useEffect(() => {
     if (id && activeTemplate) {
       setActiveTemplate(id);
