@@ -703,18 +703,18 @@ export function PresentationBuilder() {
           <div className="flex items-center gap-2 ml-4">
             <div className="flex items-center mr-2 border border-[#333] rounded-lg overflow-hidden bg-[#1c1c1e]">
                <button 
-                 onClick={() => undo()} 
-                 disabled={pastStates.length === 0}
+                 onClick={() => isEditingLayoutCode ? editorUndo() : undo()} 
+                 disabled={isEditingLayoutCode ? editorPast.length === 0 : pastStates.length === 0}
                  className="p-2 h-8 lg:h-10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#2d2d30] disabled:opacity-30 disabled:hover:bg-transparent transition-colors border-r border-[#333]"
-                 title="Undo"
+                 title={isEditingLayoutCode ? "Undo Editor Change" : "Undo"}
                >
                  <Undo2 size={16} />
                </button>
                <button 
-                 onClick={() => redo()} 
-                 disabled={futureStates.length === 0}
+                 onClick={() => isEditingLayoutCode ? editorRedo() : redo()} 
+                 disabled={isEditingLayoutCode ? editorFuture.length === 0 : futureStates.length === 0}
                  className="p-2 h-8 lg:h-10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#2d2d30] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-                 title="Redo"
+                 title={isEditingLayoutCode ? "Redo Editor Change" : "Redo"}
                >
                  <Redo2 size={16} />
                </button>
@@ -1044,24 +1044,6 @@ export function PresentationBuilder() {
                          </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="flex items-center mr-2 border border-[#333] rounded-lg overflow-hidden bg-[#1c1c1e]">
-                          <button 
-                            onClick={() => editorUndo()} 
-                            disabled={editorPast.length === 0}
-                            className="p-1.5 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#2d2d30] disabled:opacity-30 disabled:hover:bg-transparent transition-colors border-r border-[#333]"
-                            title="Undo Editor Change"
-                          >
-                            <Undo2 size={12} />
-                          </button>
-                          <button 
-                            onClick={() => editorRedo()} 
-                            disabled={editorFuture.length === 0}
-                            className="p-1.5 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#2d2d30] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-                            title="Redo Editor Change"
-                          >
-                            <Redo2 size={12} />
-                          </button>
-                        </div>
                         <Button 
                           onClick={() => {
                             if (activeLayout && activeTemplateId) {
