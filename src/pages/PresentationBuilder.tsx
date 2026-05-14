@@ -789,7 +789,6 @@ export function PresentationBuilder() {
               <>
                 <SlidePreview 
                    ref={previewRef}
-                   slideId={selectedSlideId || undefined}
                    templateCode={isEditingLayoutCode ? localCode : (selectedSlide?.code || activeLayout?.code || "")} 
                    data={previewData} 
                    designConfig={designConfig}

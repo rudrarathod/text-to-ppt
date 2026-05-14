@@ -579,30 +579,6 @@ export const generateSlideHtml = (templateCode: string, data: Record<string, any
                    }
                 }
               });
-
-              // Handle content patching without reload
-              window.addEventListener('message', (e) => {
-                if (e.data?.type === 'PATCH_HTML') {
-                  const parser = new DOMParser();
-                  const doc = parser.parseFromString(e.data.html, 'text/html');
-                  const newContent = doc.getElementById('slide-root')?.innerHTML || doc.body.innerHTML;
-                  
-                  const root = document.getElementById('slide-root');
-                  if (root && root.innerHTML !== newContent) {
-                    const active = document.activeElement;
-                    const path = active?.getAttribute('data-path');
-                    
-                    root.innerHTML = newContent;
-                    
-                    // Try to restore focus if it was lost
-                    if (path) {
-                      const newActive = root.querySelector('[data-path="' + path + '"]');
-                      if (newActive) newActive.focus();
-                    }
-                  }
-                  window.parent.postMessage({ type: 'SLIDE_READY' }, '*');
-                }
-              });
             };
 
             if (document.readyState === 'loading') {
@@ -677,12 +653,11 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
   data: Record<string, any>;
   designConfig?: Record<string, any>;
   interactive?: boolean;
-  slideId?: string;
   onImageUpload?: (key: string, path: string) => void;
   onTextUpdate?: (path: string, value: string) => void;
   className?: string;
   loading?: boolean;
-}>(({ templateCode, data, designConfig, interactive = false, slideId, onImageUpload, onTextUpdate, className, loading = false }, ref) => {
+}>(({ templateCode, data, designConfig, interactive = false, onImageUpload, onTextUpdate, className, loading = false }, ref) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -705,9 +680,6 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
   const [isInternalLoading, setIsInternalLoading] = useState(true);
   const isInternalUpdate = useRef(false);
   const isInitialMount = useRef(true);
-  const lastTemplateRef = useRef(templateCode);
-  const lastDesignRef = useRef(JSON.stringify(designConfig));
-  const lastSlideIdRef = useRef(slideId);
 
   const onImageUploadRef = useRef(onImageUpload);
   useEffect(() => {
@@ -749,31 +721,16 @@ export const SlidePreview = forwardRef<SlidePreviewRef, {
     const iframe = iframeRef.current;
     if (!iframe) return;
 
-    const designStr = JSON.stringify(designConfig);
-    const isStructuralChange = 
-      lastTemplateRef.current !== templateCode || 
-      lastDesignRef.current !== designStr ||
-      lastSlideIdRef.current !== slideId;
-    
-    lastTemplateRef.current = templateCode;
-    lastDesignRef.current = designStr;
-    lastSlideIdRef.current = slideId;
-
     if (isInternalUpdate.current) {
       return;
     }
 
+    // Always do a full write to ensure Tailwind CDN processes all classes
     const doc = iframe.contentWindow?.document;
-    if (!doc) return;
-
-    if (isStructuralChange || isInitialMount.current) {
+    if (doc) {
       doc.open();
       doc.write(html);
       doc.close();
-      isInitialMount.current = false;
-    } else {
-      // Use messaging for content-only updates to avoid flickering and focus loss
-      iframe.contentWindow?.postMessage({ type: 'PATCH_HTML', html }, '*');
     }
   }, [html, loading]);
 

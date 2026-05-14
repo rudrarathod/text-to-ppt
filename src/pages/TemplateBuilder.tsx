@@ -946,7 +946,6 @@ export function TemplateBuilder() {
                   >
                     <SlidePreview 
                       ref={previewRef}
-                      slideId={selectedLayoutId || undefined}
                       templateCode={localCode} 
                       data={currentSampleData} 
                       designConfig={designConfig} 
